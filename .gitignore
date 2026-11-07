@@ -1,0 +1,21 @@
+node_modules/
+dist/
+target/
+coverage/
+test-results/
+playwright-report/
+*.log
+.vite/
+# livros de verdade nunca vão pro git (os testes geram os seus)
+*.pdf
+*.epub
+*.cbz
+*.cbr
+*.mobi
+*.azw3
+# chaves de assinatura nunca vão pro git
+*.keystore
+*.jks
+*.key
+*.pem
+.env*

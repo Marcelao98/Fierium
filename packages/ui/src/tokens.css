@@ -1,0 +1,286 @@
+/* Design system do Fierium (docs/FIERIUM_PRODUCT_VISION.md §9). A luz é o material principal: a cor de destaque
+   (--luz) só aparece onde tem algo de verdade (progresso, foco, ligação). Dois temas: Noite (a assinatura) e Lúcido. */
+@import '@fontsource-variable/fraunces';
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/literata';
+
+:root {
+  --fonte-titulo: 'Fraunces Variable', 'Georgia', serif;
+  --fonte-ui: 'Inter Variable', system-ui, sans-serif;
+  --fonte-leitura: 'Literata Variable', 'Georgia', serif;
+
+  --espaco-1: 4px;
+  --espaco-2: 8px;
+  --espaco-3: 12px;
+  --espaco-4: 16px;
+  --espaco-5: 24px;
+  --espaco-6: 32px;
+  --espaco-7: 48px;
+  --espaco-8: 72px;
+
+  --raio-1: 6px;
+  --raio-2: 10px;
+  --raio-3: 16px;
+  --raio-4: 24px;
+
+  /* movimento: funcional é rápido; espacial é lento e sempre interrompível (§9.4) */
+  --rapido: 160ms;
+  --medio: 280ms;
+  --espacial: 700ms;
+  --curva: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --curva-sonho: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* matiz da atmosfera atual (a coleção aberta muda isto) */
+  --matiz: 255;
+}
+
+:root,
+:root[data-tema='noite'] {
+  color-scheme: dark;
+  --fundo: #0b0a1a;
+  --fundo-2: #121029;
+  --fundo-3: #1a1736;
+  --superficie: rgba(236, 232, 246, 0.04);
+  --superficie-2: rgba(236, 232, 246, 0.07);
+  --superficie-3: rgba(236, 232, 246, 0.11);
+  --borda: rgba(236, 232, 246, 0.09);
+  --borda-forte: rgba(236, 232, 246, 0.18);
+  --texto: #ece8f6;
+  --texto-2: #b5afcb;
+  --texto-3: #827b9e;
+  --luz: #f1d9a0;
+  --luz-suave: rgba(241, 217, 160, 0.16);
+  --violeta: #a99be6;
+  --aurora: #7cc7b4;
+  --rosa: #d98a9c;
+  --perigo: #ef8f8f;
+  --sombra: 0 18px 50px rgba(0, 0, 0, 0.45);
+  --vidro: rgba(18, 16, 41, 0.72);
+  --estrela: #fff6df;
+}
+
+:root[data-tema='lucido'] {
+  color-scheme: light;
+  --fundo: #f5f2ec;
+  --fundo-2: #ece7f0;
+  --fundo-3: #e2dcea;
+  --superficie: rgba(29, 26, 46, 0.035);
+  --superficie-2: rgba(29, 26, 46, 0.06);
+  --superficie-3: rgba(29, 26, 46, 0.1);
+  --borda: rgba(29, 26, 46, 0.1);
+  --borda-forte: rgba(29, 26, 46, 0.2);
+  --texto: #1d1a2e;
+  --texto-2: #4a4560;
+  --texto-3: #6f6987;
+  --luz: #9a6a1f;
+  --luz-suave: rgba(154, 106, 31, 0.12);
+  --violeta: #5d4fb8;
+  --aurora: #23806c;
+  --rosa: #b04a64;
+  --perigo: #b3261e;
+  --sombra: 0 18px 40px rgba(40, 30, 80, 0.14);
+  --vidro: rgba(245, 242, 236, 0.78);
+  --estrela: #8a76d8;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: var(--fonte-ui);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--luz);
+  outline-offset: 2px;
+  border-radius: var(--raio-1);
+}
+
+::selection {
+  background: var(--luz-suave);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--fonte-titulo);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+/* movimento reduzido: o sistema pediu ou a pessoa escolheu nos Ajustes */
+:root[data-movimento='reduzido'] *,
+:root[data-movimento='reduzido'] *::before,
+:root[data-movimento='reduzido'] *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+}
+
+.f-botao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-2);
+  height: 38px;
+  padding: 0 var(--espaco-4);
+  border-radius: 999px;
+  border: 1px solid var(--borda);
+  background: var(--superficie);
+  cursor: pointer;
+  transition:
+    background var(--rapido) var(--curva),
+    border-color var(--rapido) var(--curva),
+    transform var(--rapido) var(--curva);
+  white-space: nowrap;
+}
+.f-botao:hover {
+  background: var(--superficie-2);
+  border-color: var(--borda-forte);
+}
+.f-botao:active {
+  transform: scale(0.98);
+}
+.f-botao[data-tipo='luz'] {
+  background: var(--luz);
+  color: #1b1530;
+  border-color: transparent;
+  font-weight: 600;
+  box-shadow: 0 0 24px var(--luz-suave);
+}
+:root[data-tema='lucido'] .f-botao[data-tipo='luz'] {
+  color: #fff;
+}
+.f-botao[data-tipo='luz']:hover {
+  filter: brightness(1.06);
+}
+.f-botao[data-tipo='fantasma'] {
+  background: transparent;
+  border-color: transparent;
+}
+.f-botao[data-tipo='fantasma']:hover {
+  background: var(--superficie);
+}
+.f-botao[data-tamanho='p'] {
+  height: 30px;
+  padding: 0 var(--espaco-3);
+  font-size: 13px;
+}
+.f-botao:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.f-icone-botao {
+  width: 38px;
+  padding: 0;
+  justify-content: center;
+}
+
+.f-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid var(--borda);
+  background: transparent;
+  color: var(--texto-2);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all var(--rapido) var(--curva);
+}
+.f-chip:hover {
+  color: var(--texto);
+  border-color: var(--borda-forte);
+}
+.f-chip[aria-pressed='true'] {
+  color: var(--texto);
+  background: var(--superficie-2);
+  border-color: var(--luz);
+}
+
+.f-campo {
+  height: 40px;
+  padding: 0 var(--espaco-4);
+  border-radius: 999px;
+  border: 1px solid var(--borda);
+  background: var(--superficie);
+  outline: none;
+  transition: border-color var(--rapido) var(--curva);
+}
+.f-campo:focus {
+  border-color: var(--luz);
+}
+textarea.f-campo {
+  height: auto;
+  padding: var(--espaco-3) var(--espaco-4);
+  border-radius: var(--raio-2);
+  resize: vertical;
+}
+select.f-campo {
+  appearance: none;
+  padding-right: var(--espaco-6);
+  background-image: linear-gradient(45deg, transparent 50%, var(--texto-3) 50%),
+    linear-gradient(135deg, var(--texto-3) 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 18px,
+    calc(100% - 13px) 18px;
+  background-size: 5px 5px;
+  background-repeat: no-repeat;
+}
+
+.f-cartao {
+  border: 1px solid var(--borda);
+  background: var(--superficie);
+  border-radius: var(--raio-3);
+}
+
+.f-rotulo {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--texto-3);
+}
+
+.f-barra {
+  height: 3px;
+  border-radius: 3px;
+  background: var(--superficie-3);
+  overflow: hidden;
+}
+.f-barra > span {
+  display: block;
+  height: 100%;
+  background: var(--luz);
+  box-shadow: 0 0 10px var(--luz);
+  border-radius: 3px;
+}
+
+.f-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
