@@ -23,3 +23,6 @@ apps/app/e2e/prints/
 
 # gerado pelo Tauri
 crates/fierium-app/gen/
+
+# pastas de trabalho temporárias dos executores (subagentes), nunca entram no git
+.claude/worktrees/
