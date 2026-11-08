@@ -19,7 +19,8 @@ entrega um pacote Linux pra testar.
 | 1 | M0 | Fundação e plano | — | ✅ (feito) |
 | 2 | M1 | Protótipo de interface + arquitetura modular | v0.1 | ⏸ |
 | 3 | M2 | Tauri no Linux (pacote Linux desde aqui) | v0.2 | ⏸ |
-| 4 | M3 | Núcleo Rust e biblioteca de verdade | v0.3 | ⬜ |
+| 3b | M1.5 | **Identidade de Fieri** (sonho, mundos, constelações; o selo novo) — [IDENTIDADE.md](IDENTIDADE.md) | v0.2.1 | ⬜ próximo |
+| 4 | M3 | Núcleo Rust e biblioteca de verdade | v0.3 | ⬜ (só planejado) |
 | 5 | M4 | Leitor de PDF | v0.4 | ⬜ |
 | 6 | M7 | Marcações, notas e ligações (no PDF) | v0.5 | ⬜ |
 | 7 | M8 | Estatísticas e metas reais | v0.6 | ⬜ |

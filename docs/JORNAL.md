@@ -15,6 +15,17 @@ Uma entrada por sessão de trabalho, **a mais nova em cima**. Modelo:
 
 ---
 
+## 2026-11-08 · Pausa no M3 · a identidade de Fieri
+
+**Pedido:** o Marcelo não gostou tanto do front: Fieri é a primordial dos sonhos e da imaginação, a biblioteca de
+tudo que já foi imaginado; a pessoa tem que sentir que explora outros mundos e constelações. Manter o modo normal de
+navegar por enquanto. Pediu a proposta, onde estamos, e o símbolo; continuar em outra sessão.
+**Feito:** proposta em [IDENTIDADE.md](IDENTIDADE.md) (o Selo de Fieri: centelha, lua crescente, órbita aberta) e o
+marco M1.5 no roadmap. Nenhum código do M3 escrito (só as versões das bibliotecas conferidas: rusqlite 0.41, uuid 1.29,
+blake3 1.8, walkdir 2.5, zip 2.6, quick-xml 0.37, tauri-plugin-dialog 2.8).
+**Onde parou:** ⏸ o Marcelo aprova a direção do M1.5. Depois: três direções em print + três selos → ele escolhe →
+aplicar → seguir o M3. O repositório `Fierium` ainda não existe no GitHub (cópias em .bundle enviadas a ele).
+
 ## 2026-11-08 · M2 · Tauri no Linux
 
 **Pedido:** seguir até o M4 sem parar; Linux desde o começo; um commit por marco, com teste.
