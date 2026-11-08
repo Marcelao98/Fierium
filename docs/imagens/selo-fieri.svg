@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200" role="img" aria-label="Selo de Fieri: a centelha, a lua crescente e a órbita aberta">
+  <defs>
+    <radialGradient id="fundo" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#2a2150"/>
+      <stop offset="60%" stop-color="#141030"/>
+      <stop offset="100%" stop-color="#0b0a1a"/>
+    </radialGradient>
+    <radialGradient id="brilho" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f1d9a0" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#f1d9a0" stop-opacity="0"/>
+    </radialGradient>
+    <mask id="lua">
+      <rect width="200" height="200" fill="#000"/>
+      <circle cx="100" cy="112" r="46" fill="#fff"/>
+      <circle cx="100" cy="94" r="44" fill="#000"/>
+    </mask>
+  </defs>
+  <circle cx="100" cy="100" r="98" fill="url(#fundo)"/>
+  <!-- a órbita aberta: o vir-a-ser (o vão é o que ainda não foi sonhado) -->
+  <path d="M 158.5 51.5 A 78 78 0 1 1 100 22" fill="none" stroke="#ece8f6" stroke-opacity="0.55" stroke-width="2.2" stroke-linecap="round"/>
+  <circle cx="158.5" cy="51.5" r="4.2" fill="#a99be6"/>
+  <!-- a lua crescente embalando a centelha: o sonho -->
+  <circle cx="100" cy="112" r="46" fill="#f1d9a0" mask="url(#lua)"/>
+  <!-- a centelha: a primeira coisa imaginada -->
+  <circle cx="100" cy="92" r="30" fill="url(#brilho)"/>
+  <path d="M100 70 C102 86 104 90 120 92 C104 94 102 98 100 114 C98 98 96 94 80 92 C96 90 98 86 100 70 Z" fill="#fff6df"/>
+</svg>

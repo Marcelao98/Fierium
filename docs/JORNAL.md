@@ -24,7 +24,9 @@ navegar por enquanto. Pediu a proposta, onde estamos, e o símbolo; continuar em
 marco M1.5 no roadmap. Nenhum código do M3 escrito (só as versões das bibliotecas conferidas: rusqlite 0.41, uuid 1.29,
 blake3 1.8, walkdir 2.5, zip 2.6, quick-xml 0.37, tauri-plugin-dialog 2.8).
 **Onde parou:** ⏸ o Marcelo aprova a direção do M1.5. Depois: três direções em print + três selos → ele escolhe →
-aplicar → seguir o M3. O repositório `Fierium` ainda não existe no GitHub (cópias em .bundle enviadas a ele).
+aplicar → seguir o M3. O repositório agora existe: github.com/Marcelao98/Fierium (main + tags m1 e m2), com o
+README novo (o Selo de Fieri desenhado em SVG e prints). **A próxima sessão começa aqui: ler IDENTIDADE.md e fazer as
+três direções em print + três selos, e parar pra ele escolher.**
 
 ## 2026-11-08 · M2 · Tauri no Linux
 
