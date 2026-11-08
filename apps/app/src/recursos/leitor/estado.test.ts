@@ -31,6 +31,17 @@ describe('leitor (estado)', () => {
     l.tique();
     expect(l.sessao().segundos).toBe(3);
   });
+  it('conta o tempo do capítulo e zera ao trocar de capítulo', async () => {
+    const { l } = await abrirDomCasmurro();
+    l.posicaoMudou('1:0:0', 0.6);
+    l.tique();
+    l.tique();
+    expect(l.store.getState().segundosCapitulo).toBe(2);
+    l.posicaoMudou('1:1:0', 0.65); // mesmo capítulo: não zera
+    expect(l.store.getState().segundosCapitulo).toBe(2);
+    l.posicaoMudou('0:3:0', 0.3); // outro capítulo: zera
+    expect(l.store.getState().segundosCapitulo).toBe(0);
+  });
   it('fechar registra a sessão e avisa as outras funcionalidades', async () => {
     const { l, s } = await abrirDomCasmurro();
     const ouvidos: string[] = [];

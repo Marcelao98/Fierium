@@ -17,8 +17,9 @@
   }
 }
 .leitor[data-tema='pergaminho'] {
-  /* só as cores, pra o tema novo do contrato funcionar; a moldura e o resto vêm no cartão I.7 */
-  --l-fundo: var(--pergaminho);
+  /* o pergaminho é uma página sobre a noite: o vão da moldura (--moldura) usa --fundo */
+  --fundo: #0a0f1e;
+  --l-fundo: var(--fundo);
   --l-texto: var(--tinta);
   --l-texto-2: #6b5638;
   --l-borda: rgba(138, 90, 30, 0.22);
@@ -51,6 +52,63 @@
   --l-texto-2: #555;
   --l-borda: rgba(0, 0, 0, 0.18);
   --l-vidro: rgba(233, 233, 228, 0.96);
+}
+/* ---------- o pergaminho: a coluna de texto vira uma página sobre a noite ---------- */
+.leitor[data-tema='pergaminho'] .fl-texto {
+  max-width: calc(var(--l-largura, 66ch) + 80px);
+  margin: 48px auto 96px;
+  padding: 72px 64px 96px;
+  background: linear-gradient(180deg, var(--pergaminho), var(--pergaminho-2));
+  color: var(--tinta);
+  border-radius: var(--raio-1);
+  box-shadow:
+    var(--moldura),
+    0 40px 80px rgba(0, 0, 0, 0.6);
+}
+.leitor[data-tema='pergaminho'] .fl-texto h2 {
+  font-family: var(--fonte-titulo);
+  font-size: 1.85em;
+  font-weight: 600;
+  color: var(--tinta);
+}
+.leitor[data-tema='pergaminho'] .fl-texto h2::before {
+  content: 'Capítulo';
+  display: block;
+  margin-bottom: 10px;
+  font-family: var(--fonte-rotulo);
+  font-size: 11.5px;
+  font-weight: 400;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--tinta-ouro);
+}
+.leitor[data-tema='pergaminho'] .fl-texto section p:first-of-type::first-letter {
+  float: left;
+  padding: 6px 10px 0 0;
+  font-family: var(--fonte-titulo);
+  font-size: 3.6em;
+  font-weight: 600;
+  line-height: 0.85;
+  color: var(--tinta-ouro);
+}
+.leitor[data-tema='pergaminho'] .fl-texto ::selection {
+  background: rgba(200, 140, 40, 0.35);
+  color: var(--tinta);
+}
+.leitor[data-tema='pergaminho'] mark.fl-marca {
+  background: rgba(200, 140, 40, 0.22);
+  box-shadow: inset 0 -0.5em 0 rgba(200, 140, 40, 0.22);
+}
+.leitor[data-tema='pergaminho'] mark.fl-marca:hover,
+.leitor[data-tema='pergaminho'] mark.fl-marca[data-selecionada='true'] {
+  background: rgba(200, 140, 40, 0.38);
+}
+@media (max-width: 760px) {
+  .leitor[data-tema='pergaminho'] .fl-texto {
+    max-width: none;
+    margin: 16px 12px 72px;
+    padding: 48px 26px 72px;
+  }
 }
 .leitor-palco {
   position: absolute;
@@ -111,6 +169,48 @@
   display: block;
   height: 100%;
   background: #d9b56a;
+}
+/* o progresso do pergaminho é um anel de ouro no canto, sobre a noite */
+.anel-progresso {
+  position: absolute;
+  right: 46px;
+  bottom: 40px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  color: rgba(239, 228, 200, 0.7);
+  text-align: center;
+  font-family: var(--fonte-ui);
+  font-size: 10.5px;
+  line-height: 1.25;
+  transition:
+    opacity var(--medio) var(--curva),
+    transform var(--medio) var(--curva);
+}
+.anel-progresso svg {
+  position: absolute;
+  inset: 0;
+}
+.anel-progresso .anel-trilho {
+  stroke: currentColor;
+  opacity: 0.14;
+}
+.anel-progresso .anel-arco {
+  stroke: #e2b866;
+}
+.anel-progresso b {
+  display: block;
+  font-family: var(--fonte-titulo);
+  font-size: 20px;
+  font-weight: 500;
+  color: #efe4c8;
+}
+.leitor[data-veu='true'] .anel-progresso {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
 }
 .leitor-painel {
   position: absolute;

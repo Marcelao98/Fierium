@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from 'react';
 import { corDe, useCores } from '../../compartilhado/Marcacoes';
 import { useConfig, useConfigApp, useFatia, useServicos } from '../../nucleo/contexto';
 import { fecharLeitura, type Leitura } from '../../nucleo/navegacao';
+import { AnelProgresso } from './AnelProgresso';
 import { Balao } from './Balao';
 import type { Leitor as EstadoLeitor } from './estado';
 import './leitor.css';
@@ -30,7 +31,7 @@ const FONTES: [ConfigLeitura['fonte'], string, string][] = [
 type EstadoBalao = { caixa: Caixa; nova: Selecao | null; marcacaoId: string | null };
 
 export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Leitura }) {
-  const { obra, fonte, marcacoes, selecionada, fracao } = useFatia(leitor.store, (s) => s);
+  const { obra, fonte, marcacoes, selecionada, fracao, segundosCapitulo } = useFatia(leitor.store, (s) => s);
   const cfg = useConfig()?.leitura;
   const config = useConfigApp();
   const servicos = useServicos();
@@ -315,9 +316,13 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
           aoFechar={() => setBalao(null)}
         />
       )}
-      <div className="leitor-progresso" aria-hidden="true">
-        <span style={{ width: `${fracao * 100}%` }} />
-      </div>
+      {cfg.tema === 'pergaminho' ? (
+        <AnelProgresso fracao={fracao} segundos={segundosCapitulo} />
+      ) : (
+        <div className="leitor-progresso" aria-hidden="true">
+          <span style={{ width: `${fracao * 100}%` }} />
+        </div>
+      )}
     </div>
   );
 }

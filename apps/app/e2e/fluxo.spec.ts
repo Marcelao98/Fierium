@@ -44,10 +44,20 @@ test('abertura → início → ler → marcar com nota → Notas → recarregar 
   await balao.getByLabel('Nota da marcação').fill('Que título?');
   await page.screenshot({ path: `${PRINTS}/3-leitor-marcando.png` });
   await balao.getByText('Pronto').click();
-  await expect(page.locator('mark[data-nota="true"]', { hasText: 'Agora que expliquei o título' })).toBeVisible();
+  const marca = page.locator('mark[data-nota="true"]', { hasText: 'Agora que expliquei o título' });
+  await expect(marca).toBeVisible();
+  // o pergaminho (tema padrão): a página com moldura, a marcação em ouro e o anel de progresso
+  await marca.click();
+  await expect(page.getByRole('dialog', { name: 'Marcação' })).toBeVisible();
+  await expect(leitor.getByRole('status')).toContainText('%');
+  await page.screenshot({ path: `${PRINTS}/3b-leitor-pergaminho.png` });
+  await page.keyboard.press('Escape');
 
   await leitor.getByRole('button', { name: 'Aparência' }).click();
   await page.getByRole('button', { name: 'Sépia' }).click();
+  // fora do pergaminho, o anel some e a barra de progresso volta
+  await expect(leitor.getByRole('status')).toHaveCount(0);
+  await expect(leitor.locator('.leitor-progresso')).toBeVisible();
   await page.screenshot({ path: `${PRINTS}/4-leitor-sepia.png` });
   await page.keyboard.press('Escape');
   await page.keyboard.press('Escape');
