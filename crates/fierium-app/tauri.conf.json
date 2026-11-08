@@ -22,7 +22,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: fierium: http://fierium.localhost; connect-src 'self' ipc: http://ipc.localhost fierium: http://fierium.localhost; worker-src 'self' blob:"
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob: fierium: http://fierium.localhost; connect-src 'self' ipc: http://ipc.localhost fierium: http://fierium.localhost; worker-src 'self' blob:; frame-src 'self' blob: about:"
     }
   },
   "bundle": {
