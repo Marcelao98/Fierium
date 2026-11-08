@@ -94,32 +94,51 @@ lockfile não brigar.
 
 ## Ondas planejadas
 
-### M1.5 (resto)
-
-| Onda | Cartões | Raia | Quem |
-|---|---|---|---|
-| 1 | [I.3 ícones do selo](cartoes/m1.5/i3.md) · [I.4 fundo de mapa celeste](cartoes/m1.5/i4.md) | ferramentas+ui · casca | executores, em paralelo |
-| 1 | [I.6 capas e mundos](cartoes/m1.5/i6.md) · [I.7 leitor em pergaminho](cartoes/m1.5/i7.md) | compartilhado+biblioteca · leitor | executores, em paralelo |
-| 2 | I.8 transição de abrir obra (🧭: mexe na casca e no leitor juntos) | casca+leitor | orquestrador ou um executor depois da onda 1 |
-| 3 | I.9 integração: prints, README, pacote Linux, CP1.5 (🧭) | — | orquestrador |
-
-As quatro da onda 1 não se tocam: dá pra disparar as quatro de uma vez.
-
-### M3 (núcleo Rust e biblioteca de verdade) — esboço; os cartões saem quando o M1.5 fechar
-
-| Onda | Cartões | Raia |
+| Marco | Mapa das ondas | Cartões |
 |---|---|---|
-| 0 🧭 | Contrato da biblioteca (comandos `biblioteca.*`, `pastas.*`, `busca.*`) + dependências (rusqlite, uuid, blake3, walkdir, zip, quick-xml, tauri-plugin-dialog) + esqueleto dos módulos | orquestrador |
-| 1 | Banco: SQLite + migrações numeradas e testadas · modelo obra → edição → arquivo, UUIDv7, registro de mudanças | `core/banco` |
-| 1 | Varredura: pastas, novo/movido/apagado, identidade pelo conteúdo (blake3) | `core/varredura` |
-| 1 | Metadados: PDF · EPUB · CBZ/CBR · pelo nome do arquivo (4 cartões, um por formato) | `core/metadados/<formato>` |
-| 1 | Gerador de pastas de teste (2.000 arquivos sintéticos, sem livro de verdade) | `ferramentas/` |
-| 2 | Reconhecer obra e série, juntar e separar · busca FTS5 sem acento · coleções no banco | `core/obras`, `core/busca`, `core/colecoes` |
-| 2 | Comandos no `fierium-app` ligando tudo (porta `chamar`) | `fierium-app` |
-| 3 | Front: adaptador combinado passando a biblioteca pro Rust · tela de escolher pastas | `apps/app` |
-| 3 | Teste de contrato exemplo × Rust · orçamento com 2.000 arquivos | testes |
-| 4 🧭 | Integração, prints, pacote, CP3 | orquestrador |
+| M1.5 (resto) | [m1.5/ONDAS.md](cartoes/m1.5/ONDAS.md) | I.3, I.4, I.6, I.7 (onda 1) → I.8 (onda 2) → I.9 🧭 |
+| M3 | [m3/ONDAS.md](cartoes/m3/ONDAS.md) | 13 cartões em 4 ondas, depois da onda 0 🧭 (crates, dependências, contrato) |
+| M4 | [m4/ONDAS.md](cartoes/m4/ONDAS.md) | 8 cartões; o motor de PDF sozinho na onda 1 |
+| M7 em diante | — | Fatiados quando o M4 fechar (o que se aprende no M3 e no M4 muda o tamanho certo dos cartões) |
 
-Os marcos seguintes (M4, M7, M8…) são fatiados do mesmo jeito quando chegarem: o leitor de PDF, por exemplo, quebra
-bem em "motor pdf.js aos pedaços", "zoom e página dupla", "sumário e busca", "cortar margens", "Pintor", "posição
-exata", "escaneados".
+## Como o Marcelo toca (no Happier)
+
+Você roda os executores (Codex e Claude) no Happier; a sessão do orquestrador é onde você fala comigo. Os comandos
+são todos pro orquestrador; pro executor é sempre a mesma frase, que o orquestrador te entrega pronta.
+
+| Você quer | Diga pro orquestrador | O que eu faço |
+|---|---|---|
+| Ver como está | `/orquestra painel` | Busco as branches, rodo `pnpm cartoes`, digo o que está pronto, parado e o próximo passo |
+| Começar uma onda | `/orquestra despacha m3 1` | Faço a onda 0 se faltar, marco os cartões e te dou a frase de cada um, dizendo qual vai pro Codex e qual pro Claude |
+| Um executor terminou | `/orquestra revisa m1.5/i4` | Confiro o cartão contra a branch; aprovo ou devolvo com o motivo e a frase de correção |
+| Juntar o aprovado | `/orquestra junta m1.5/i4` | Merge na branch do marco, portões integrados, envio |
+| Fechar o marco | `/orquestra fecha m1.5` | Integração, prints, pacote Linux, JORNAL; paro no checkpoint pra você testar |
+
+(Sem o `/orquestra`, funciona falar normal: "revisa o i4", "despacha a onda 1 do m3".)
+
+Pro executor, no Happier (Codex ou Claude):
+
+> Execute o cartão `docs/cartoes/<marco>/<cartão>.md` do repositório Fierium, a partir da branch `<base>`. Siga o
+> AGENTS.md. No fim, escreva o relatório no próprio cartão e envie a branch.
+
+```mermaid
+flowchart TD
+  A([Você: /orquestra despacha marco onda]) --> B[Orquestrador: onda 0 se faltar<br/>e te entrega as frases]
+  B --> C[Você: cola cada frase num agente no Happier<br/>Codex e Claude alternando]
+  C --> D[Executores trabalham em paralelo<br/>cada um na sua branch agente/...]
+  D --> E([Você: /orquestra revisa marco/cartão<br/>a cada um que terminar])
+  E --> F{Aprovado?}
+  F -- não --> G[Orquestrador escreve o motivo no cartão<br/>e te dá a frase de correção]
+  G --> C
+  F -- sim --> H([Você: /orquestra junta marco/cartão])
+  H --> I{A onda acabou?}
+  I -- não --> E
+  I -- sim, tem outra onda --> A
+  I -- sim, era a última --> J([Você: /orquestra fecha marco])
+  J --> K[Orquestrador: integração, prints, pacote Linux]
+  K --> L([Você testa no CP e diz: segue])
+  L --> A
+```
+
+**Revisão cruzada sem esforço:** quando um cartão foi feito pelo Codex, eu reviso; quando foi feito pelo Claude, eu
+te dou também uma frase "revise a branch X contra o cartão Y" pra colar num Codex, e junto as duas opiniões.

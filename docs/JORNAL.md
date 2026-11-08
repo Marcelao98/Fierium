@@ -15,6 +15,18 @@ Uma entrada por sessão de trabalho, **a mais nova em cima**. Modelo:
 
 ---
 
+## 2026-11-08 · Orquestração · cartões do M1.5 ao M4, painel e /orquestra
+
+**Pedido:** o Marcelo roda os agentes no Happier; eu só orquestro e verifico (sem abrir sessões nem executar
+cartões). Fazer os cartões das próximas etapas até onde der, e um comando e um fluxograma pra ele ir tocando.
+**Feito:** cartões I.8 (M1.5), 13 do M3 e 8 do M4 (`docs/cartoes/`), cada marco com `ONDAS.md` (onda 0 do
+orquestrador, ondas, grafo); `pnpm cartoes` (painel: estado de cada cartão e se a branch já está no GitHub);
+comando `/orquestra` (`.claude/commands/orquestra.md`: painel, despacha, revisa, junta, fecha); ORQUESTRACAO.md com
+"Como o Marcelo toca" (tabela de comandos + fluxograma); AGENTS.md: o executor marca o cartão "em revisão" no fim.
+**Decidido:** M7 em diante só é fatiado quando o M4 fechar (o tamanho certo dos cartões vem do que se aprender).
+**Onde parou:** ⏸ o Marcelo dispara a onda 1 do M1.5 no Happier (I.3, I.4, I.6, I.7) e me chama com
+`/orquestra revisa m1.5/<cartão>` a cada um que terminar.
+
 ## 2026-11-08 · M1.5 · plano de orquestração (vários agentes)
 
 **Pedido:** "um plano pra vários agentes; você vai ser mais orquestrador que executor; pensar isso no roadmap".

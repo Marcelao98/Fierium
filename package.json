@@ -20,6 +20,7 @@
     "e2e": "pnpm --filter @fierium/app e2e",
     "tauri": "tauri",
     "check:rust": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace",
+    "cartoes": "node ferramentas/cartoes/painel.mjs",
     "check:tudo": "pnpm check && pnpm check:rust",
     "pacote:linux": "tauri build --bundles deb appimage"
   },

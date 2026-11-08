@@ -178,19 +178,19 @@ Referência visual: os prints `docs/imagens/identidade/ceu-*.jpg` e `selos.jpg`;
       da Biblioteca bate com `ceu-biblioteca.jpg`
 - [ ] I.7 🤖 [cartão](cartoes/m1.5/i7.md) **Leitor em pergaminho**: página clara com moldura, capitular, marca-texto em ouro, notas com borda
       gravada e o progresso num anel (em `recursos/leitor/leitor.css`); Literata continua como opção nos Ajustes
-- [ ] I.8 🧭 Transição de abrir obra: o anel do astrolábio gira e a página se abre em luz (interrompível; nada no
+- [ ] I.8 🤖 [cartão](cartoes/m1.5/i8.md) Transição de abrir obra: o anel do astrolábio gira e a página se abre em luz (interrompível; nada no
       movimento reduzido)
 - [ ] I.9 🧭 Prints novos no README, `pnpm check` + `pnpm e2e` + `pnpm check:rust`, pacote Linux
 
 **Aceite (CP1.5):** você instala o pacote e o app tem a cara do Céu antigo: Início, Biblioteca e leitor batendo com os
 prints escolhidos, o selo novo no ícone e na abertura. Depois segue o M3.
 
-**Ondas (D27):** onda 1 = I.3, I.4, I.6 e I.7 juntos (não se tocam) → onda 2 = I.8 → onda 3 = I.9 e o CP1.5.
+**Ondas (D27):** onda 1 = I.3, I.4, I.6 e I.7 juntos (não se tocam) → onda 2 = I.8 (cartão) → onda 3 = I.9 🧭 e o CP1.5.
 Detalhes e o esboço das ondas do M3 em [ORQUESTRACAO.md](ORQUESTRACAO.md#ondas-planejadas).
 
 ## M3 — Núcleo Rust e biblioteca de verdade ⬜
 
-> Fatiado em ondas e cartões quando o M1.5 fechar (esboço em [ORQUESTRACAO.md](ORQUESTRACAO.md#ondas-planejadas)).
+> Cartões e ondas: [cartoes/m3/ONDAS.md](cartoes/m3/ONDAS.md) (13 cartões; a onda 0 é do orquestrador).
 
 **Objetivo:** a tua pasta de livros de verdade dentro do Fierium.
 
@@ -209,6 +209,8 @@ Detalhes e o esboço das ondas do M3 em [ORQUESTRACAO.md](ORQUESTRACAO.md#ondas-
 acha por autor sem acento; abrir com 2.000 arquivos cumpre o orçamento.
 
 ## M4 — Leitor de PDF ⬜
+
+> Cartões e ondas: [cartoes/m4/ONDAS.md](cartoes/m4/ONDAS.md) (8 cartões; o motor sozinho na onda 1).
 
 - [ ] pdf.js recebendo aos pedaços; desenha só as páginas perto da tela
 - [ ] Zoom (largura, página inteira, livre), página dupla

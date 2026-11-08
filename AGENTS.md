@@ -15,7 +15,7 @@ interface, Rust (Tauri 2) no núcleo a partir do M2.
 
 O trabalho é dividido em cartões ([docs/ORQUESTRACAO.md](docs/ORQUESTRACAO.md)). Se te mandaram executar
 `docs/cartoes/<marco>/<passo>.md`: leia este arquivo e o cartão (pule o JORNAL e o ROADMAP), trabalhe na branch que o
-cartão diz, mexa **só** no que ele permite, rode os portões, preencha o relatório no fim do cartão e envie a branch.
+cartão diz, mexa **só** no que ele permite, rode os portões, preencha o relatório no fim do cartão, mude o **Estado** do cartão pra "em revisão" e envie a branch.
 Dúvida de produto ou algo fora do cartão: anote no relatório e pare, não decida sozinho.
 
 ## Se você é a sessão principal (orquestrador)
