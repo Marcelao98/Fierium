@@ -13,13 +13,9 @@ pub struct Arquivos {
 }
 
 impl Arquivos {
-    // a biblioteca (M3) registra os arquivos dela; até lá só os testes usam
-    #[cfg_attr(not(test), allow(dead_code))]
-    pub fn registrar(&self, id: &str, caminho: PathBuf) {
-        self.mapa
-            .write()
-            .expect("registro de arquivos")
-            .insert(id.into(), caminho);
+    /// Troca tudo o que está registrado pelos arquivos que a biblioteca diz que existem.
+    pub fn substituir(&self, arquivos: Vec<(String, PathBuf)>) {
+        *self.mapa.write().expect("registro de arquivos") = arquivos.into_iter().collect();
     }
 
     pub fn caminho(&self, id: &str) -> Option<PathBuf> {
@@ -116,7 +112,7 @@ mod testes {
         let mut f = tempfile::Builder::new().suffix(".pdf").tempfile().unwrap();
         f.write_all(b"%PDF-1.7 0123456789").unwrap();
         let a = Arquivos::default();
-        a.registrar("x1", f.path().into());
+        a.substituir(vec![("x1".into(), f.path().into())]);
         let r = responder(&a, "/arquivo/x1", Some("bytes=0-7"));
         assert_eq!((r.status, r.corpo.as_slice()), (206, &b"%PDF-1.7"[..]));
         assert!(r.cabecalhos.contains(&("Content-Range", "bytes 0-7/19".into())));

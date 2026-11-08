@@ -10,8 +10,8 @@ use serde_json::Value;
 
 /// A porta única dos comandos (nomes iguais aos do contrato da interface).
 #[tauri::command]
-fn chamar(cmd: String, args: Option<Value>) -> Result<Value, ErroContrato> {
-    comandos::chamar(&cmd, args.unwrap_or(Value::Null)).map_err(|e| {
+fn chamar(ctx: tauri::State<comandos::Contexto>, cmd: String, args: Option<Value>) -> Result<Value, ErroContrato> {
+    comandos::chamar(&ctx, &cmd, args.unwrap_or(Value::Null)).map_err(|e| {
         if e.codigo() != "NAO_ENCONTRADO" {
             tracing::warn!(cmd, codigo = e.codigo(), "{e}");
         }
@@ -31,17 +31,26 @@ fn main() {
     };
     tracing::info!(versao = env!("CARGO_PKG_VERSION"), pasta = %pasta.display(), "Fierium aberto");
 
+    let ctx = match comandos::Contexto::abrir(&pasta) {
+        Ok(c) => c,
+        Err(e) => {
+            tracing::error!("a biblioteca não abriu: {e}");
+            eprintln!("Fierium: não consegui abrir a biblioteca: {e}");
+            std::process::exit(1);
+        }
+    };
+
     let resultado = tauri::Builder::default()
-        .manage(protocolo::Arquivos::default())
+        .manage(ctx)
         .register_asynchronous_uri_scheme_protocol("fierium", |ctx, pedido, responder| {
             use tauri::Manager;
-            let arquivos = ctx.app_handle().state::<protocolo::Arquivos>();
+            let ctx = ctx.app_handle().state::<comandos::Contexto>();
             let range = pedido
                 .headers()
                 .get("range")
                 .and_then(|v| v.to_str().ok())
                 .map(str::to_owned);
-            let r = protocolo::responder(&arquivos, pedido.uri().path(), range.as_deref());
+            let r = protocolo::responder(&ctx.arquivos, pedido.uri().path(), range.as_deref());
             let mut b = tauri::http::Response::builder().status(r.status);
             for (k, v) in r.cabecalhos {
                 b = b.header(k, v);
