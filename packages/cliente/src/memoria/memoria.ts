@@ -12,6 +12,7 @@ import { comandosEstatisticas, ESCREVEM_ESTATISTICAS } from './estatisticas';
 import { comandosLeitura, ESCREVEM_LEITURA } from './leitura';
 import { comandosMarcacoes, ESCREVEM_MARCACOES } from './marcacoes';
 import { comandosObras, ESCREVEM_OBRAS } from './obras';
+import { comandosPastas, ESCREVEM_PASTAS } from './pastas';
 
 export { CONFIG_PADRAO } from './base';
 
@@ -37,6 +38,7 @@ export function criarClienteMemoria(op: OpcoesMemoria = {}): Cliente {
     ...comandosMarcacoes(b),
     ...comandosEstatisticas(b),
     ...comandosBusca(b),
+    ...comandosPastas(),
   };
   const escrevem = new Set<NomeComando>([
     ...ESCREVEM_CONFIG,
@@ -45,6 +47,7 @@ export function criarClienteMemoria(op: OpcoesMemoria = {}): Cliente {
     ...ESCREVEM_LEITURA,
     ...ESCREVEM_MARCACOES,
     ...ESCREVEM_ESTATISTICAS,
+    ...ESCREVEM_PASTAS,
   ]);
   return {
     async chamar<C extends NomeComando>(cmd: C, args: ArgsDe<C>): Promise<RespostaDe<C>> {

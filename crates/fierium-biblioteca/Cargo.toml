@@ -1,0 +1,23 @@
+[package]
+name = "fierium-biblioteca"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Fierium: a biblioteca de verdade (pastas, varredura, SQLite, obras pelo nome do arquivo, progresso)"
+
+[lints]
+workspace = true
+
+[dependencies]
+fierium-core = { path = "../fierium-core" }
+rusqlite = { version = "0.37", features = ["bundled"] }
+walkdir = "2.5"
+blake3 = "1.8"
+uuid = { version = "1.18", features = ["v7"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+
+[dev-dependencies]
+tempfile = "3"

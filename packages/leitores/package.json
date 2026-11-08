@@ -11,7 +11,9 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@fierium/contratos": "workspace:*"
+    "@fierium/contratos": "workspace:*",
+    "epubjs": "0.3.93",
+    "pdfjs-dist": "4.10.38"
   },
   "devDependencies": {
     "jsdom": "30.1.3"

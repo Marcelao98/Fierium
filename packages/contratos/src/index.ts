@@ -182,6 +182,23 @@ export interface Limiar {
   totalObras: number;
 }
 
+/** Uma pasta de livros escolhida pela pessoa (M3). */
+export interface PastaBiblioteca {
+  /** caminho absoluto no aparelho */
+  caminho: string;
+  /** a pasta existe e dá pra ler */
+  existe: boolean;
+  /** quantos arquivos de livro a última varredura achou nela */
+  arquivos: number;
+}
+
+export interface ResultadoVarredura {
+  novos: number;
+  sumiram: number;
+  total: number;
+  milissegundos: number;
+}
+
 export type Ordem = 'recentes' | 'titulo' | 'autor' | 'progresso';
 
 export interface FiltroObras {
@@ -268,6 +285,12 @@ export interface Comandos {
   'config.ler': [Record<string, never>, Config];
   'config.gravar': [{ config: Config }, Config];
   'busca.tudo': [{ texto: string }, ResultadoBusca[]];
+  /** M3: as pastas de livros (caminho digitado ou colado; o diálogo do sistema vem depois) */
+  'pastas.listar': [Record<string, never>, PastaBiblioteca[]];
+  'pastas.adicionar': [{ caminho: string }, PastaBiblioteca[]];
+  'pastas.remover': [{ caminho: string }, PastaBiblioteca[]];
+  /** M3: procura PDF e EPUB nas pastas e atualiza a biblioteca */
+  'biblioteca.varrer': [Record<string, never>, ResultadoVarredura];
 }
 
 export type NomeComando = keyof Comandos;
