@@ -40,6 +40,8 @@ export interface Edicao {
   idioma: string;
   descricao: string;
   paginas?: number;
+  /** endereço da capa (imagem); sem capa = a interface desenha um selo */
+  capa?: string;
   arquivos: Arquivo[];
   progresso?: Progresso;
 }
@@ -121,11 +123,13 @@ export interface CapituloDemo {
   paragrafos: string[];
 }
 
-/** Conteúdo de leitura do M1 (texto de domínio público embutido). Do M4/M5 em diante vêm PDF e EPUB de verdade. */
-export interface ConteudoDemo {
-  edicaoId: Id;
-  capitulos: CapituloDemo[];
-}
+/**
+ * O que o leitor precisa pra abrir uma edição. `texto` = conteúdo embutido (demonstração); `arquivo` = endereço que
+ * entrega o arquivo aos pedaços (Range), lido pelo motor do formato (PDF no M4, EPUB no M5, mangá no M6).
+ */
+export type FonteLeitura =
+  | { tipo: 'texto'; edicaoId: Id; capitulos: CapituloDemo[] }
+  | { tipo: 'arquivo'; edicaoId: Id; formato: Formato; url: string; tamanho: number };
 
 export type Periodo = 'dia' | 'semana' | 'mes' | 'ano';
 export type TipoMeta = 'livros' | 'paginas' | 'minutos';
@@ -243,7 +247,7 @@ export interface Comandos {
   'colecoes.listar': [Record<string, never>, Colecao[]];
   'colecao.criar': [{ nome: string; descricao: string; matiz: number }, Colecao];
   'colecao.definirObras': [{ id: Id; obraIds: Id[] }, Colecao];
-  'leitura.conteudo': [{ edicaoId: Id }, ConteudoDemo];
+  'edicao.abrir': [{ edicaoId: Id }, FonteLeitura];
   'progresso.salvar': [{ edicaoId: Id; posicao: string; fracao: number }, null];
   'marcacoes.listar': [{ obraId?: Id; cor?: string; texto?: string }, Marcacao[]];
   'marcacao.criar': [Omit<Marcacao, 'id' | 'criadaEm' | 'editadaEm'>, Marcacao];

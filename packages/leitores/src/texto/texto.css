@@ -1,0 +1,64 @@
+/* Motor de texto: a coluna de leitura. As cores e a fonte vêm da casca (--l-*). */
+.fl-rolagem {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+.fl-texto {
+  max-width: var(--l-largura, 66ch);
+  margin: 0 auto;
+  padding: 96px 24px 40vh;
+  font-family: var(--l-fonte, serif);
+  font-size: var(--l-tamanho, 20px);
+  line-height: var(--l-entrelinha, 1.7);
+  hyphens: auto;
+}
+.fl-texto h2 {
+  font-family: var(--fonte-titulo, serif);
+  font-size: 1.5em;
+  margin: 2.4em 0 1.2em;
+  text-align: center;
+  font-weight: 400;
+}
+.fl-texto section:first-child h2 {
+  margin-top: 0.6em;
+}
+.fl-texto p {
+  margin: 0 0 1em;
+  text-align: justify;
+}
+.fl-texto ::selection {
+  background: rgba(241, 217, 160, 0.4);
+}
+.fl-fim {
+  text-align: center !important;
+  opacity: 0.5;
+  margin-top: 3em !important;
+  font-family: var(--fonte-ui, sans-serif);
+  font-size: 14px;
+}
+mark.fl-marca {
+  color: inherit;
+  background: color-mix(in srgb, var(--cor-marca) 38%, transparent);
+  border-bottom: 2px solid var(--cor-marca);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 160ms;
+}
+mark.fl-marca:hover,
+mark.fl-marca[data-selecionada='true'] {
+  background: color-mix(in srgb, var(--cor-marca) 60%, transparent);
+}
+mark.fl-marca[data-nota='true']::after {
+  content: '✎';
+  font-size: 0.6em;
+  vertical-align: super;
+  margin-left: 2px;
+  color: var(--cor-marca);
+}
+@media (max-width: 760px) {
+  .fl-texto {
+    padding: 80px 18px 40vh;
+  }
+}

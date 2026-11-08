@@ -2,6 +2,8 @@
 // um dia conta na sequência com 5 min ou mais; hoje sem leitura ainda não quebra a sequência.
 import type { DiaDeLeitura, Meta, Obra, ResumoEstatisticas, SituacaoMeta } from '@fierium/contratos';
 import { chaveDia, diaInicio, type Sessao } from './dados-exemplo';
+import { ErroFierium } from '../cliente';
+import type { Base, Tratadores } from './base';
 
 export const MIN_DIA = 300;
 const DIA = 86_400_000;
@@ -91,5 +93,20 @@ export function resumo(sessoes: Sessao[], obras: Obra[], metas: Meta[], agora: n
     metas: situacaoDasMetas(metas, sessoes, obras, agora),
     horaFavorita: max > 0 ? horas.indexOf(max) : null,
     porReino: [...porReino].map(([reino, segundos]) => ({ reino, segundos })).sort((a, b) => b.segundos - a.segundos),
+  };
+}
+
+export const ESCREVEM_ESTATISTICAS = ['metas.salvar'] as const;
+
+export function comandosEstatisticas(b: Base): Tratadores<'estatisticas.resumo' | 'metas.salvar'> {
+  const atual = () => resumo(b.estado.sessoes, b.estado.obras, b.estado.metas, b.agora());
+  return {
+    'estatisticas.resumo': atual,
+    'metas.salvar': ({ metas }) => {
+      for (const m of metas)
+        if (!(m.alvo > 0)) throw new ErroFierium('ARGUMENTO_INVALIDO', 'a meta precisa de um alvo maior que zero');
+      b.estado.metas = metas;
+      return atual().metas;
+    },
   };
 }

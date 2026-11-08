@@ -1,0 +1,65 @@
+/* ---------- coleções ---------- */
+.colecoes-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--espaco-4);
+}
+.colecao-cartao {
+  position: relative;
+  padding: var(--espaco-5);
+  min-height: 190px;
+  border-radius: var(--raio-4);
+  border: 1px solid var(--borda);
+  background:
+    radial-gradient(90% 90% at 100% 0%, hsl(var(--c-matiz) 60% 50% / 0.28), transparent 65%), var(--superficie);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition:
+    transform var(--medio) var(--curva-sonho),
+    border-color var(--rapido);
+}
+.colecao-cartao:hover {
+  transform: translateY(-3px);
+  border-color: var(--borda-forte);
+}
+.colecao-cartao h2 {
+  font-size: 22px;
+}
+.colecao-cartao p {
+  color: var(--texto-2);
+  margin: 6px 0 0;
+  font-size: 13.5px;
+}
+.colecao-capas {
+  display: flex;
+  margin-top: var(--espaco-4);
+}
+.colecao-capas > div {
+  width: 44px;
+  margin-right: -14px;
+  font-size: 5px;
+}
+.colecao-nova {
+  display: grid;
+  gap: var(--espaco-3);
+  padding: var(--espaco-5);
+}
+.matizes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.matizes button {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+.matizes button[aria-pressed='true'] {
+  border-color: var(--texto);
+}

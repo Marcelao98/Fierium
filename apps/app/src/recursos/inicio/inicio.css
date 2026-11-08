@@ -1,0 +1,152 @@
+/* ---------- início ---------- */
+.inicio-saudacao {
+  color: var(--texto-3);
+  font-size: 14px;
+  margin-bottom: var(--espaco-2);
+}
+.continuar {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(120px, 190px) 1fr;
+  gap: var(--espaco-6);
+  align-items: center;
+  padding: var(--espaco-6);
+  border-radius: var(--raio-4);
+  border: 1px solid var(--borda);
+  background:
+    radial-gradient(80% 120% at 0% 0%, hsl(var(--obra-matiz, 40) 50% 40% / 0.22), transparent 60%), var(--superficie);
+  overflow: hidden;
+}
+.continuar-capa {
+  font-size: 15px;
+}
+.continuar h1 {
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.05;
+}
+.continuar-autor {
+  margin: 6px 0 var(--espaco-4);
+  color: var(--texto-2);
+}
+.continuar-progresso {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-4);
+  margin-bottom: var(--espaco-5);
+  color: var(--texto-2);
+  font-size: 14px;
+}
+.continuar-acoes {
+  display: flex;
+  gap: var(--espaco-3);
+  flex-wrap: wrap;
+}
+.eco {
+  margin-top: var(--espaco-6);
+  padding: var(--espaco-5) var(--espaco-6);
+  border-left: 2px solid var(--luz);
+  background: linear-gradient(90deg, var(--luz-suave), transparent);
+  border-radius: 0 var(--raio-3) var(--raio-3) 0;
+}
+.eco blockquote {
+  margin: var(--espaco-2) 0;
+  font-family: var(--fonte-leitura);
+  font-size: 20px;
+  line-height: 1.5;
+}
+.eco button {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--texto-2);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.inicio-colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--espaco-6);
+}
+.esquecidas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+}
+.esquecida {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: var(--espaco-4);
+  align-items: center;
+  padding: var(--espaco-3);
+  border-radius: var(--raio-3);
+  border: 1px solid var(--borda);
+  background: var(--superficie);
+  text-align: left;
+  cursor: pointer;
+  font-size: 9px;
+}
+.esquecida:hover {
+  border-color: var(--borda-forte);
+}
+.esquecida strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+}
+.esquecida span {
+  font-size: 12.5px;
+  color: var(--texto-3);
+}
+
+/* ---------- abertura ---------- */
+.abertura {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: var(--espaco-5);
+  z-index: 2;
+}
+.abertura-luz {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin: 0 auto var(--espaco-6);
+  background: var(--luz);
+  box-shadow:
+    0 0 30px 8px var(--luz),
+    0 0 120px 40px var(--luz-suave);
+  animation: nascer 2.4s var(--curva-sonho) both;
+}
+@keyframes nascer {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+.abertura h1 {
+  font-size: clamp(44px, 8vw, 84px);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  animation: aparecer 1.6s 0.6s both;
+}
+.abertura p {
+  color: var(--texto-2);
+  font-size: 18px;
+  max-width: 34ch;
+  margin: var(--espaco-4) auto var(--espaco-6);
+  animation: aparecer 1.6s 1.1s both;
+}
+.abertura-acoes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-3);
+  animation: aparecer 1.2s 1.6s both;
+}
+.abertura-formando {
+  font-variant-numeric: tabular-nums;
+  color: var(--texto-2);
+}

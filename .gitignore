@@ -19,3 +19,4 @@ playwright-report/
 *.key
 *.pem
 .env*
+apps/app/e2e/prints/

@@ -4,13 +4,15 @@ import type { SVGProps } from 'react';
 const CAMINHOS = {
   limiar: 'M12 3a9 9 0 1 0 0 18M12 7v5l3 2M16 4.5l1 1.8M20 9l-1.9.6',
   biblioteca: 'M5 4h3v16H5zM10 4h3v16h-3zM15.5 5l2.9-.8 3.6 15-2.9.8z',
-  atlas: 'M12 12m-1.2 0a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0M5 6l.01 0M19 7l.01 0M17 18l.01 0M7 17l.01 0M5 6l7 6 7-5M12 12l5 6M12 12l-5 5',
+  atlas:
+    'M12 12m-1.2 0a1.2 1.2 0 1 0 2.4 0a1.2 1.2 0 1 0-2.4 0M5 6l.01 0M19 7l.01 0M17 18l.01 0M7 17l.01 0M5 6l7 6 7-5M12 12l5 6M12 12l-5 5',
   indice: 'M4 5h4v4H4zM10 5h4v4h-4zM16 5h4v4h-4zM4 11h4v4H4zM10 11h4v4h-4zM16 11h4v4h-4zM4 17h4v2H4zM10 17h4v2h-4z',
   lista: 'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',
   colecoes: 'M12 3l8 4-8 4-8-4zM4 12l8 4 8-4M4 17l8 4 8-4',
   marginalia: 'M5 4h10l4 4v12H5zM15 4v4h4M8 12h8M8 16h5',
   cronica: 'M12 3a9 9 0 1 0 9 9M12 7v5h5M17 3v4M15 5h4',
-  ajustes: 'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1',
+  ajustes:
+    'M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1',
   buscar: 'M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14M20 20l-4-4',
   voltar: 'M15 5l-7 7 7 7',
   fechar: 'M6 6l12 12M18 6L6 18',
@@ -33,7 +35,11 @@ const CAMINHOS = {
 
 export type NomeIcone = keyof typeof CAMINHOS;
 
-export function Icone({ nome, tamanho = 20, ...resto }: { nome: NomeIcone; tamanho?: number } & SVGProps<SVGSVGElement>) {
+export function Icone({
+  nome,
+  tamanho = 20,
+  ...resto
+}: { nome: NomeIcone; tamanho?: number } & SVGProps<SVGSVGElement>) {
   return (
     <svg
       width={tamanho}

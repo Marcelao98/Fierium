@@ -92,12 +92,26 @@ const OBRAS: Linha[] = [
   ['Cálculo — Notas de Aula', 'Fierium (exemplo)', 2026, 'Estudos', 'pdf', 420, ['matemática', 'cálculo']],
   ['Termodinâmica — Apostila', 'Fierium (exemplo)', 2026, 'Estudos', 'pdf', 310, ['física', 'termodinâmica']],
   ['Introdução aos Algoritmos — Resumos', 'Fierium (exemplo)', 2026, 'Estudos', 'pdf', 180, ['computação']],
-  ...[1, 2, 3, 4, 5, 6].map(
-    (v): Linha => [`Lâmina do Crepúsculo vol. ${v}`, 'Série de exemplo', 2024, 'Mangá', 'cbz', 192, ['ação', 'fantasia'], ['Lâmina do Crepúsculo', v]],
-  ),
-  ...[1, 2, 3].map(
-    (v): Linha => [`Jardim de Vidro vol. ${v}`, 'Série de exemplo', 2025, 'Mangá', 'cbz', 176, ['slice of life'], ['Jardim de Vidro', v]],
-  ),
+  ...[1, 2, 3, 4, 5, 6].map((v): Linha => [
+    `Lâmina do Crepúsculo vol. ${v}`,
+    'Série de exemplo',
+    2024,
+    'Mangá',
+    'cbz',
+    192,
+    ['ação', 'fantasia'],
+    ['Lâmina do Crepúsculo', v],
+  ]),
+  ...[1, 2, 3].map((v): Linha => [
+    `Jardim de Vidro vol. ${v}`,
+    'Série de exemplo',
+    2025,
+    'Mangá',
+    'cbz',
+    176,
+    ['slice of life'],
+    ['Jardim de Vidro', v],
+  ]),
 ];
 
 const DIA = 86_400_000;
@@ -153,7 +167,13 @@ export function bibliotecaDeExemplo(agora: number): Estado {
       ed.progresso = { posicao: '0:0:0', fracao: Math.round((0.05 + r() * 0.85) * 100) / 100, quando };
     } else if (sorte < 0.4) {
       const quando = agora - Math.floor(20 + r() * 330) * DIA;
-      obra.relacao = { ...obra.relacao, estado: 'lida', ultimaLeitura: quando, terminadaEm: quando, favorita: r() < 0.3 };
+      obra.relacao = {
+        ...obra.relacao,
+        estado: 'lida',
+        ultimaLeitura: quando,
+        terminadaEm: quando,
+        favorita: r() < 0.3,
+      };
       ed.progresso = { posicao: '0:0:0', fracao: 1, quando };
     }
     return obra;
@@ -172,8 +192,11 @@ export function bibliotecaDeExemplo(agora: number): Estado {
     colecao('Clássicos brasileiros', 'Machado, Alencar, Aluísio: a casa onde a gente aprendeu a ler.', 32, (o) =>
       o.assuntos.includes('literatura brasileira'),
     ),
-    colecao('Os antigos', 'Perguntas de dois mil anos que ainda não acabaram.', 215, (o) =>
-      o.assuntos.includes('filosofia antiga') || o.assuntos.includes('estoicismo') || o.titulo === 'A Odisseia',
+    colecao(
+      'Os antigos',
+      'Perguntas de dois mil anos que ainda não acabaram.',
+      215,
+      (o) => o.assuntos.includes('filosofia antiga') || o.assuntos.includes('estoicismo') || o.titulo === 'A Odisseia',
     ),
     colecao('Semestre 2027.1', 'Cálculo, termodinâmica e algoritmos. Foco.', 190, (o) => o.reino === 'Estudos'),
     colecao('Mundos de sonho', 'Por onde a imaginação foge.', 285, (o) =>
@@ -204,10 +227,31 @@ export function bibliotecaDeExemplo(agora: number): Estado {
       ...(nota ? { nota } : {}),
     });
   };
-  marcarTexto(0, 5, 'Há livros que apenas terão isso dos seus autores; alguns nem tanto.', 'citacao', 'A ironia do Machado logo na primeira página.', 380);
-  marcarTexto(1, 3, 'O meu fim evidente era atar as duas pontas da vida, e restaurar na velhice a adolescência.', 'importante', 'O livro inteiro está nesta frase.', 12);
+  marcarTexto(
+    0,
+    5,
+    'Há livros que apenas terão isso dos seus autores; alguns nem tanto.',
+    'citacao',
+    'A ironia do Machado logo na primeira página.',
+    380,
+  );
+  marcarTexto(
+    1,
+    3,
+    'O meu fim evidente era atar as duas pontas da vida, e restaurar na velhice a adolescência.',
+    'importante',
+    'O livro inteiro está nesta frase.',
+    12,
+  );
   marcarTexto(1, 3, 'mas falto eu mesmo, e esta lacuna é tudo.', 'ideia', undefined, 12);
-  const solta = (titulo: string, trecho: string, cor: string, pagina: number, nota: string | undefined, diasAtras: number) => {
+  const solta = (
+    titulo: string,
+    trecho: string,
+    cor: string,
+    pagina: number,
+    nota: string | undefined,
+    diasAtras: number,
+  ) => {
     const o = porTitulo(titulo);
     const quando = agora - diasAtras * DIA;
     marcacoes.push({
@@ -225,10 +269,38 @@ export function bibliotecaDeExemplo(agora: number): Estado {
       ...(nota ? { nota } : {}),
     });
   };
-  solta('Meditações', 'A felicidade da tua vida depende da qualidade dos teus pensamentos.', 'importante', 41, undefined, 200);
-  solta('O Banquete', 'O amor é o desejo de possuir o bem para sempre.', 'citacao', 77, 'Comparar com a Ética a Nicômaco, livro VIII.', 95);
-  solta('Termodinâmica', 'A entropia de um sistema isolado nunca diminui.', 'duvida', 58, 'Por que "isolado" e não "fechado"? Perguntar na monitoria.', 6);
-  solta('Alice no País das Maravilhas', 'Quem sou eu no mundo? Ah, esse é o grande enigma.', 'ideia', 23, undefined, 150);
+  solta(
+    'Meditações',
+    'A felicidade da tua vida depende da qualidade dos teus pensamentos.',
+    'importante',
+    41,
+    undefined,
+    200,
+  );
+  solta(
+    'O Banquete',
+    'O amor é o desejo de possuir o bem para sempre.',
+    'citacao',
+    77,
+    'Comparar com a Ética a Nicômaco, livro VIII.',
+    95,
+  );
+  solta(
+    'Termodinâmica',
+    'A entropia de um sistema isolado nunca diminui.',
+    'duvida',
+    58,
+    'Por que "isolado" e não "fechado"? Perguntar na monitoria.',
+    6,
+  );
+  solta(
+    'Alice no País das Maravilhas',
+    'Quem sou eu no mundo? Ah, esse é o grande enigma.',
+    'ideia',
+    23,
+    undefined,
+    150,
+  );
   // uma ligação entre livros (o "fio" da Marginália)
   const banquete = marcacoes.find((m) => m.trecho.startsWith('O amor'))!;
   const lacuna = marcacoes.find((m) => m.trecho.startsWith('mas falto'))!;

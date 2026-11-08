@@ -11,6 +11,7 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
-    "@fierium/contratos": "workspace:*"
+    "@fierium/contratos": "workspace:*",
+    "@fierium/diagnostico": "workspace:*"
   }
 }

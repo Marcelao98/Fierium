@@ -10,8 +10,32 @@
 
 ## Visão geral
 
-| Marco | Entrega | Versão | Tamanho | Estado |
+**Ordem combinada com o Marcelo (08/11):** depois do PDF (M4) vêm as marcações (M7) e as estatísticas (M8), porque
+ele lê mais PDF agora; EPUB (M5) e mangá (M6) vêm depois. **Linux desde o começo:** a partir do M2, todo checkpoint
+entrega um pacote Linux pra testar.
+
+| Ordem | Marco | Entrega | Versão | Estado |
 |---|---|---|---|---|
+| 1 | M0 | Fundação e plano | — | ✅ (feito) |
+| 2 | M1 | Protótipo de interface + arquitetura modular | v0.1 | ⏸ |
+| 3 | M2 | Tauri no Linux (pacote Linux desde aqui) | v0.2 | ⬜ |
+| 4 | M3 | Núcleo Rust e biblioteca de verdade | v0.3 | ⬜ |
+| 5 | M4 | Leitor de PDF | v0.4 | ⬜ |
+| 6 | M7 | Marcações, notas e ligações (no PDF) | v0.5 | ⬜ |
+| 7 | M8 | Estatísticas e metas reais | v0.6 | ⬜ |
+| 8 | M5 | Leitor de EPUB | v0.7 | ⬜ |
+| 9 | M6 | Leitor de mangá e HQ | v0.8 | ⬜ |
+| 10 | M9 | Backup e importar o KOFlibrary | v0.9 | ⬜ |
+| 11 | M10 | Lançamento Linux | v1.0 | ⬜ |
+| 12 | M11 / M12 / M13 | Windows / Android / Sincronia → aposentar o KOFlibrary | v1.1–1.3 | ⬜ |
+
+```mermaid
+flowchart LR
+  M0 --> M1 --> M2 --> M3 --> M4["M4 PDF"] --> M7["M7 Marcações"] --> M8["M8 Estatísticas"]
+  M8 --> M5["M5 EPUB"] --> M6["M6 Mangá"] --> M9 --> M10["M10 v1.0 Linux"] --> M11 --> M12 --> M13
+```
+
+---|---|---|---|---|
 | M0 | Fundação e plano | — | P | 🟨 |
 | M1 | Protótipo de interface (navegador, biblioteca de exemplo) | v0.1 | G | 🟨 |
 | M2 | Prova técnica: Tauri no Linux (e um APK de teste) | v0.2 | M | ⬜ |
@@ -39,7 +63,7 @@ flowchart LR
 
 ---
 
-## M0 — Fundação e plano 🟨
+## M0 — Fundação e plano ✅
 
 **Objetivo:** projeto organizado antes de qualquer tela.
 
@@ -48,12 +72,12 @@ flowchart LR
 - [x] CI do GitHub (Linux e Windows)
 - [x] `.gitignore` barrando livros e chaves
 - [x] Visão de produto, arquitetura, modelo de dados, decisões, plano de engenharia, este roadmap
-- [ ] `README.md`, `AGENTS.md`/`CLAUDE.md`, `docs/CONTRATOS.md`, `docs/JORNAL.md`
+- [x] `README.md`, `AGENTS.md`/`CLAUDE.md`, `docs/CONTRATOS.md`, `docs/JORNAL.md`, `docs/EXPANDIR.md`
 - [ ] Repositório `Fierium` criado por você (vazio) e o primeiro push com o CI verde
 
 **Aceite (CP0):** você aprova o PLANO e este ROADMAP; o CI roda verde no GitHub.
 
-## M1 — Protótipo de interface 🟨
+## M1 — Protótipo de interface ⏸
 
 **Objetivo:** o app inteiro de cara, no navegador, com uma biblioteca de exemplo (40 obras de domínio público e duas
 séries de mangá inventadas), pra aprovar o visual e a navegação **antes** de ligar o Rust.
@@ -72,25 +96,34 @@ Casca
 - [x] Fundo com céu animado (para no movimento reduzido e com o leitor aberto)
 - [x] Buscar (Ctrl+K): obras, autores, coleções, frases marcadas e comandos
 - [x] Avisos de erro (código + mensagem em português)
-- [ ] Nomes simples na interface (D15): Início, Biblioteca, Coleções, Notas, Estatísticas, Ajustes, Buscar
-- [ ] Juntar a casca e o estilo das telas
+- [x] Nomes simples na interface (D15): Início, Biblioteca, Coleções, Notas, Estatísticas, Ajustes, Buscar
+- [x] Juntar a casca e o estilo das telas
 
 Telas
-- [ ] Primeira abertura (escolher "biblioteca de exemplo"; "escolher pasta" chega no M3)
-- [ ] **Início**: continuar lendo, em andamento, uma marcação antiga que volta, nunca abertos, adicionados recentemente
-- [ ] **Biblioteca — grade/lista**: busca, filtros (estado, área, formato, favoritas), ordenar
-- [ ] **Biblioteca — mapa**: as obras como luzes agrupadas por área, brilho pelo progresso, arrastar e zoom
-- [ ] **Coleções**: lista, página da coleção com a cor dela, criar coleção
-- [ ] **Página da obra**: capa, dados, edições e arquivos, progresso, marcações, coleções, obras parecidas
-- [ ] **Leitor de demonstração** (Dom Casmurro de verdade): abertura animada, interface que some, temas (papel, sépia, noite, tinta), fonte, tamanho, entrelinha, largura
-- [ ] **Marcação no leitor**: selecionar → cor com significado → nota; mudar cor, apagar; painel das marcações do livro
-- [ ] **Notas**: todas as marcações, filtro por cor, busca, ligações, exportar Markdown
-- [ ] **Estatísticas**: hoje, semana, sequência, recorde, calendário do ano, últimos 30 dias, por área, metas
-- [ ] **Ajustes**: tema, movimento reduzido, padrões de leitura, cores das marcações, recomeçar o exemplo
+- [x] Primeira abertura (escolher "biblioteca de exemplo"; "escolher pasta" chega no M3)
+- [x] **Início**: continuar lendo, em andamento, uma marcação antiga que volta, nunca abertos, adicionados recentemente
+- [x] **Biblioteca — grade/lista**: busca, filtros (estado, área, formato, favoritas), ordenar
+- [x] **Biblioteca — mapa**: as obras como luzes agrupadas por área, brilho pelo progresso, arrastar e zoom
+- [x] **Coleções**: lista, página da coleção com a cor dela, criar coleção
+- [x] **Página da obra**: capa, dados, edições e arquivos, progresso, marcações, coleções, obras parecidas
+- [x] **Leitor de demonstração** (Dom Casmurro de verdade): abertura animada, interface que some, temas (papel, sépia, noite, tinta), fonte, tamanho, entrelinha, largura
+- [x] **Marcação no leitor**: selecionar → cor com significado → nota; mudar cor, apagar; painel das marcações do livro
+- [x] **Notas**: todas as marcações, filtro por cor, busca, ligações, exportar Markdown
+- [x] **Estatísticas**: hoje, semana, sequência, recorde, calendário do ano, últimos 30 dias, por área, metas
+- [x] **Ajustes**: tema, movimento reduzido, padrões de leitura, cores das marcações, recomeçar o exemplo
 
 Fechamento
-- [ ] Testes de fluxo (Playwright) com prints de computador e celular
-- [ ] Prévia publicada pra você abrir sem instalar nada
+- [x] Testes de fluxo (Playwright) com prints de computador e celular
+- [ ] Prévia publicada pra você abrir sem instalar nada (vai junto com o pacote Linux do M2)
+
+Arquitetura (pedido do Marcelo: "engenharia de software de verdade")
+- [x] Uma pasta por funcionalidade (`recursos/`), cada uma com estado, telas, estilo e testes; o lint barra uma importar outra
+- [x] Injeção de dependências (`Servicos`: cliente, log, eventos, relógio) e eventos tipados entre funcionalidades
+- [x] Adaptador de exemplo dividido por área, igual às partes do Rust
+- [x] `@fierium/leitores`: a tomada `MotorDeLeitura` + o motor de texto (sem React, testado com DOM falso)
+- [x] `@fierium/diagnostico`: log central, rastro de cada comando (tempo e erro) e o inspetor (Ctrl+Shift+D)
+- [x] Vitrine (`#/vitrine`, só em desenvolvimento) e testes de componente (balão de marcação)
+- [x] Guia de como estender (`docs/EXPANDIR.md`)
 
 **Aceite (CP1):** com `pnpm install && pnpm dev` (ou a prévia): achar um livro pela grade, pelo mapa e pela busca;
 abrir a leitura e voltar pro mesmo lugar; marcar com duas cores, anotar, ver nas Notas e exportar; ver as

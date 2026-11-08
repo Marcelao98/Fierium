@@ -16,7 +16,11 @@ export default tseslint.config(
   ...tseslint.configs.strict,
   {
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
-    rules: { 'no-empty': ['error', { allowEmptyCatch: false }] },
+    rules: {
+      'no-empty': ['error', { allowEmptyCatch: false }],
+      // com noUncheckedIndexedAccess, `lista[i]!` depois de conferir o tamanho é o jeito claro de dizer "existe"
+      '@typescript-eslint/no-non-null-assertion': 'off',
+    },
   },
   {
     files: ['apps/**/*.{ts,tsx}', 'packages/ui/**/*.{ts,tsx}'],
@@ -28,22 +32,81 @@ export default tseslint.config(
     rules: proibir([['@fierium/*', 'react', 'react-dom', 'zustand'], 'contratos só tem tipos: não importa nada']),
   },
   {
+    files: ['packages/diagnostico/**'],
+    rules: proibir([['@fierium/*', 'react', 'react-dom', 'zustand'], 'o diagnóstico não depende de nada do app']),
+  },
+  {
     files: ['packages/cliente/**'],
-    rules: proibir(
-      [['@fierium/ui', '@fierium/app', 'react', 'react-dom', 'zustand'], 'o cliente não conhece a interface'],
-    ),
+    rules: proibir([
+      ['@fierium/ui', '@fierium/leitores', '@fierium/app', 'react', 'react-dom', 'zustand'],
+      'o cliente não conhece a interface',
+    ]),
+  },
+  {
+    files: ['packages/leitores/**'],
+    rules: proibir([
+      ['@fierium/cliente', '@fierium/ui', '@fierium/app', 'react', 'react-dom', 'zustand'],
+      'motor de leitura só conhece o contrato e o DOM',
+    ]),
   },
   {
     files: ['packages/ui/**'],
-    rules: proibir(
-      [['@fierium/cliente', '@fierium/app', 'zustand'], 'a ui (design system) não conhece dados nem estado'],
-    ),
+    rules: proibir([
+      ['@fierium/cliente', '@fierium/leitores', '@fierium/app', 'zustand'],
+      'a ui (design system) não conhece dados nem estado',
+    ]),
   },
   {
-    files: ['apps/app/src/telas/**', 'apps/app/src/componentes/**'],
+    // uma funcionalidade nunca importa outra (conversam por eventos: nucleo/eventos.ts)
+    files: ['apps/app/src/recursos/**'],
+    // nos testes pode usar o cliente em memória e os dados de exemplo (o resto da regra vale igual)
+    ignores: ['**/*.test.ts', '**/*.test.tsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^\\.\\./(?!\\.\\./)',
+              message:
+                'uma funcionalidade não importa outra: use um evento (nucleo/eventos) ou mova pra compartilhado/',
+            },
+            {
+              regex: '^\\.\\./\\.\\./recursos/',
+              message: 'uma funcionalidade não importa outra: use um evento (nucleo/eventos)',
+            },
+            {
+              group: ['@fierium/cliente', '@fierium/cliente/*'],
+              message: 'funcionalidade fala com o núcleo pelos Servicos (nucleo/servicos), não pelo cliente',
+            },
+            {
+              group: ['**/plataforma', '**/plataforma/*'],
+              message: 'funcionalidade não escolhe o adaptador: isso é do main.tsx',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['apps/app/src/recursos/**/*.test.ts', 'apps/app/src/recursos/**/*.test.tsx'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            { regex: '^\\.\\./(?!\\.\\./)', message: 'teste de uma funcionalidade não importa outra' },
+            { regex: '^\\.\\./\\.\\./recursos/', message: 'teste de uma funcionalidade não importa outra' },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ['apps/app/src/casca/**', 'apps/app/src/compartilhado/**', 'apps/app/src/nucleo/**'],
     rules: proibir(
-      [['**/plataforma', '**/plataforma/*'], 'telas não falam com o backend: use uma store (src/estado)'],
-      [['@fierium/cliente/*'], 'telas usam o estado, não os adaptadores'],
+      [['**/recursos/**'], 'casca, compartilhado e núcleo não conhecem as funcionalidades (só App.tsx e montar.ts)'],
+      [['**/plataforma', '**/plataforma/*'], 'só o main.tsx escolhe o adaptador'],
     ),
   },
 );

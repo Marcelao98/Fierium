@@ -1,127 +1,166 @@
 # Arquitetura do Fierium
 
-> Como o Fierium é montado e quem pode falar com quem. A visão de produto (o porquê) está em
-> [FIERIUM_PRODUCT_VISION.md](FIERIUM_PRODUCT_VISION.md); as decisões numeradas em [DECISOES.md](DECISOES.md).
+> Como o Fierium é montado e quem pode falar com quem. O porquê do produto: [FIERIUM_PRODUCT_VISION.md](FIERIUM_PRODUCT_VISION.md).
+> Decisões numeradas: [DECISOES.md](DECISOES.md). Como acrescentar coisas: [EXPANDIR.md](EXPANDIR.md).
 > Estado de cada parte: [ROADMAP.md](ROADMAP.md).
 
 ## 1. Visão geral
 
-Um app só (Tauri 2): uma **casca nativa em Rust** que tem o **núcleo** (regras, dados, arquivos) e mostra a
+Um app só (Tauri 2, a partir do M2): uma **casca nativa em Rust** com o **núcleo** (regras, dados, arquivos) e a
 **interface web** (React + TypeScript) numa janela do sistema (WebKitGTK no Linux, WebView2 no Windows, WebView no
-Android, WKWebView no iOS). Não existe servidor no V1: o "back-end" é o núcleo Rust dentro do app.
+Android). Não existe servidor no V1: o "back-end" é o núcleo Rust dentro do app.
+
+**Regra de ouro:** regra de negócio só no Rust; a interface mostra e pede. Até o M3, o adaptador em memória imita o
+Rust (mesmos comandos, mesmos erros) pra dar pra construir e testar a interface sem ele.
 
 ```mermaid
 flowchart TB
-  subgraph APP["Fierium (um executável / um APK)"]
-    subgraph WEB["Interface — TypeScript (apps/app)"]
-      TELAS["telas/ e componentes/"]
-      EST["estado/ (stores)"]
-      LEIT["leitores (pdf.js, foliate-js) — M4/M5"]
-    end
-    subgraph PORTA["@fierium/cliente — a porta"]
-      MEM["adaptador memória (M1, pnpm dev, testes)"]
-      TAU["adaptador Tauri (M2)"]
-      HTTP["adaptador HTTP (futuro: web)"]
-    end
-    subgraph RUST["Núcleo — Rust (crates/, a partir do M2)"]
-      CMD["comandos (o contrato)"]
-      DOM["core: domínio e regras de juntar"]
-      BIB["biblioteca: pastas, formatos, capas, backup"]
-      DADOS["dados: SQLite, migrações, busca FTS5"]
-    end
+  subgraph APP["apps/app — a interface"]
+    MAIN["main.tsx + montar.ts (raiz da composição)"]
+    CASCA["casca/ — barras, busca, inspetor, fundo"]
+    REC["recursos/* — uma pasta por funcionalidade"]
+    COMP["compartilhado/ — cartões usados por várias"]
+    NUC["nucleo/ — serviços, eventos, navegação, config"]
   end
-  ARQ[("Arquivos do usuário (só leitura)")]
-  BD[("Dados pessoais (SQLite)")]
-  CACHE[("Derivados: capas, índices (refazíveis)")]
-  TELAS --> EST --> PORTA
-  LEIT --> PORTA
-  TAU -- "IPC + protocolo de arquivo aos pedaços" --> CMD
-  CMD --> DOM
-  CMD --> BIB
-  BIB --> DOM
-  BIB --> DADOS
-  DADOS --> BD
-  BIB --> ARQ
-  BIB --> CACHE
+  subgraph PKG["packages/"]
+    LEI["leitores — MotorDeLeitura + motores (texto, pdf M4, epub M5, mangá M6)"]
+    UI["ui — design system"]
+    CLI["cliente — a porta Cliente + adaptadores (memória; Tauri M2; HTTP futuro)"]
+    DIA["diagnostico — log central"]
+    CON["contratos — tipos dos comandos"]
+  end
+  subgraph RUST["crates/ (M2+)"]
+    APPR["fierium-app — Tauri: comandos, protocolo de arquivo, log em arquivo"]
+    BIB["fierium-biblioteca — pastas, formatos, capas, backup"]
+    DADOS["fierium-dados — SQLite, migrações, busca"]
+    CORE["fierium-core — domínio e regras puras"]
+  end
+  MAIN --> REC & CASCA & NUC
+  REC --> NUC & COMP & LEI & UI
+  CASCA --> NUC & COMP & UI
+  NUC --> CLI & DIA
+  CLI -- "IPC tipado + arquivo aos pedaços" --> APPR
+  APPR --> BIB & DADOS & CORE
+  BIB --> CORE
+  DADOS --> CORE
 ```
 
 ## 2. Pastas
 
 ```
 fierium/
-  apps/app/                 o app (Vite + React); src-tauri/ entra no M2
-    src/telas/              uma pasta por tela (Limiar, Biblioteca, Obra, Leitor, Marginalia, Cronica, Ajustes…)
-    src/componentes/        peças da casca (barra lateral, Invocar, cartões…)
-    src/estado/             stores (Zustand): falam com o cliente; as telas só falam com elas
-    src/plataforma/         escolhe o adaptador (memória, Tauri)
-    e2e/                    testes de fluxo (Playwright)
-  packages/ui/              design system: tokens (cores, fontes, espaço, movimento), ícones, selos; sem dados
-  packages/contratos/       os tipos do contrato (provisório à mão; gerado do Rust a partir do M2/M3 — D6)
-  packages/cliente/         a porta Cliente + adaptadores (memória agora)
-  crates/                   (M2+) core · dados · biblioteca · comandos · (depois) sincronia, servidor
-  docs/
+├─ apps/app/src/
+│  ├─ main.tsx             liga tudo: log, cliente (adaptador), montar(), provedor, App
+│  ├─ montar.ts            RAIZ DA COMPOSIÇÃO: cria os serviços e cada funcionalidade (o único que conhece todas)
+│  ├─ App.tsx              a rota atual + o leitor por cima + casca
+│  ├─ nucleo/              servicos.ts · eventos.ts · navegacao.ts · config.ts · contexto.tsx · avisos.ts
+│  ├─ casca/               Navegacao (barras), Busca (Ctrl+K), Inspetor (Ctrl+Shift+D), Atmosfera, Avisos
+│  ├─ compartilhado/       Obras (cartão, capa, prateleira), Marcacoes (cartão de marcação, cores)
+│  ├─ recursos/
+│  │  ├─ inicio/           estado.ts · Tela.tsx · Abertura.tsx · inicio.css
+│  │  ├─ biblioteca/       estado.ts · Tela.tsx · Mapa.tsx · ceu.ts (o céu, puro) · testes
+│  │  ├─ obra/  colecoes/  notas/  estatisticas/  ajustes/
+│  │  └─ leitor/           estado.ts · Tela.tsx (a casca do leitor) · Balao.tsx (marcação, igual pra todo formato)
+│  ├─ plataforma/          escolher o adaptador (só o main.tsx usa)
+│  ├─ dev/Vitrine.tsx      cada componente sozinho (#/vitrine, só em desenvolvimento)
+│  └─ testes/apoio.ts      serviços de teste (cliente em memória, relógio parado, avisos guardados)
+├─ packages/
+│  ├─ contratos/           os tipos e os comandos (provisório; gerado do Rust a partir do M3 — D6)
+│  ├─ cliente/             Cliente + rastrear() + memoria/ (base, obras, colecoes, leitura, marcacoes, estatisticas, config, busca)
+│  ├─ leitores/            motor.ts (a tomada) + texto/ (+ pdf/ no M4, epub/ no M5, manga/ no M6)
+│  ├─ ui/                  tokens.css, Icone, Selo, Anel
+│  └─ diagnostico/         criarLog, relatorio, textoDoErro
+└─ crates/ (M2+)           fierium-core · fierium-dados · fierium-biblioteca · fierium-app
 ```
 
-## 3. Camadas (conferidas pelo ESLint)
+## 3. Quem pode falar com quem (o ESLint barra o resto)
 
-| Camada | Pode usar | Não pode usar |
+| Peça | Pode usar | Não pode usar |
 |---|---|---|
-| `@fierium/contratos` | nada | tudo |
-| `@fierium/ui` | contratos (tipos), React | cliente, estado, app |
-| `@fierium/cliente` | contratos | React, ui, app |
-| `apps/app/src/estado` | cliente, contratos | — |
-| `apps/app/src/telas`, `componentes` | estado, ui, contratos | **cliente direto, plataforma** |
+| `contratos`, `diagnostico` | nada do projeto | tudo |
+| `cliente` | contratos, diagnostico | React, ui, leitores |
+| `leitores` | contratos (e o DOM) | React, cliente, ui |
+| `ui` | contratos, React | cliente, leitores, estado |
+| `nucleo/`, `casca/`, `compartilhado/` | cliente (só o núcleo), diagnostico, ui, contratos | **recursos**, plataforma |
+| `recursos/x/` | nucleo, compartilhado, ui, leitores, contratos | **outro recurso**, o cliente direto, plataforma |
+| `main.tsx`, `montar.ts`, `App.tsx` | tudo | — |
 
-Regras que valem sempre:
-- **Regra de negócio só no Rust** (D4). O adaptador memória imita os comandos (mesmos nomes, argumentos e erros) pra
-  dar pra desenvolver a tela sem Rust; quando o comando existir no Rust, o teste de contrato confere que os dois
-  respondem igual.
-- **Erro tem código e mensagem em português**; `catch` vazio é barrado pelo lint (só com comentário dizendo por quê).
-- **O Rust só expõe comandos com nome e escopo** (nada de "ler qualquer caminho" nem shell). Permissões do Tauri
-  (capabilities) só com o necessário.
+## 4. Como as peças ficam isoladas
 
-## 4. Como uma leitura acontece (a partir do M4)
+### 4.1 Injeção de dependências
+`montar(cliente)` cria `Servicos = { chamar, log, eventos, agora, avisar }` e entrega a cada funcionalidade:
+`criarBiblioteca(servicos) → { store, carregar, filtrar, … }`. As telas recebem a sua funcionalidade por props
+(`<TelaBiblioteca biblioteca={…} />`) e leem com `useFatia(store, seletor)`. Nos testes:
+`servicosDeTeste()` (cliente em memória, relógio parado, avisos guardados) e a store é testada sem tela e sem Rust.
+
+### 4.2 Eventos entre funcionalidades
+Uma funcionalidade nunca importa outra. Quando algo muda que interessa às outras, ela emite (tipado em
+`nucleo/eventos.ts`): `obra-mudou`, `marcacoes-mudaram`, `sessao-registrada`, `colecoes-mudaram`. Ex.: o leitor fecha
+→ `sessao-registrada` + `obra-mudou` → Início, Biblioteca, página da obra e Estatísticas se atualizam sozinhos.
+
+### 4.3 A porta do núcleo (`Cliente`)
+Uma interface (`chamar(cmd, args)`), vários adaptadores: memória (agora), Tauri (M2), HTTP (futura versão web).
+`rastrear(cliente, log)` envolve qualquer adaptador e registra cada comando (nome, argumentos resumidos, tempo, erro).
+O adaptador em memória é dividido por área igual aos crates do Rust; o tipo `Tratadores<NomeComando>` garante que
+todo comando do contrato tem tratador (faltou um = não compila).
+
+### 4.4 Os leitores (motores)
+```
+MotorDeLeitura: nome · aceita(fonte) · montar(elemento, { fonte, alvo, aparencia, marcacoes, cores, eventos })
+SessaoLeitura:  aplicarAparencia · mostrarMarcacoes · irPara · limparSelecao · desmontar
+EventosMotor:   posicao(p, fração) · selecao(trecho+âncora+caixa) · marcacaoClicada · toque · erro
+```
+A casca do leitor (`recursos/leitor`) é única: barra, véu, temas, painel de marcações e o **balão de marcação**. O
+motor só desenha o conteúdo e avisa o que aconteceu. Sem React: cada motor é testável com jsdom.
+
+## 5. Depuração
+
+- **Log central** (`@fierium/diagnostico`): anel dos últimos 500 registros (nível, origem, mensagem, dados). Em
+  desenvolvimento também vai pro console; a partir do M2 vai pro arquivo de log do Rust (um por dia), como no KOFstation.
+- **Rastro de cada comando** (automático), **cada evento** e **cada erro de tela** (`error`, `unhandledrejection`).
+- **Inspetor (Ctrl+Shift+D ou Ajustes → Depuração):** a lista ao vivo, filtro por nível e origem, "copiar relatório".
+- **`window.__fierium`** (em desenvolvimento ou com `?depurar`): os serviços e todas as funcionalidades, pra
+  investigar pelo console (ex.: `__fierium.recursos.leitor.sessao()`).
+- **Erros sempre com código e mensagem em português** (`ErroFierium`), iguais no Rust e na tela.
+
+## 6. Como uma leitura acontece
 
 ```mermaid
 sequenceDiagram
   actor P as Pessoa
-  participant T as Tela (React)
-  participant E as estado/leitura
-  participant C as Cliente (Tauri)
-  participant R as Núcleo Rust
+  participant T as Leitor (casca)
+  participant E as estado do leitor
+  participant M as Motor (texto/PDF/EPUB)
+  participant N as Núcleo (Cliente)
   P->>T: abre a obra (portal)
-  T->>E: abrir(edicaoId)
-  E->>C: edicao.abrir
-  C->>R: comando
-  R-->>C: formato, posição salva, endereço fierium://arquivo/<id>
-  E->>T: leitor certo (PDF ou EPUB)
-  loop enquanto lê
-    T->>R: pede pedaços do arquivo (Range) pelo protocolo próprio
-    T->>E: posição mudou / marcação nova
-    E->>C: progresso.salvar / marcacao.criar (com atraso curto, em lote)
-  end
-  P->>T: fecha → volta pro lugar de onde veio
-  E->>C: sessao.registrar (tempo, páginas)
+  T->>E: abrir(obra, edição)
+  E->>N: obra.obter + edicao.abrir + marcacoes.listar
+  N-->>E: fonte (texto, ou endereço do arquivo aos pedaços)
+  T->>M: montar(elemento, fonte, posição, aparência, marcações)
+  M-->>T: posicao(p, f) / selecao(trecho) / marcacaoClicada
+  T->>E: posicaoMudou (grava com atraso) · marcar(âncora, cor)
+  E->>N: progresso.salvar · marcacao.criar
+  E-->>T: evento marcacoes-mudaram → Notas, obra, Início se atualizam
+  P->>T: fecha → E: sessao.registrar → eventos sessao-registrada, obra-mudou
 ```
 
-## 5. Dados
+## 7. Dados
 
-Detalhes em [MODELO_DE_DADOS.md](MODELO_DE_DADOS.md). Resumo:
-- **Três tipos de dado:** arquivos do usuário (nunca alterados, D9), dados pessoais (SQLite, protegidos, com backup e
-  exportação) e derivados (capas, índices, cache: refazíveis).
-- **Prontos pra sincronizar** (D8): UUIDv7, identidade do arquivo pelo conteúdo, relógio lógico + aparelho, lápides,
-  regras de juntar por campo, registro de mudanças.
+[MODELO_DE_DADOS.md](MODELO_DE_DADOS.md): obra → edição → arquivo; dados pessoais separados dos derivados;
+prontos pra sincronizar (UUIDv7, identidade pelo conteúdo, relógio lógico, lápides, regras de juntar por campo).
 
-## 6. Como a arquitetura cresce (sem construir antes da hora)
+## 8. Testes
 
-| Futuro | Entra como |
-|---|---|
-| Formato novo (mangá, audiolivro, webtoon…) | um adaptador no Rust (ler, capa, metadados) + um leitor na tela, registrados pelo tipo de conteúdo; o resto não muda |
-| Sincronia | um crate `sincronia` com transportes (rede local segura, pasta sincronizada, serviço); usa o registro de mudanças e as regras de juntar que já existem |
-| Versão web | o mesmo front com o adaptador HTTP; um servidor (Rust, reaproveitando `core` e `dados` com outro banco) |
-| Contas e nuvem | só quando o servidor existir; sempre opcionais |
+| Nível | Onde | Ferramenta |
+|---|---|---|
+| Regras e adaptador | `packages/*/src/**/*.test.ts` | Vitest |
+| Stores de cada funcionalidade | `recursos/*/estado.test.ts` (com `servicosDeTeste`) | Vitest |
+| Motores de leitura | `packages/leitores/**` | Vitest + jsdom |
+| Componentes | `*.test.tsx` | Testing Library + jsdom |
+| Fluxo | `apps/app/e2e/` (com prints em `e2e/prints/`) | Playwright (Chromium; app Tauri a partir do M2) |
+| Rust | `crates/*/tests` | `cargo test` (M2+) |
 
-## 7. Segurança e entrega
+## 9. Segurança e entrega
 
-Atualização assinada desde o primeiro pacote (D11), chave em segredo do CI, lançamento separado do push. Testes de
-fluxo e CI em Linux e Windows desde o M0. Nunca commitar livro, chave ou senha.
+Atualização assinada desde o primeiro pacote (D11), chave só no segredo do CI, lançamento por tag. O Rust só expõe
+comandos com nome e escopo; permissões do Tauri mínimas. O app nunca altera os arquivos dos livros (D9).

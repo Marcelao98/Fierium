@@ -15,7 +15,12 @@ function armazenamento(): Storage | null {
 
 export function escolherCliente(url: URL): Cliente {
   const guardar = armazenamento();
-  if (url.searchParams.get('novo') === '1') guardar?.removeItem('fierium.memoria.v1');
+  if (url.searchParams.get('novo') === '1') {
+    guardar?.removeItem('fierium.memoria.v1');
+    // tira o ?novo=1 do endereço: senão recarregar a página apagaria tudo de novo
+    url.searchParams.delete('novo');
+    history.replaceState(null, '', url.pathname + url.search + url.hash);
+  }
   const atraso = Number(url.searchParams.get('atraso') ?? 0);
   return criarClienteMemoria({ guardar, ...(atraso > 0 ? { atraso } : {}) });
 }

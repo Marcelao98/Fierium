@@ -1,0 +1,134 @@
+/* ---------- obra ---------- */
+.obra-topo {
+  display: grid;
+  grid-template-columns: minmax(160px, 240px) 1fr;
+  gap: var(--espaco-7);
+  align-items: start;
+}
+.obra-capa {
+  font-size: 18px;
+  position: sticky;
+  top: var(--espaco-6);
+}
+.obra-topo h1 {
+  font-size: clamp(32px, 4.4vw, 54px);
+  line-height: 1.05;
+}
+.obra-autor {
+  font-size: 18px;
+  color: var(--texto-2);
+  margin: var(--espaco-2) 0 var(--espaco-4);
+}
+.obra-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-2);
+  margin-bottom: var(--espaco-5);
+}
+.etiqueta {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--superficie-2);
+  color: var(--texto-2);
+}
+.obra-acoes {
+  display: flex;
+  gap: var(--espaco-3);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: var(--espaco-6);
+}
+.secao {
+  margin-top: var(--espaco-6);
+}
+.secao > h2 {
+  font-size: 19px;
+  margin-bottom: var(--espaco-3);
+}
+.edicao {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--espaco-4);
+  align-items: center;
+  padding: var(--espaco-4);
+}
+.edicao + .edicao {
+  margin-top: var(--espaco-2);
+}
+.edicao small {
+  display: block;
+  color: var(--texto-3);
+  font-size: 12px;
+  word-break: break-all;
+}
+.formato {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--superficie-3);
+}
+
+/* marcação (cartão usado na obra e nas Notas) */
+.marcacoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+}
+.marcacao {
+  position: relative;
+  padding: var(--espaco-4) var(--espaco-5);
+  border-radius: var(--raio-3);
+  border: 1px solid var(--borda);
+  background: var(--superficie);
+}
+.marcacao::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 14px;
+  bottom: 14px;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--cor-marca);
+  box-shadow: 0 0 10px var(--cor-marca);
+}
+.marcacao blockquote {
+  margin: 0 0 var(--espaco-2);
+  font-family: var(--fonte-leitura);
+  font-size: 17px;
+  line-height: 1.55;
+}
+.marcacao-nota {
+  margin: var(--espaco-2) 0;
+  color: var(--texto-2);
+  white-space: pre-wrap;
+}
+.marcacao-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-3);
+  align-items: center;
+  font-size: 12.5px;
+  color: var(--texto-3);
+}
+.marcacao-rodape button {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--texto-2);
+  cursor: pointer;
+}
+.marcacao-rodape button:hover {
+  color: var(--texto);
+}
+.cor-ponto {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 6px;
+  background: var(--cor-marca);
+}
