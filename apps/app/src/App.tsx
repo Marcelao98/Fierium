@@ -44,7 +44,7 @@ export function App({ recursos }: { recursos: Recursos }) {
         {rota.tela === 'colecao' && <TelaColecao colecoes={recursos.colecoes} id={rota.id} />}
         {rota.tela === 'notas' && <TelaNotas notas={recursos.notas} />}
         {rota.tela === 'estatisticas' && <TelaEstatisticas estatisticas={recursos.estatisticas} />}
-        {rota.tela === 'ajustes' && <TelaAjustes />}
+        {rota.tela === 'ajustes' && <TelaAjustes pastas={recursos.pastas} />}
         {rota.tela === 'vitrine' && Vitrine && (
           <Suspense fallback={null}>
             <Vitrine />

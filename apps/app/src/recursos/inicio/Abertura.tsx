@@ -12,6 +12,26 @@ export function Abertura() {
   const [passo, setPasso] = useState<'luz' | 'formando'>('luz');
   const [total, setTotal] = useState(0);
   const [contagem, setContagem] = useState(0);
+  const [noApp, setNoApp] = useState(false);
+
+  useEffect(() => {
+    void servicos.chamar('app.info', {}).then(
+      (i) => setNoApp(i.adaptador === 'tauri'),
+      () => undefined, // sem a informação, fica a abertura do navegador
+    );
+  }, [servicos]);
+
+  const exemplo = () => {
+    void servicos.chamar('obras.listar', {}).then(
+      (l) => setTotal(l.length),
+      () => undefined,
+    );
+    setPasso('formando');
+  };
+  const escolher = () => {
+    ir({ tela: 'ajustes' });
+    void config.mudar((c) => ({ ...c, primeiraVez: false })).catch(() => undefined);
+  };
 
   useEffect(() => {
     if (passo !== 'formando' || !total) return;
@@ -41,22 +61,25 @@ export function Abertura() {
           <>
             <p>Toda biblioteca começa como uma coisa imaginada. Onde moram os seus livros?</p>
             <div className="abertura-acoes">
-              <button
-                className="f-botao"
-                data-tipo="luz"
-                onClick={() => {
-                  void servicos.chamar('obras.listar', {}).then(
-                    (l) => setTotal(l.length),
-                    () => undefined,
-                  );
-                  setPasso('formando');
-                }}
-              >
-                Usar a biblioteca de exemplo
-              </button>
-              <button className="f-botao" data-tipo="fantasma" disabled title="Chega no marco 3">
-                Escolher a minha pasta (em breve)
-              </button>
+              {noApp ? (
+                <>
+                  <button className="f-botao" data-tipo="luz" onClick={escolher}>
+                    Escolher a pasta dos meus livros
+                  </button>
+                  <button className="f-botao" data-tipo="fantasma" onClick={exemplo}>
+                    Usar a biblioteca de exemplo
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="f-botao" data-tipo="luz" onClick={exemplo}>
+                    Usar a biblioteca de exemplo
+                  </button>
+                  <button className="f-botao" data-tipo="fantasma" disabled title="Só no app">
+                    Escolher a minha pasta (só no app)
+                  </button>
+                </>
+              )}
             </div>
           </>
         ) : (

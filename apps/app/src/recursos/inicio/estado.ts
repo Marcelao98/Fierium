@@ -8,6 +8,7 @@ export function criarInicio(s: Servicos) {
   const carregar = async () => store.setState({ limiar: await s.chamar('biblioteca.limiar', {}) });
   const recarregar = () => void carregar().catch(() => undefined); // o aviso e o log já mostraram o erro
   s.eventos.ouvir('obra-mudou', recarregar);
+  s.eventos.ouvir('biblioteca-mudou', recarregar);
   s.eventos.ouvir('marcacoes-mudaram', recarregar);
   return { store, carregar };
 }

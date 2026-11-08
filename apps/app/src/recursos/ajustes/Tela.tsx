@@ -1,9 +1,11 @@
 import type { Tema } from '@fierium/contratos';
 import { useConfig, useConfigApp, useServicos } from '../../nucleo/contexto';
 import { inspetor } from '../../nucleo/navegacao';
+import { PastasDeLivros } from './PastasDeLivros';
+import type { Pastas } from './estado';
 import './ajustes.css';
 
-export function TelaAjustes() {
+export function TelaAjustes({ pastas }: { pastas: Pastas }) {
   const c = useConfig();
   const { mudar: mudarConfig } = useConfigApp();
   const servicos = useServicos();
@@ -13,9 +15,10 @@ export function TelaAjustes() {
       <div className="titulo-tela">
         <div>
           <h1>Ajustes</h1>
-          <p>Fierium 0.1 · biblioteca de exemplo (os seus livros chegam no marco 3)</p>
+          <p>Fierium 0.1 · as suas pastas, o tema e o resto</p>
         </div>
       </div>
+      <PastasDeLivros pastas={pastas} />
       <div className="ajuste">
         <div>
           Tema
@@ -94,15 +97,6 @@ export function TelaAjustes() {
             </button>
           )}
         </div>
-      </div>
-      <div className="ajuste">
-        <div>
-          Pastas da biblioteca
-          <small>Escolher as suas pastas chega no marco 3</small>
-        </div>
-        <button className="f-botao" disabled>
-          Escolher pasta
-        </button>
       </div>
       <div className="ajuste">
         <div>

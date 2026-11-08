@@ -44,6 +44,7 @@ export function criarBiblioteca(s: Servicos) {
   }
   const recarregar = () => void carregar().catch(() => undefined);
   s.eventos.ouvir('obra-mudou', recarregar);
+  s.eventos.ouvir('biblioteca-mudou', recarregar);
   s.eventos.ouvir('colecoes-mudaram', recarregar);
   return { store, carregar, filtrar, mudarVisao: (visao: 'grade' | 'lista') => store.setState({ visao }) };
 }
