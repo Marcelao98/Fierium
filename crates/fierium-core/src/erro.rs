@@ -18,6 +18,8 @@ pub enum ErroFierium {
     ForaDoArquivo(String),
     #[error("não consegui ligar o log: {0}")]
     Log(String),
+    #[error("erro no banco de dados da biblioteca: {0}")]
+    Banco(String),
     #[error("erro de arquivo em {caminho}: {fonte}")]
     Arquivo {
         caminho: String,
@@ -36,6 +38,7 @@ impl ErroFierium {
             Self::DiscoCheio(_) => "DISCO_CHEIO",
             Self::ForaDoArquivo(_) => "FORA_DO_ARQUIVO",
             Self::Log(_) => "LOG_INDISPONIVEL",
+            Self::Banco(_) => "BANCO_DE_DADOS",
             Self::Arquivo { .. } => "ERRO_DE_ARQUIVO",
         }
     }
