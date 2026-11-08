@@ -4,8 +4,8 @@ Uma biblioteca pessoal com leitores integrados: os seus livros, PDFs, EPUBs e ma
 Local e offline, sem conta e sem nuvem. Linux primeiro, depois Windows e Android. **Substitui o
 [KOFlibrary](https://github.com/Marcelao98/KOFLibrary)** quando tiver tudo o que ele tem.
 
-> **Em construção.** Onde estamos: **M1 (protótipo de interface + arquitetura) feito, esperando o teste do Marcelo.**
-> Próximos: M2 (Tauri no Linux), M3 (os teus livros de verdade), M4 (leitor de PDF). Detalhe: [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Em construção.** Onde estamos: **M1 (interface + arquitetura) e M2 (programa Linux) feitos**, esperando o teste
+> do Marcelo. Próximos: M3 (os teus livros de verdade), M4 (leitor de PDF). Detalhe: [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Rodar
 
@@ -28,6 +28,14 @@ sozinho · `?novo=1` recomeça do zero.
 | `pnpm check` | formato, lint (com as regras de camadas), tipos e testes de unidade |
 | `pnpm e2e` | testes de fluxo no Chromium, com prints em `apps/app/e2e/prints/` |
 | `pnpm build` | gera o app web em `apps/app/dist/` |
+| `pnpm tauri dev` | o programa de verdade (Rust + interface), recarregando ao mudar o código |
+| `pnpm pacote:linux` | gera `.deb` e AppImage em `target/release/bundle/` |
+| `pnpm check:rust` | formato, clippy e testes do Rust |
+| `sh ferramentas/fumaca-linux.sh` | abre o executável numa tela virtual e confere que a interface falou com o Rust |
+
+O programa precisa das bibliotecas do Tauri no Linux (Ubuntu/Debian:
+`sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libsoup-3.0-dev`; Fedora:
+`sudo dnf install webkit2gtk4.1-devel gtk3-devel librsvg2-devel libsoup3-devel`) e do Rust pelo rustup.
 
 ## Arquitetura em uma figura
 

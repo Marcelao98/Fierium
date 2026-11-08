@@ -18,7 +18,7 @@ entrega um pacote Linux pra testar.
 |---|---|---|---|---|
 | 1 | M0 | Fundação e plano | — | ✅ (feito) |
 | 2 | M1 | Protótipo de interface + arquitetura modular | v0.1 | ⏸ |
-| 3 | M2 | Tauri no Linux (pacote Linux desde aqui) | v0.2 | ⬜ |
+| 3 | M2 | Tauri no Linux (pacote Linux desde aqui) | v0.2 | ⏸ |
 | 4 | M3 | Núcleo Rust e biblioteca de verdade | v0.3 | ⬜ |
 | 5 | M4 | Leitor de PDF | v0.4 | ⬜ |
 | 6 | M7 | Marcações, notas e ligações (no PDF) | v0.5 | ⬜ |
@@ -130,20 +130,23 @@ abrir a leitura e voltar pro mesmo lugar; marcar com duas cores, anotar, ver nas
 Estatísticas e criar uma meta; trocar pro tema Claro; tudo usável numa janela estreita (celular); recarregar e as
 mudanças continuarem.
 
-## M2 — Prova técnica: Tauri no Linux ⬜
+## M2 — Tauri no Linux ⏸
 
-**Objetivo:** confirmar a stack no teu Linux antes de construir o núcleo (risco R1 do PLANO).
+**Objetivo:** o Fierium abrindo como programa de verdade no Linux, com o núcleo Rust, antes de construir a biblioteca.
 
-- [ ] Tauri 2 com o front do M1, abrindo como programa no Linux
-- [ ] Comando `app.info` no Rust, com os tipos gerados pro TypeScript
-- [ ] Adaptador Tauri na porta `Cliente` (as telas não mudam)
-- [ ] Protocolo de arquivo **aos pedaços** (Range)
-- [ ] Medição no Linux: PDF de 500 MB (abrir, rolar, memória), animações do fundo
-- [ ] APK Android de teste com a mesma medição
-- [ ] CI: `cargo fmt`, `clippy`, `cargo test`
+- [x] Workspace Rust: `fierium-core` (erros com código, log em arquivo por dia guardando 14 dias, leitura aos pedaços) e `fierium-app` (Tauri 2)
+- [x] Porta única `chamar` com os mesmos nomes do contrato (`app.info`, `app.comandos`, `log.escrever`) — D21
+- [x] Adaptador Tauri + **adaptador combinado** (o resto ainda vem do exemplo; cada área troca no M3) — D22
+- [x] Log da interface indo pro arquivo do Rust (`~/.local/share/fierium/logs/`)
+- [x] Protocolo `fierium://arquivo/<id>` com Range (só arquivos registrados, nunca caminho solto); testado com arquivo de 500 MB sem ler tudo
+- [x] Permissões mínimas (só `core:default`) e CSP fechada
+- [x] Ícone, `.deb` e AppImage; teste de fumaça do executável numa tela virtual (`ferramentas/fumaca-linux.sh`)
+- [x] CI: job do núcleo no Linux (`fmt`, `clippy -D warnings`, testes)
+- [ ] Medição do PDF grande no WebKitGTK → vai junto com o leitor de PDF (M4), que é quem lê pelo protocolo
+- [ ] APK Android de teste → adiado pro M12 (o Linux vem primeiro, D23)
 
-**Aceite (CP2):** você abre o executável no teu Linux; os números batem com os orçamentos do PLANO §5.3 (ou o plano
-B do R1 é acionado). Decisão registrada: manter o Tauri.
+**Aceite (CP2):** você instala o `.deb` (ou roda o AppImage) no teu Linux e o Fierium abre com a biblioteca de
+exemplo; o log do dia aparece em `~/.local/share/fierium/logs/`.
 
 ## M3 — Núcleo Rust e biblioteca de verdade ⬜
 

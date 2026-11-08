@@ -17,10 +17,15 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
-    "e2e": "pnpm --filter @fierium/app e2e"
+    "e2e": "pnpm --filter @fierium/app e2e",
+    "tauri": "tauri",
+    "check:rust": "cargo fmt --all --check && cargo clippy --workspace --all-targets -- -D warnings && cargo test --workspace",
+    "check:tudo": "pnpm check && pnpm check:rust",
+    "pacote:linux": "tauri build --bundles deb appimage"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@tauri-apps/cli": "2.12.4",
     "@types/node": "22.20.5",
     "eslint": "10.14.0",
     "eslint-plugin-react-hooks": "7.1.1",

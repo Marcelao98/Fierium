@@ -20,3 +20,6 @@ playwright-report/
 *.pem
 .env*
 apps/app/e2e/prints/
+
+# gerado pelo Tauri
+crates/fierium-app/gen/

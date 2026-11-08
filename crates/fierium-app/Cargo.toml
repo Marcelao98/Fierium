@@ -1,0 +1,27 @@
+[package]
+name = "fierium-app"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+description = "Fierium: o programa (Tauri). Comandos com nome, protocolo de arquivo aos pedaços, log em arquivo"
+
+[[bin]]
+name = "fierium"
+path = "src/main.rs"
+
+[lints]
+workspace = true
+
+[build-dependencies]
+tauri-build = { version = "2.7.4", features = [] }
+
+[dependencies]
+fierium-core = { path = "../fierium-core" }
+tauri = { version = "2.12.5", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+
+[dev-dependencies]
+tempfile = "3"

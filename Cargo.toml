@@ -1,0 +1,21 @@
+[workspace]
+resolver = "2"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.2.0"
+edition = "2021"
+license = "UNLICENSED"
+rust-version = "1.97"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+
+[workspace.lints.clippy]
+all = { level = "warn", priority = -1 }
+
+[profile.release]
+# executável menor e mais rápido de abrir (o Fierium não precisa de símbolos de depuração no pacote)
+lto = "thin"
+codegen-units = 4
+strip = true

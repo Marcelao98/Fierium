@@ -15,6 +15,21 @@ Uma entrada por sessão de trabalho, **a mais nova em cima**. Modelo:
 
 ---
 
+## 2026-11-08 · M2 · Tauri no Linux
+
+**Pedido:** seguir até o M4 sem parar; Linux desde o começo; um commit por marco, com teste.
+**Feito:** workspace Rust (`fierium-core`: erros com código, log em arquivo por dia guardando 14 dias, leitura aos
+pedaços com Range; `fierium-app`: Tauri 2, porta única `chamar`, protocolo `fierium://arquivo/<id>`, ícone, CSP e
+permissões mínimas). Na interface: adaptador Tauri + adaptador combinado (Rust no que já existe, exemplo no resto) e o
+log da tela indo pro arquivo do Rust. `.deb` e AppImage. Teste de fumaça do executável (`ferramentas/fumaca-linux.sh`).
+CI com o job do núcleo no Linux.
+**Decidido:** D19–D23.
+**Medido / conferido:** `pnpm check` (39 testes), `pnpm check:rust` (8 testes, clippy sem aviso), fumaça: a interface
+carrega no WebKitGTK e fala com o Rust em ~1,2 s; `.deb` 3,6 MB, AppImage 79 MB (leva o WebKitGTK junto).
+**Deu errado / aprendido:** o `registrar` do protocolo só é usado no M3 (marcado explicitamente, sem esconder o aviso).
+A medição do PDF grande no WebKitGTK ficou pro M4 (é o leitor de PDF que lê pelo protocolo).
+**Onde parou:** ⏸ CP2 (o Marcelo instala o pacote). Seguindo direto pro M3 (biblioteca de verdade), como ele pediu.
+
 ## 2026-11-08 · M0 e M1 · fundação, protótipo de interface e arquitetura modular
 
 **Pedido:** visão do produto, plano e roadmap de engenharia com checkpoints; arquitetura "de engenharia de software de

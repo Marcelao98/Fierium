@@ -240,6 +240,13 @@ export interface ErroContrato {
 /** Todos os comandos: nome → [argumentos, resposta]. */
 export interface Comandos {
   'app.info': [Record<string, never>, InfoApp];
+  /** quais comandos o núcleo Rust já atende (o resto ainda vem do exemplo em memória) */
+  'app.comandos': [Record<string, never>, string[]];
+  /** uma linha do log da interface no arquivo de log do núcleo */
+  'log.escrever': [
+    { nivel: 'debug' | 'info' | 'aviso' | 'erro'; origem: string; mensagem: string; dados?: unknown },
+    null,
+  ];
   'biblioteca.limiar': [Record<string, never>, Limiar];
   'obras.listar': [FiltroObras, Obra[]];
   'obra.obter': [{ id: Id }, Obra];

@@ -1,7 +1,15 @@
-// Escolhe o adaptador do núcleo (D5). No M1 só existe o de memória; o do Tauri entra no M2.
+// Escolhe o adaptador do núcleo (D5): dentro do app (Tauri) fala com o Rust; no navegador (pnpm dev, testes), com o
+// exemplo em memória. No Tauri, o adaptador é combinado: o que o Rust já atende vai pro Rust, o resto pro exemplo
+// (a migração área por área, M3 em diante).
 //   ?novo=1     começa do zero (como na primeira vez), apagando o que o exemplo guardou
 //   ?atraso=300 atraso artificial em cada comando (pra ver os estados de carregando)
-import { criarClienteMemoria, type Cliente } from '@fierium/cliente';
+import {
+  criarClienteCombinado,
+  criarClienteMemoria,
+  criarClienteTauri,
+  type Cliente,
+  type Invocar,
+} from '@fierium/cliente';
 
 function armazenamento(): Storage | null {
   try {
@@ -13,7 +21,16 @@ function armazenamento(): Storage | null {
   }
 }
 
-export function escolherCliente(url: URL): Cliente {
+export interface Plataforma {
+  cliente: Cliente;
+  /** manda uma linha pro log em arquivo do núcleo (só no app; no navegador não existe) */
+  enviarLog: ((linha: { nivel: string; origem: string; mensagem: string; dados?: unknown }) => void) | null;
+  nome: 'tauri' | 'navegador';
+}
+
+export const ehTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
+
+export async function escolherPlataforma(url: URL): Promise<Plataforma> {
   const guardar = armazenamento();
   if (url.searchParams.get('novo') === '1') {
     guardar?.removeItem('fierium.memoria.v1');
@@ -22,5 +39,16 @@ export function escolherCliente(url: URL): Cliente {
     history.replaceState(null, '', url.pathname + url.search + url.hash);
   }
   const atraso = Number(url.searchParams.get('atraso') ?? 0);
-  return criarClienteMemoria({ guardar, ...(atraso > 0 ? { atraso } : {}) });
+  const memoria = criarClienteMemoria({ guardar, ...(atraso > 0 ? { atraso } : {}) });
+  if (!ehTauri()) return { cliente: memoria, enviarLog: null, nome: 'navegador' };
+
+  const { invoke } = await import('@tauri-apps/api/core');
+  const invocar: Invocar = (cmd, args) => invoke(cmd, args);
+  const rust = criarClienteTauri(invocar);
+  const noRust = new Set(await rust.chamar('app.comandos', {}));
+  return {
+    cliente: criarClienteCombinado(rust, memoria, noRust),
+    enviarLog: (l) => void invocar('chamar', { cmd: 'log.escrever', args: l }).catch(() => undefined), // o log não pode gerar log
+    nome: 'tauri',
+  };
 }
