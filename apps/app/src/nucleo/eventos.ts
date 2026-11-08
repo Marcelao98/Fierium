@@ -9,6 +9,8 @@ export interface EventosApp {
   'marcacoes-mudaram': { obraId: string };
   /** uma sessão de leitura foi registrada (estatísticas) */
   'sessao-registrada': { obraId: string; segundos: number };
+  /** a varredura das pastas mudou o que há na biblioteca (ou uma pasta saiu) */
+  'biblioteca-mudou': Record<string, never>;
   /** coleções criadas ou mudadas */
   'colecoes-mudaram': Record<string, never>;
 }

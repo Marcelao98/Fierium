@@ -32,3 +32,52 @@
   background: none;
   cursor: pointer;
 }
+
+/* ---------- pastas de livros ---------- */
+.pastas {
+  display: grid;
+  gap: var(--espaco-3);
+  padding: var(--espaco-4) 0;
+  border-bottom: 1px solid var(--borda);
+}
+.pastas-cab {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--espaco-4);
+  align-items: center;
+}
+.pastas-cab small {
+  display: block;
+  color: var(--texto-3);
+}
+.pastas-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--espaco-2);
+}
+.pastas-lista li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--espaco-3);
+  align-items: center;
+}
+.pasta-caminho {
+  overflow-wrap: anywhere;
+}
+.pastas-lista small,
+.pastas-vazio,
+.pastas-resultado {
+  color: var(--texto-3);
+  margin: 0;
+}
+.pastas-novo {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--espaco-3);
+}
+.pastas-erro {
+  color: var(--erro, #e5848a);
+  margin: 0;
+}

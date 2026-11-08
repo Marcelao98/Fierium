@@ -3,6 +3,7 @@
 import type { Cliente } from '@fierium/cliente';
 import { criarConfig } from './nucleo/config';
 import { criarServicos, type OpcoesServicos } from './nucleo/servicos';
+import { criarPastas } from './recursos/ajustes/estado';
 import { criarBiblioteca } from './recursos/biblioteca/estado';
 import { criarColecoes } from './recursos/colecoes/estado';
 import { criarEstatisticas } from './recursos/estatisticas/estado';
@@ -17,6 +18,7 @@ export function montar(cliente: Cliente, op: OpcoesServicos = {}) {
     servicos,
     config: criarConfig(servicos),
     recursos: {
+      pastas: criarPastas(servicos),
       inicio: criarInicio(servicos),
       biblioteca: criarBiblioteca(servicos),
       obra: criarObra(servicos),
