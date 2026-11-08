@@ -11,6 +11,18 @@ interface, Rust (Tauri 2) no núcleo a partir do M2.
 4. Quando precisar: [docs/PLANO.md](docs/PLANO.md) (processo, definição de pronto), [docs/MODELO_DE_DADOS.md](docs/MODELO_DE_DADOS.md),
    [docs/CONTRATOS.md](docs/CONTRATOS.md), [docs/DECISOES.md](docs/DECISOES.md), a visão em [docs/FIERIUM_PRODUCT_VISION.md](docs/FIERIUM_PRODUCT_VISION.md).
 
+## Se você recebeu um cartão (executor)
+
+O trabalho é dividido em cartões ([docs/ORQUESTRACAO.md](docs/ORQUESTRACAO.md)). Se te mandaram executar
+`docs/cartoes/<marco>/<passo>.md`: leia este arquivo e o cartão (pule o JORNAL e o ROADMAP), trabalhe na branch que o
+cartão diz, mexa **só** no que ele permite, rode os portões, preencha o relatório no fim do cartão e envie a branch.
+Dúvida de produto ou algo fora do cartão: anote no relatório e pare, não decida sozinho.
+
+## Se você é a sessão principal (orquestrador)
+
+Fatie o marco em cartões, despache em ondas, revise e junte (D27). Escreva código só no que é 🧭 (contratos,
+dependências, integração).
+
 ## Regras
 
 - **Marco → checkpoint:** termine o checklist, rode os portões (`pnpm check`, `pnpm e2e`, `pnpm check:rust` no M2+),

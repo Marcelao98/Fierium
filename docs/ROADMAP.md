@@ -6,6 +6,9 @@
 > **Cada marco termina num checkpoint (CP):** eu paro, entrego (comando, roteiro do que conferir, prints, testes) e
 > você testa. Só sigo depois do teu "segue".
 >
+> **Quem faz (D27):** a sessão principal orquestra; os passos viram **cartões** pra agentes executores (Codex,
+> outras sessões do Claude). Como funciona: [ORQUESTRACAO.md](ORQUESTRACAO.md). 🧭 = do orquestrador; 🤖 = cartão.
+>
 > Estado: ⬜ não começou · 🟨 em andamento · ⏸ esperando você testar · ✅ aprovado
 
 ## Visão geral
@@ -160,37 +163,34 @@ Referência visual: os prints `docs/imagens/identidade/ceu-*.jpg` e `selos.jpg`;
       `#f1e6c9`, raios finos, bordas gravadas), mantendo os nomes das variáveis que as telas já usam
 - [x] I.2 🤖 **Fontes**: `@fontsource` de Cormorant Garamond e Cinzel em `packages/ui` (D25), variáveis
       `--fonte-titulo` e `--fonte-rotulo`. Pronto quando: `pnpm check` passa e o build não busca nada na internet
-- [ ] I.3 🤖 **Ícones do selo Astrolábio**: o componente já existe (`packages/ui/src/SeloFieri.tsx`, usado na barra
+- [x] I.0b 🧭 Onda 0: o contrato do leitor ganha o tema `pergaminho` e a fonte `cormorant` (padrões novos)
+- [ ] I.3 🤖 [cartão](cartoes/m1.5/i3.md) **Ícones do selo Astrolábio**: o componente já existe (`packages/ui/src/SeloFieri.tsx`, usado na barra
       lateral, no Início e na abertura). Falta: um teste de componente (grande × simples em ≤ 20 px), o ícone do app
       (`crates/fierium-app/icons/`: 32, 128, 256, `.ico`, `.icns`, sobre o fundo `#0a0f1e`) gerado por script a partir
       do mesmo desenho, e o `docs/imagens/selo-fieri.svg`. Pronto quando: os ícones saem do script (nada à mão),
       `pnpm check` e `pnpm check:rust` passam e o `.deb` mostra o ícone novo
-- [ ] I.4 🤖 **Fundo de mapa celeste** em `apps/app/src/casca/Atmosfera.tsx` (canvas: paralelos e meridianos, eclíptica,
+- [ ] I.4 🤖 [cartão](cartoes/m1.5/i4.md) **Fundo de mapa celeste** em `apps/app/src/casca/Atmosfera.tsx` (canvas: paralelos e meridianos, eclíptica,
       estrelas, constelações com semente fixa; parado no movimento reduzido). Pronto quando: print igual ao protótipo e
       sem custo por quadro com o app parado
 - [x] I.5 **Início = Limiar do Sonho** (selo, frase, a obra em leitura no astrolábio, "Continuar lendo", os mundos)
-- [ ] I.6 🤖 **Capas e mundos**: moldura gravada dupla, foco em ouro, títulos em Cormorant e autor em itálico; mundos
+- [ ] I.6 🤖 [cartão](cartoes/m1.5/i6.md) **Capas e mundos**: moldura gravada dupla, foco em ouro, títulos em Cormorant e autor em itálico; mundos
       com losango (em `compartilhado/Obras.tsx` e nos chips). Pronto quando: os testes de componente passam e o print
       da Biblioteca bate com `ceu-biblioteca.jpg`
-- [ ] I.7 🤖 **Leitor em pergaminho**: página clara com moldura, capitular, marca-texto em ouro, notas com borda
+- [ ] I.7 🤖 [cartão](cartoes/m1.5/i7.md) **Leitor em pergaminho**: página clara com moldura, capitular, marca-texto em ouro, notas com borda
       gravada e o progresso num anel (em `recursos/leitor/leitor.css`); Literata continua como opção nos Ajustes
-- [ ] I.8 Transição de abrir obra: o anel do astrolábio gira e a página se abre em luz (interrompível; nada no
+- [ ] I.8 🧭 Transição de abrir obra: o anel do astrolábio gira e a página se abre em luz (interrompível; nada no
       movimento reduzido)
-- [ ] I.9 Prints novos no README, `pnpm check` + `pnpm e2e` + `pnpm check:rust`, pacote Linux
+- [ ] I.9 🧭 Prints novos no README, `pnpm check` + `pnpm e2e` + `pnpm check:rust`, pacote Linux
 
 **Aceite (CP1.5):** você instala o pacote e o app tem a cara do Céu antigo: Início, Biblioteca e leitor batendo com os
 prints escolhidos, o selo novo no ícone e na abertura. Depois segue o M3.
 
-### Trabalhar com outros agentes (Codex etc.)
-
-O AGENTS.md vale pra qualquer agente. Pra passar um passo 🤖: abrir uma tarefa com **o número do passo, este trecho do
-ROADMAP e os arquivos citados**; o agente trabalha numa branch `agente/<marco>-<passo>` (ex.: `agente/m1.5-i3`),
-roda `pnpm check` (e `pnpm e2e` se mexeu em tela), e não mexe fora dos arquivos do passo. A revisão confere o "pronto
-quando" e junta. Passos sem 🤖 dependem de decisão de produto ou mexem em muita coisa ao mesmo tempo: ficam com a
-sessão principal. Passos 🤖 do mesmo marco podem rodar em paralelo quando não tocam nos mesmos arquivos (no M1.5:
-I.2, I.3 e I.4 juntos; I.6 e I.7 depois do I.1).
+**Ondas (D27):** onda 1 = I.3, I.4, I.6 e I.7 juntos (não se tocam) → onda 2 = I.8 → onda 3 = I.9 e o CP1.5.
+Detalhes e o esboço das ondas do M3 em [ORQUESTRACAO.md](ORQUESTRACAO.md#ondas-planejadas).
 
 ## M3 — Núcleo Rust e biblioteca de verdade ⬜
+
+> Fatiado em ondas e cartões quando o M1.5 fechar (esboço em [ORQUESTRACAO.md](ORQUESTRACAO.md#ondas-planejadas)).
 
 **Objetivo:** a tua pasta de livros de verdade dentro do Fierium.
 

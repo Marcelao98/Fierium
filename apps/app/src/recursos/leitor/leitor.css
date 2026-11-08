@@ -16,6 +16,14 @@
     clip-path: circle(150vmax at var(--origem-x) var(--origem-y));
   }
 }
+.leitor[data-tema='pergaminho'] {
+  /* só as cores, pra o tema novo do contrato funcionar; a moldura e o resto vêm no cartão I.7 */
+  --l-fundo: var(--pergaminho);
+  --l-texto: var(--tinta);
+  --l-texto-2: #6b5638;
+  --l-borda: rgba(138, 90, 30, 0.22);
+  --l-vidro: rgba(241, 230, 201, 0.92);
+}
 .leitor[data-tema='papel'] {
   --l-fundo: #f7f3ea;
   --l-texto: #1f1b16;

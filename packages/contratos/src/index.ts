@@ -204,10 +204,12 @@ export interface ResultadoBusca {
 }
 
 export type Tema = 'noite' | 'lucido' | 'sistema';
-export type TemaLeitura = 'papel' | 'sepia' | 'noite' | 'tinta';
+/** 'pergaminho' é o tema da identidade Céu antigo (D24) e o padrão a partir do M1.5 */
+export type TemaLeitura = 'pergaminho' | 'papel' | 'sepia' | 'noite' | 'tinta';
 
 export interface ConfigLeitura {
-  fonte: 'literata' | 'inter' | 'fraunces';
+  /** 'cormorant' é o padrão a partir do M1.5 (D25); 'fraunces' fica pra config antiga continuar abrindo */
+  fonte: 'cormorant' | 'literata' | 'inter' | 'fraunces';
   /** px */
   tamanho: number;
   entrelinha: number;

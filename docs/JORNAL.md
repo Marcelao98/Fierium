@@ -15,6 +15,19 @@ Uma entrada por sessão de trabalho, **a mais nova em cima**. Modelo:
 
 ---
 
+## 2026-11-08 · M1.5 · plano de orquestração (vários agentes)
+
+**Pedido:** "um plano pra vários agentes; você vai ser mais orquestrador que executor; pensar isso no roadmap".
+**Feito:** [ORQUESTRACAO.md](ORQUESTRACAO.md) (papéis, cartão, raias, ciclo do marco, economia de tokens, ondas do
+M1.5 e esboço do M3); modelo de cartão e os quatro cartões da onda 1 do M1.5 (`docs/cartoes/m1.5/i3, i4, i6, i7`);
+ROADMAP com 🧭/🤖 e os links dos cartões; AGENTS.md com o que fazer sendo executor ou orquestrador. Onda 0 do M1.5
+(🧭): o contrato do leitor ganhou o tema `pergaminho` e a fonte `cormorant`, que viraram o padrão (a config antiga
+com `fraunces` continua abrindo).
+**Decidido:** D27 (orquestrador + executores por cartão, revisão por outro modelo).
+**Medido / conferido:** `pnpm check` passa.
+**Onde parou:** ⏸ onda 1 pronta pra despachar (I.3, I.4, I.6, I.7, em paralelo). O Marcelo dispara no Codex e/ou
+o orquestrador abre sessões do Claude; quando voltarem, revisar e juntar, depois I.8 e I.9 (CP1.5).
+
 ## 2026-11-08 · M1.5 · escolha: Céu antigo + Astrolábio; passos pra outros agentes
 
 **Pedido:** "vamos pelo B, astrolábio". Documentar a decisão, deixar o próximo passo do roadmap pronto e ver o que dá

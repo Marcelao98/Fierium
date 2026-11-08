@@ -15,7 +15,7 @@ export interface Guardar {
 export const CONFIG_PADRAO: Config = {
   tema: 'noite',
   movimento: 'normal',
-  leitura: { fonte: 'literata', tamanho: 20, entrelinha: 1.7, largura: 66, tema: 'noite' },
+  leitura: { fonte: 'cormorant', tamanho: 21, entrelinha: 1.65, largura: 66, tema: 'pergaminho' },
   cores: CORES_PADRAO,
   primeiraVez: true,
 };

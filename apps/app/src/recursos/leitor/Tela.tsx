@@ -15,14 +15,15 @@ import type { Leitor as EstadoLeitor } from './estado';
 import './leitor.css';
 
 const TEMAS: [TemaLeitura, string, string, string][] = [
+  ['pergaminho', 'Pergaminho', '#f1e6c9', '#2b2216'],
   ['papel', 'Papel', '#f7f3ea', '#1f1b16'],
   ['sepia', 'Sépia', '#efe1c6', '#3b2b1a'],
   ['noite', 'Noite', '#12101f', '#ddd6c8'],
   ['tinta', 'Tinta', '#e9e9e4', '#111'],
 ];
 const FONTES: [ConfigLeitura['fonte'], string, string][] = [
+  ['cormorant', 'Cormorant', 'var(--fonte-titulo)'],
   ['literata', 'Literata', 'var(--fonte-leitura)'],
-  ['fraunces', 'Fraunces', 'var(--fonte-titulo)'],
   ['inter', 'Inter', 'var(--fonte-ui)'],
 ];
 
@@ -161,7 +162,8 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
         {
           '--origem-x': `${leitura.origem.x}px`,
           '--origem-y': `${leitura.origem.y}px`,
-          '--l-fonte': FONTES.find((f) => f[0] === cfg.fonte)?.[2] ?? 'var(--fonte-leitura)',
+          // 'fraunces' (config antiga) cai na Cormorant, que tomou o lugar dela nos títulos
+          '--l-fonte': FONTES.find((f) => f[0] === cfg.fonte)?.[2] ?? 'var(--fonte-titulo)',
         } as CSSProperties
       }
       onPointerMove={acordar}
