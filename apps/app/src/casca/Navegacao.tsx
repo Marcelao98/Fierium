@@ -1,5 +1,5 @@
 // A barra lateral (computador) e a de baixo (celular): os mesmos destinos, duas posturas (§12.2 da visão).
-import { Icone, type NomeIcone } from '@fierium/ui';
+import { Icone, SeloFieri, type NomeIcone } from '@fierium/ui';
 import { invocar, ir, useNavegacao, type Rota } from '../nucleo/navegacao';
 
 const DESTINOS: { nome: string; icone: NomeIcone; rota: Rota; ativo: (r: Rota) => boolean; celular: boolean }[] = [
@@ -33,12 +33,7 @@ export function Lateral() {
   return (
     <nav className="lateral" aria-label="Principal">
       <button className="lateral-marca" onClick={() => ir({ tela: 'inicio' })} aria-label="Fierium — Início">
-        <svg viewBox="0 0 32 32" width="30" height="30" aria-hidden="true">
-          <circle cx="16" cy="16" r="10" fill="none" stroke="var(--luz)" strokeWidth="1.1" />
-          <circle cx="16" cy="16" r="14.5" fill="none" stroke="var(--borda-forte)" strokeWidth="0.8" />
-          <circle cx="16" cy="16" r="2.8" fill="var(--luz)" />
-          <circle cx="26" cy="16" r="1.4" fill="var(--texto)" />
-        </svg>
+        <SeloFieri tamanho={34} />
       </button>
       <button className="lateral-item" onClick={() => invocar()} title="Buscar (Ctrl+K)">
         <Icone nome="buscar" />

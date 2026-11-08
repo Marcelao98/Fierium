@@ -37,7 +37,7 @@
   .conteudo {
     padding: var(--espaco-5) var(--espaco-4) 96px;
   }
-  .continuar,
+  .limiar,
   .obra-topo {
     grid-template-columns: 1fr;
     padding: var(--espaco-5);
@@ -46,10 +46,19 @@
   .obra-topo {
     padding: 0;
   }
-  .continuar-capa,
   .obra-capa {
     width: 46%;
     position: static;
+  }
+  .limiar {
+    min-height: 0;
+  }
+  .limiar-astrolabio {
+    top: -40px;
+    width: 380px;
+  }
+  .limiar-capa {
+    width: 46%;
   }
   .inicio-colunas {
     grid-template-columns: 1fr;

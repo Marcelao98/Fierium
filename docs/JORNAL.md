@@ -23,7 +23,15 @@ pra passar pra outros agentes (tipo o Codex); depois continuar.
 quando" de cada um) e "Trabalhar com outros agentes"; IDENTIDADE.md com a escolha no topo.
 **Decidido:** D24 (direção B + selo Astrolábio), D25 (Cormorant + Cinzel embutidas; atualiza D12), D26 (passos 🤖
 em branch `agente/<marco>-<passo>`, revisados antes de juntar).
-**Onde parou:** começando o I.1 (tokens). I.2, I.3 e I.4 podem ir pra outro agente em paralelo.
+**Feito depois (mesma sessão):** I.1 tokens do Céu antigo (`packages/ui/src/tokens.css`: noite azul, ouro, pergaminho,
+cantos de 2–6 px, `--moldura`, botão principal como inscrição em Cinzel; o tema Lúcido virou pergaminho), I.2 fontes
+(Cormorant Garamond e Cinzel pelo `@fontsource`), I.5 Início = Limiar do Sonho (selo, frase, a obra no anel do
+astrolábio que gira devagar) e o componente `SeloFieri` (barra lateral, Início, abertura).
+**Medido / conferido:** `pnpm check` e `pnpm e2e` (4 fluxos) passam.
+**Deu errado / aprendido:** no celular (390 px) a página já rolava de lado antes desta mudança (vem das prateleiras);
+fica pro I.6. O anel do astrolábio usa `overflow-x: clip` pra não piorar isso.
+**Onde parou:** I.3, I.4, I.6 e I.7 estão prontos pra outro agente (🤖, com o "pronto quando" no ROADMAP); I.3 e I.4
+podem ir juntos, I.6 e I.7 também. Depois: I.8 (transição) e I.9 (prints, pacote Linux, CP1.5).
 
 ## 2026-11-08 · M1.5 · três direções e três selos em print
 

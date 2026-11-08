@@ -1,52 +1,110 @@
 /* ---------- início ---------- */
-.inicio-saudacao {
-  color: var(--texto-3);
-  font-size: 14px;
-  margin-bottom: var(--espaco-2);
-}
-.continuar {
+.limiar {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(120px, 190px) 1fr;
-  gap: var(--espaco-6);
+  grid-template-columns: 1fr minmax(320px, 440px);
+  gap: var(--espaco-7);
   align-items: center;
-  padding: var(--espaco-6);
-  border-radius: var(--raio-4);
-  border: 1px solid var(--borda);
-  background:
-    radial-gradient(80% 120% at 0% 0%, hsl(var(--obra-matiz, 40) 50% 40% / 0.22), transparent 60%), var(--superficie);
-  overflow: hidden;
+  min-height: min(620px, calc(100vh - 140px));
+  /* o anel do astrolábio passa das bordas: corta só de lado, pra não criar rolagem horizontal */
+  overflow-x: clip;
+  padding: var(--espaco-5) 0 var(--espaco-6);
 }
-.continuar-capa {
-  font-size: 15px;
+.limiar-fala .f-selo-fieri {
+  margin-bottom: var(--espaco-5);
 }
-.continuar h1 {
-  font-size: clamp(30px, 4vw, 48px);
-  line-height: 1.05;
+.limiar-fala .f-rotulo {
+  color: var(--luz);
 }
-.continuar-autor {
-  margin: 6px 0 var(--espaco-4);
+.limiar-frase {
+  margin: var(--espaco-3) 0 0;
+  max-width: 13em;
+  font-family: var(--fonte-titulo);
+  font-size: clamp(40px, 5vw, 62px);
+  font-weight: 500;
+  line-height: 1.04;
+}
+.limiar-frase em {
+  color: var(--luz);
+}
+.limiar-sub {
+  margin: var(--espaco-4) 0 0;
+  max-width: 30em;
+  font-family: var(--fonte-titulo);
+  font-style: italic;
+  font-size: 20px;
+  line-height: 1.45;
   color: var(--texto-2);
 }
-.continuar-progresso {
+.limiar-obra {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.limiar-astrolabio {
+  position: absolute;
+  top: -64px;
+  left: 50%;
+  width: 520px;
+  max-width: 130%;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.limiar-astrolabio-marcas {
+  transform-origin: 280px 250px;
+  animation: astrolabio-girar 240s linear infinite;
+}
+@keyframes astrolabio-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.limiar-capa {
+  position: relative;
+  width: 200px;
+  font-size: 17px;
+  margin-bottom: var(--espaco-6);
+}
+.limiar-capa > * {
+  box-shadow:
+    var(--moldura),
+    0 26px 50px rgba(0, 0, 0, 0.55);
+}
+.limiar-obra h1 {
+  font-size: clamp(30px, 3vw, 38px);
+  line-height: 1.05;
+  margin-top: var(--espaco-2);
+}
+.limiar-autor {
+  margin: 4px 0 var(--espaco-4);
+  font-family: var(--fonte-titulo);
+  font-style: italic;
+  font-size: 18px;
+  color: var(--texto-2);
+}
+.limiar-progresso {
   display: flex;
   align-items: center;
-  gap: var(--espaco-4);
+  gap: var(--espaco-3);
   margin-bottom: var(--espaco-5);
   color: var(--texto-2);
-  font-size: 14px;
+  font-size: 13.5px;
+  text-align: left;
 }
-.continuar-acoes {
+.limiar-acoes {
   display: flex;
   gap: var(--espaco-3);
   flex-wrap: wrap;
+  justify-content: center;
 }
 .eco {
-  margin-top: var(--espaco-6);
+  margin-top: var(--espaco-4);
   padding: var(--espaco-5) var(--espaco-6);
   border-left: 2px solid var(--luz);
   background: linear-gradient(90deg, var(--luz-suave), transparent);
-  border-radius: 0 var(--raio-3) var(--raio-3) 0;
+  border-radius: 0;
 }
 .eco blockquote {
   margin: var(--espaco-2) 0;
@@ -109,15 +167,11 @@
   padding: var(--espaco-5);
   z-index: 2;
 }
-.abertura-luz {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  margin: 0 auto var(--espaco-6);
-  background: var(--luz);
-  box-shadow:
-    0 0 30px 8px var(--luz),
-    0 0 120px 40px var(--luz-suave);
+.abertura-selo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--espaco-6);
+  filter: drop-shadow(0 0 40px var(--luz-suave));
   animation: nascer 2.4s var(--curva-sonho) both;
 }
 @keyframes nascer {

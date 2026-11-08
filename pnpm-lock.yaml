@@ -122,6 +122,12 @@ importers:
       '@fierium/contratos':
         specifier: workspace:*
         version: link:../contratos
+      '@fontsource-variable/cinzel':
+        specifier: 5.3.0
+        version: 5.3.0
+      '@fontsource-variable/cormorant-garamond':
+        specifier: 5.3.0
+        version: 5.3.0
       '@fontsource-variable/fraunces':
         specifier: 5.3.0
         version: 5.3.0
@@ -313,6 +319,12 @@ packages:
     peerDependenciesMeta:
       '@noble/hashes':
         optional: true
+
+  '@fontsource-variable/cinzel@5.3.0':
+    resolution: {integrity: sha512-eFcU0TwaAP5QESF2pV8VoOPJJXJ6sSGm/6mXMwqTdMBPAJMaLhfa6oISHuOtFeddsoHP9RYm4Io0j1j3mNEz2Q==}
+
+  '@fontsource-variable/cormorant-garamond@5.3.0':
+    resolution: {integrity: sha512-rgZJ/5w3hi60swAPnrOXpZf5wEH6NTrvm4H8D9Y4b1QIFUqlX14eM3QTMU/eAznjfh0eXpO1QUqsFhiy58aoMg==}
 
   '@fontsource-variable/fraunces@5.3.0':
     resolution: {integrity: sha512-9BYGySn4AHEJdgp9Z28tQ3X+laJMEOITXkQarZXeloWQZDq5oOvXJ3kDA8c7MGIfpogIaZfjrQBqmda8POOCKA==}
@@ -1673,6 +1685,10 @@ snapshots:
       levn: 0.4.1
 
   '@exodus/bytes@1.16.0': {}
+
+  '@fontsource-variable/cinzel@5.3.0': {}
+
+  '@fontsource-variable/cormorant-garamond@5.3.0': {}
 
   '@fontsource-variable/fraunces@5.3.0': {}
 

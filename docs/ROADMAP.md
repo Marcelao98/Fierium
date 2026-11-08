@@ -156,17 +156,19 @@ Referência visual: os prints `docs/imagens/identidade/ceu-*.jpg` e `selos.jpg`;
 (o selo B está em `selos.js → seloB`). 🤖 = dá pra passar pra outro agente (D26; veja "Trabalhar com outros agentes" abaixo).
 
 - [x] I.0 Três direções e três selos em print; o Marcelo escolheu B + Astrolábio
-- [ ] I.1 **Tokens do Céu antigo** em `packages/ui/src/tokens.css` (noite azul `#0a0f1e`, ouro `#e2b866`, pergaminho
+- [x] I.1 **Tokens do Céu antigo** em `packages/ui/src/tokens.css` (noite azul `#0a0f1e`, ouro `#e2b866`, pergaminho
       `#f1e6c9`, raios finos, bordas gravadas), mantendo os nomes das variáveis que as telas já usam
-- [ ] I.2 🤖 **Fontes**: `@fontsource` de Cormorant Garamond e Cinzel em `packages/ui` (D25), variáveis
+- [x] I.2 🤖 **Fontes**: `@fontsource` de Cormorant Garamond e Cinzel em `packages/ui` (D25), variáveis
       `--fonte-titulo` e `--fonte-rotulo`. Pronto quando: `pnpm check` passa e o build não busca nada na internet
-- [ ] I.3 🤖 **Selo Astrolábio** em `packages/ui/src/selo.ts`/`Selo.tsx` (grande, 32 e 16 px, como no `seloB`), o
-      ícone do app (`crates/fierium-app/icons/`) e o `docs/imagens/selo-fieri.svg`. Pronto quando: o teste do selo
-      cobre as três medidas e os ícones saem de um script (nada desenhado à mão)
+- [ ] I.3 🤖 **Ícones do selo Astrolábio**: o componente já existe (`packages/ui/src/SeloFieri.tsx`, usado na barra
+      lateral, no Início e na abertura). Falta: um teste de componente (grande × simples em ≤ 20 px), o ícone do app
+      (`crates/fierium-app/icons/`: 32, 128, 256, `.ico`, `.icns`, sobre o fundo `#0a0f1e`) gerado por script a partir
+      do mesmo desenho, e o `docs/imagens/selo-fieri.svg`. Pronto quando: os ícones saem do script (nada à mão),
+      `pnpm check` e `pnpm check:rust` passam e o `.deb` mostra o ícone novo
 - [ ] I.4 🤖 **Fundo de mapa celeste** em `apps/app/src/casca/Atmosfera.tsx` (canvas: paralelos e meridianos, eclíptica,
       estrelas, constelações com semente fixa; parado no movimento reduzido). Pronto quando: print igual ao protótipo e
       sem custo por quadro com o app parado
-- [ ] I.5 **Início = Limiar do Sonho** (selo, frase, a obra em leitura no astrolábio, "Continuar lendo", os mundos)
+- [x] I.5 **Início = Limiar do Sonho** (selo, frase, a obra em leitura no astrolábio, "Continuar lendo", os mundos)
 - [ ] I.6 🤖 **Capas e mundos**: moldura gravada dupla, foco em ouro, títulos em Cormorant e autor em itálico; mundos
       com losango (em `compartilhado/Obras.tsx` e nos chips). Pronto quando: os testes de componente passam e o print
       da Biblioteca bate com `ceu-biblioteca.jpg`

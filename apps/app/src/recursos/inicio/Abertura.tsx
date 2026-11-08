@@ -1,5 +1,6 @@
 // A primeira vez: uma luz, o nome, e a pergunta "onde moram os seus livros?". No M1 só existe a biblioteca de
 // exemplo; escolher a pasta de verdade chega no M3.
+import { SeloFieri } from '@fierium/ui';
 import { useEffect, useState } from 'react';
 import { useConfigApp, useServicos } from '../../nucleo/contexto';
 import { ir } from '../../nucleo/navegacao';
@@ -32,7 +33,9 @@ export function Abertura() {
   return (
     <div className="abertura">
       <div>
-        <div className="abertura-luz" />
+        <div className="abertura-selo">
+          <SeloFieri tamanho={132} />
+        </div>
         <h1>Fierium</h1>
         {passo === 'luz' ? (
           <>

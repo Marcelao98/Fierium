@@ -1,11 +1,17 @@
-/* Design system do Fierium (docs/FIERIUM_PRODUCT_VISION.md §9). A luz é o material principal: a cor de destaque
-   (--luz) só aparece onde tem algo de verdade (progresso, foco, ligação). Dois temas: Noite (a assinatura) e Lúcido. */
+/* Design system do Fierium (docs/FIERIUM_PRODUCT_VISION.md §9) com a identidade "Céu antigo" (D24): o mapa do céu
+   de Fieri gravado em ouro. O ouro (--luz) só aparece onde tem algo de verdade (progresso, foco, ligação); as linhas
+   são finas e gravadas, os cantos quase retos. Dois temas: Noite (a assinatura) e Lúcido (pergaminho). */
 @import '@fontsource-variable/fraunces';
 @import '@fontsource-variable/inter';
 @import '@fontsource-variable/literata';
+@import '@fontsource-variable/cormorant-garamond/wght.css';
+@import '@fontsource-variable/cormorant-garamond/wght-italic.css';
+@import '@fontsource-variable/cinzel';
 
 :root {
-  --fonte-titulo: 'Fraunces Variable', 'Georgia', serif;
+  --fonte-titulo: 'Cormorant Garamond Variable', 'Georgia', serif;
+  /* rótulos em maiúsculas (capítulo, seções, botão principal): a letra das inscrições do astrolábio (D25) */
+  --fonte-rotulo: 'Cinzel Variable', 'Georgia', serif;
   --fonte-ui: 'Inter Variable', system-ui, sans-serif;
   --fonte-leitura: 'Literata Variable', 'Georgia', serif;
 
@@ -18,10 +24,11 @@
   --espaco-7: 48px;
   --espaco-8: 72px;
 
-  --raio-1: 6px;
-  --raio-2: 10px;
-  --raio-3: 16px;
-  --raio-4: 24px;
+  /* Céu antigo: cantos quase retos, como placas gravadas */
+  --raio-1: 2px;
+  --raio-2: 3px;
+  --raio-3: 4px;
+  --raio-4: 6px;
 
   /* movimento: funcional é rápido; espacial é lento e sempre interrompível (§9.4) */
   --rapido: 160ms;
@@ -31,56 +38,70 @@
   --curva-sonho: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* matiz da atmosfera atual (a coleção aberta muda isto) */
-  --matiz: 255;
+  --matiz: 222;
 }
 
 :root,
 :root[data-tema='noite'] {
   color-scheme: dark;
-  --fundo: #0b0a1a;
-  --fundo-2: #121029;
-  --fundo-3: #1a1736;
-  --superficie: rgba(236, 232, 246, 0.04);
-  --superficie-2: rgba(236, 232, 246, 0.07);
-  --superficie-3: rgba(236, 232, 246, 0.11);
-  --borda: rgba(236, 232, 246, 0.09);
-  --borda-forte: rgba(236, 232, 246, 0.18);
-  --texto: #ece8f6;
-  --texto-2: #b5afcb;
-  --texto-3: #827b9e;
-  --luz: #f1d9a0;
-  --luz-suave: rgba(241, 217, 160, 0.16);
-  --violeta: #a99be6;
-  --aurora: #7cc7b4;
+  --fundo: #0a0f1e;
+  --fundo-2: #0f1628;
+  --fundo-3: #162036;
+  --superficie: rgba(226, 184, 102, 0.035);
+  --superficie-2: rgba(226, 184, 102, 0.07);
+  --superficie-3: rgba(226, 184, 102, 0.12);
+  --borda: rgba(226, 184, 102, 0.2);
+  --borda-forte: rgba(226, 184, 102, 0.42);
+  --texto: #efe4c8;
+  --texto-2: #c2b48f;
+  --texto-3: #8f8467;
+  --luz: #e2b866;
+  --luz-suave: rgba(226, 184, 102, 0.16);
+  --violeta: #9d93d6;
+  --aurora: #8fb3c9;
   --rosa: #d98a9c;
   --perigo: #ef8f8f;
-  --sombra: 0 18px 50px rgba(0, 0, 0, 0.45);
-  --vidro: rgba(18, 16, 41, 0.72);
-  --estrela: #fff6df;
+  --sombra: 0 18px 50px rgba(0, 0, 0, 0.55);
+  --vidro: rgba(10, 15, 30, 0.82);
+  --estrela: #efe4c8;
+  /* o pergaminho (página do leitor, cartões claros) e a tinta sobre ele */
+  --pergaminho: #f1e6c9;
+  --pergaminho-2: #e9dbb7;
+  --tinta: #2b2216;
+  --tinta-ouro: #8a5a1e;
+  /* moldura gravada: fio de ouro, vão da cor do fundo, segundo fio mais fraco */
+  --moldura: 0 0 0 1px rgba(226, 184, 102, 0.55), 0 0 0 5px var(--fundo), 0 0 0 6px rgba(226, 184, 102, 0.25);
+  --moldura-foco: 0 0 0 1px var(--luz), 0 0 0 5px var(--fundo), 0 0 0 6px var(--luz), 0 0 40px rgba(226, 184, 102, 0.3);
 }
 
 :root[data-tema='lucido'] {
   color-scheme: light;
-  --fundo: #f5f2ec;
-  --fundo-2: #ece7f0;
-  --fundo-3: #e2dcea;
-  --superficie: rgba(29, 26, 46, 0.035);
-  --superficie-2: rgba(29, 26, 46, 0.06);
-  --superficie-3: rgba(29, 26, 46, 0.1);
-  --borda: rgba(29, 26, 46, 0.1);
-  --borda-forte: rgba(29, 26, 46, 0.2);
-  --texto: #1d1a2e;
-  --texto-2: #4a4560;
-  --texto-3: #6f6987;
-  --luz: #9a6a1f;
-  --luz-suave: rgba(154, 106, 31, 0.12);
+  --fundo: #f1e6c9;
+  --fundo-2: #e9dbb7;
+  --fundo-3: #dfcea4;
+  --superficie: rgba(43, 34, 22, 0.035);
+  --superficie-2: rgba(43, 34, 22, 0.065);
+  --superficie-3: rgba(43, 34, 22, 0.11);
+  --borda: rgba(138, 90, 30, 0.25);
+  --borda-forte: rgba(138, 90, 30, 0.5);
+  --texto: #2b2216;
+  --texto-2: #5a4a32;
+  --texto-3: #7d6a4c;
+  --luz: #8a5a1e;
+  --luz-suave: rgba(138, 90, 30, 0.14);
   --violeta: #5d4fb8;
-  --aurora: #23806c;
-  --rosa: #b04a64;
+  --aurora: #2f6b84;
+  --rosa: #a3445c;
   --perigo: #b3261e;
-  --sombra: 0 18px 40px rgba(40, 30, 80, 0.14);
-  --vidro: rgba(245, 242, 236, 0.78);
-  --estrela: #8a76d8;
+  --sombra: 0 18px 40px rgba(60, 40, 10, 0.18);
+  --vidro: rgba(241, 230, 201, 0.86);
+  --estrela: #8a5a1e;
+  --pergaminho: #f7efd9;
+  --pergaminho-2: #efe3c4;
+  --tinta: #2b2216;
+  --tinta-ouro: #8a5a1e;
+  --moldura: 0 0 0 1px rgba(138, 90, 30, 0.55), 0 0 0 5px var(--fundo), 0 0 0 6px rgba(138, 90, 30, 0.25);
+  --moldura-foco: 0 0 0 1px var(--luz), 0 0 0 5px var(--fundo), 0 0 0 6px var(--luz), 0 0 30px rgba(138, 90, 30, 0.25);
 }
 
 *,
@@ -123,8 +144,8 @@ h1,
 h2,
 h3 {
   font-family: var(--fonte-titulo);
-  font-weight: 500;
-  letter-spacing: -0.01em;
+  font-weight: 600;
+  letter-spacing: 0;
   margin: 0;
 }
 
@@ -143,7 +164,7 @@ h3 {
   gap: var(--espaco-2);
   height: 38px;
   padding: 0 var(--espaco-4);
-  border-radius: 999px;
+  border-radius: var(--raio-1);
   border: 1px solid var(--borda);
   background: var(--superficie);
   cursor: pointer;
@@ -161,17 +182,19 @@ h3 {
   transform: scale(0.98);
 }
 .f-botao[data-tipo='luz'] {
-  background: var(--luz);
-  color: #1b1530;
-  border-color: transparent;
-  font-weight: 600;
-  box-shadow: 0 0 24px var(--luz-suave);
-}
-:root[data-tema='lucido'] .f-botao[data-tipo='luz'] {
-  color: #fff;
+  /* o botão principal é uma inscrição: fio de ouro, letra do astrolábio */
+  background: transparent;
+  color: var(--luz);
+  border-color: var(--luz);
+  font-family: var(--fonte-rotulo);
+  font-weight: 500;
+  font-size: 12.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 .f-botao[data-tipo='luz']:hover {
-  filter: brightness(1.06);
+  background: var(--luz-suave);
+  box-shadow: 0 0 24px var(--luz-suave);
 }
 .f-botao[data-tipo='fantasma'] {
   background: transparent;
@@ -201,7 +224,7 @@ h3 {
   gap: 6px;
   height: 30px;
   padding: 0 12px;
-  border-radius: 999px;
+  border-radius: var(--raio-1);
   border: 1px solid var(--borda);
   background: transparent;
   color: var(--texto-2);
@@ -222,7 +245,7 @@ h3 {
 .f-campo {
   height: 40px;
   padding: 0 var(--espaco-4);
-  border-radius: 999px;
+  border-radius: var(--raio-1);
   border: 1px solid var(--borda);
   background: var(--superficie);
   outline: none;
@@ -257,15 +280,16 @@ select.f-campo {
 }
 
 .f-rotulo {
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-family: var(--fonte-rotulo);
+  font-size: 11.5px;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--texto-3);
 }
 
 .f-barra {
-  height: 3px;
-  border-radius: 3px;
+  height: 2px;
+  border-radius: 0;
   background: var(--superficie-3);
   overflow: hidden;
 }
