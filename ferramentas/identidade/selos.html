@@ -1,0 +1,184 @@
+<!doctype html>
+<!-- As três versões do Selo de Fieri (M1.5, docs/IDENTIDADE.md). Não faz parte do app. -->
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <title>Fierium · selos</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500&family=Cormorant+Garamond:wght@600&family=Fraunces:ital,opsz,wght@0,9..144,300..600;1,9..144,400&family=Inter:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body {
+        width: 1440px;
+        height: 900px;
+        overflow: hidden;
+      }
+      body {
+        background: radial-gradient(120% 90% at 50% 0%, #17143a, #08071a 60%);
+        color: #ece8f6;
+        font-family: Inter, sans-serif;
+        padding: 44px 56px;
+      }
+      h1 {
+        font:
+          400 34px Fraunces,
+          serif;
+      }
+      h1 small {
+        font: 400 14px Inter;
+        color: #7f789d;
+        margin-left: 14px;
+      }
+      .linha {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 28px;
+        margin-top: 30px;
+      }
+      .card {
+        border: 1px solid rgba(200, 185, 255, 0.14);
+        border-radius: 18px;
+        background: rgba(30, 24, 70, 0.32);
+        padding: 26px 26px 22px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .grande {
+        width: 230px;
+        height: 230px;
+      }
+      .card h2 {
+        font:
+          500 24px Fraunces,
+          serif;
+        margin-top: 16px;
+      }
+      .card h2 b {
+        font: 600 12px Inter;
+        letter-spacing: 0.2em;
+        color: #f4dca4;
+        margin-right: 10px;
+        vertical-align: 4px;
+      }
+      .card p {
+        font-size: 13.5px;
+        line-height: 1.55;
+        color: #b5afcb;
+        text-align: center;
+        margin-top: 8px;
+        min-height: 63px;
+      }
+      .tam {
+        display: flex;
+        gap: 18px;
+        align-items: flex-end;
+        margin-top: 18px;
+        width: 100%;
+        justify-content: center;
+      }
+      .tam div {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        font-size: 11px;
+        color: #7f789d;
+      }
+      .claro {
+        background: #f3f0e8;
+        border-radius: 10px;
+        padding: 8px;
+      }
+      .marca {
+        margin-top: 20px;
+        width: 100%;
+        height: 96px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+      }
+      .marca span {
+        font-size: 38px;
+        letter-spacing: 0.04em;
+      }
+      .app {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        background: #120f2a;
+        display: grid;
+        place-items: center;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>
+      O Selo de Fieri <small>três versões · grande, ícone do app, 32 px, 16 px e sobre fundo claro, e com o nome</small>
+    </h1>
+    <div class="linha" id="linha"></div>
+    <script src="selos.js"></script>
+    <script>
+      const selos = [
+        [
+          'A',
+          'Centelha e lua',
+          'A proposta do IDENTIDADE.md, polida: a centelha com brilho, a lua dourada embalando, a órbita aberta com o vão do vir-a-ser. Macio, de sonho. (Vai com a Nebulosa.)',
+          (id) => seloA(id),
+          (id) => seloA(id, true),
+          '#120f2a',
+          'Fraunces',
+          400,
+          '#ece8f6',
+          'radial-gradient(circle at 30% 40%,#2c2160,#0b0a1a 70%)',
+        ],
+        [
+          'B',
+          'Astrolábio',
+          'Gravado em ouro: a lua e a centelha dentro de um astrolábio com as marcas de grau; a órbita aberta corre por dentro. Mítico e antigo. (Vai com o Céu antigo.)',
+          (id) => seloB(id),
+          (id) => seloB(id, true),
+          '#0a0f1e',
+          'Cinzel',
+          500,
+          '#e2b866',
+          'radial-gradient(circle at 30% 40%,#16203a,#0a0f1e 70%)',
+        ],
+        [
+          'C',
+          'Lua que vira órbita',
+          'Uma peça só: a lua se abre e a ponta dela vira a órbita, que não fecha. A centelha nasce no oco. Moderno, funciona em 16 px. (Vai com a Aurora.)',
+          (id) => seloC(id),
+          (id) => seloC(id, true),
+          '#04131a',
+          'Cormorant Garamond',
+          600,
+          '#eaf6f2',
+          'radial-gradient(circle at 30% 40%,#0c3a36,#040b10 70%)',
+        ],
+      ];
+      document.getElementById('linha').innerHTML = selos
+        .map(
+          ([l, nome, txt, g, p, fundo, fonte, peso, corNome, bgMarca], i) => `
+  <div class="card"><div class="grande">${g('G' + i)}</div><h2><b>${l}</b>${nome}</h2><p>${txt}</p>
+  <div class="tam"><div><div class="app" style="background:${fundo}"><div style="width:36px;height:36px">${g('a' + i)}</div></div>app</div>
+  <div><div style="width:32px;height:32px">${g('m' + i)}</div>32</div>
+  <div><div style="width:16px;height:16px">${p('p' + i)}</div>16</div>
+  <div><div class="claro"><div style="width:44px;height:44px">${i === 1 ? seloB('c' + i, false, '#8a5a1e', '#8a5a1e') : g('c' + i)}</div></div>claro</div></div>
+  <div class="marca" style="background:${bgMarca}"><div style="width:58px;height:58px">${g('w' + i)}</div><span style="font-family:'${fonte}';font-weight:${peso};color:${corNome}">Fierium</span></div></div>`,
+        )
+        .join('');
+    </script>
+  </body>
+</html>

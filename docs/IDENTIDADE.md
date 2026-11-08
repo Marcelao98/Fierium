@@ -60,3 +60,17 @@ grade e a lista continuam sendo o jeito normal de navegar, só que com a linguag
 2. **Três versões do Selo de Fieri.**
 3. O Marcelo escolhe; eu aplico: cores, fundo, selo, Início, capas, transições, mapa como mundos.
 4. Checkpoint com prints e o pacote Linux.
+
+## As três direções em print (2026-11-08)
+
+Protótipo estático, fora do app: [ferramentas/identidade/](../ferramentas/identidade/) (`node ferramentas/identidade/prints.mjs`
+refaz os prints). Mesmos dados nas três (obras em domínio público), pra comparar só a linguagem.
+
+| | Início (o Limiar do Sonho) | Biblioteca | Leitor |
+|---|---|---|---|
+| **A · Nebulosa** — névoa violeta/índigo com aurora, capas com halo da própria cor, Fraunces | ![](imagens/identidade/nebulosa-inicio.jpg) | ![](imagens/identidade/nebulosa-biblioteca.jpg) | ![](imagens/identidade/nebulosa-leitor.jpg) |
+| **B · Céu antigo** — mapa celeste gravado em ouro, constelações, astrolábio, molduras finas, Cormorant + Cinzel, página de pergaminho | ![](imagens/identidade/ceu-inicio.jpg) | ![](imagens/identidade/ceu-biblioteca.jpg) | ![](imagens/identidade/ceu-leitor.jpg) |
+| **C · Aurora** — noite verde-escura com cortinas de aurora (verde, violeta, rosa), vidro, reflexo das capas, Cormorant | ![](imagens/identidade/aurora-inicio.jpg) | ![](imagens/identidade/aurora-biblioteca.jpg) | ![](imagens/identidade/aurora-leitor.jpg) |
+
+**Os três selos** ([selos.jpg](imagens/identidade/selos.jpg)): A · Centelha e lua (a proposta acima), B · Astrolábio,
+C · Lua que vira órbita. Cada direção usa o "seu" selo, mas dá pra misturar (ex.: direção A com o selo C).

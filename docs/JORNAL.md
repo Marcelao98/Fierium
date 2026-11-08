@@ -15,6 +15,20 @@ Uma entrada por sessão de trabalho, **a mais nova em cima**. Modelo:
 
 ---
 
+## 2026-11-08 · M1.5 · três direções e três selos em print
+
+**Pedido:** continuar de onde parou: as três direções do IDENTIDADE.md em print (Nebulosa, Céu antigo, Aurora) e três
+versões do Selo de Fieri; parar pra o Marcelo escolher.
+**Feito:** protótipo estático fora do app em `ferramentas/identidade/` (`prototipo.html?d=…&t=…`, `selos.html`,
+`selos.js` com os três selos, `prints.mjs` que tira os prints com o Chromium). 10 prints em `docs/imagens/identidade/`
+(Início, Biblioteca e leitor de cada direção + a folha dos selos), com a tabela no fim do IDENTIDADE.md. Nada do app
+mudou.
+**Medido / conferido:** `pnpm check` passa; prints 1440×900, deterministas (céu gerado com semente fixa).
+**Deu errado / aprendido:** as fontes dos protótipos vêm do Google Fonts (só pra comparar Cormorant/Cinzel); no app
+vão embutidas pelo `@fontsource`, como as outras. O `prints.mjs` acha o Playwright por `createRequire` (o do sistema serve).
+**Onde parou:** ⏸ o Marcelo escolhe a direção (A, B, C ou mistura) e o selo. Depois: aplicar no app (tokens, fundo,
+selo, Início, capas, transições), checkpoint com prints e pacote Linux, e seguir o M3.
+
 ## 2026-11-08 · Pausa no M3 · a identidade de Fieri
 
 **Pedido:** o Marcelo não gostou tanto do front: Fieri é a primordial dos sonhos e da imaginação, a biblioteca de
