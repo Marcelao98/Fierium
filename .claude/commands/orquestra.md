@@ -16,7 +16,7 @@ Conforme a ação:
   estiver, faça a onda 0 (é sua) e envie. Depois devolva, pra cada cartão da onda, a frase pronta pro Happier:
   "Execute o cartão `docs/cartoes/<marco>/<cartão>.md` do repositório Fierium, a partir da branch `<base>`. Siga o
   AGENTS.md. No fim, escreva o relatório no próprio cartão e envie a branch." Marque os cartões como
-  "em execução" e diga quais podem ir pro Codex e quais pro Claude (alternando, pra revisão cruzada). Lembre que
+  "em execução" e diga quais vão pro Codex e quais pro OpenCode (o Claude não executa: limite de uso). Lembre que
   ele pode disparar tudo de uma vez no terminal com `pnpm despachar <marco> <onda>`.
 - **revisa `<marco>/<cartão>`**: busque a branch do cartão; leia o relatório e o `git diff --stat` contra a base;
   confira se só mexeu no que o cartão permite, se o "pronto quando" foi atendido e se os portões passam (rode-os);

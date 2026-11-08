@@ -27,6 +27,7 @@ comando `/orquestra` (`.claude/commands/orquestra.md`: painel, despacha, revisa,
 **Depois:** `pnpm despachar <marco> <onda>` (ferramentas/cartoes/despachar.mjs): um worktree e uma sessão de agente
 (tmux) por cartão, em paralelo, Codex e Claude alternando; o script envia a branch no fim. Testado num clone
 descartável com um GitHub local e agentes de mentira: 4 worktrees, 4 janelas, 4 branches enviadas.
+**Mudou (D28):** os executores são Codex e OpenCode (o Claude não dispara: só revisa no fim).
 **Onde parou:** ⏸ o Marcelo roda `pnpm despachar m1.5 1` no Linux e me chama com `/orquestra revisa m1.5/<cartão>`
 a cada um que terminar.
 

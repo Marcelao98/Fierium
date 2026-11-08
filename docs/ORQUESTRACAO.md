@@ -6,14 +6,14 @@
 ## A ideia em uma frase
 
 A sessão principal **não escreve a maior parte do código**: ela fatia cada marco em **cartões** pequenos e
-independentes, entrega cada cartão a um agente executor (Codex, outra sessão do Claude, o que vier), **revisa** o que
+independentes, entrega cada cartão a um agente executor (Codex, OpenCode, o que vier), **revisa** o que
 volta, junta, roda os portões integrados e leva o resultado pro Marcelo no checkpoint.
 
 ```mermaid
 flowchart LR
   M[Marcelo] -- decide e testa nos CPs --> O[Orquestrador<br/>sessão principal]
   O -- cartões --> E1[Executor A<br/>Codex]
-  O -- cartões --> E2[Executor B<br/>sessão Claude]
+  O -- cartões --> E2[Executor B<br/>OpenCode]
   O -- cartões --> E3[Executor C<br/>...]
   E1 -- branch + relatório --> R{Revisão}
   E2 -- branch + relatório --> R
@@ -29,8 +29,8 @@ flowchart LR
 |---|---|---|---|
 | **Dono** | Marcelo | Decide produto e identidade, testa nos checkpoints, aprova ondas ("segue") | — |
 | **Orquestrador** | A sessão principal (Claude) | Fatia o marco, escreve os cartões, decide a ordem (ondas), despacha, revisa, junta, roda os portões integrados, mantém JORNAL/ROADMAP/DECISOES, fala com o Marcelo | Não pega cartão de executor, exceto o que é **integração** ou **decisão de produto** (marcados 🧭) |
-| **Executor** | Codex, sessões do Claude, outros | Executa **um** cartão numa branch própria, roda os portões, escreve o relatório | Não mexe fora dos arquivos do cartão, não muda contrato nem decisão, não junta na branch do marco |
-| **Revisor** | Um modelo **diferente** de quem executou (Codex revisa Claude e vice-versa), ou o orquestrador | Confere o diff contra o cartão: só os arquivos permitidos, o "pronto quando", os testes novos, o print | Não reescreve; aponta e devolve |
+| **Executor** | Codex e OpenCode (o Claude não executa: limite de uso) | Executa **um** cartão numa branch própria, roda os portões, escreve o relatório | Não mexe fora dos arquivos do cartão, não muda contrato nem decisão, não junta na branch do marco |
+| **Revisor** | O orquestrador (Claude) no fim de cada cartão; se quiser uma segunda opinião, o Codex revisa o do OpenCode e vice-versa | Confere o diff contra o cartão: só os arquivos permitidos, o "pronto quando", os testes novos, o print | Não reescreve; aponta e devolve |
 
 ## O cartão
 
@@ -48,8 +48,8 @@ Como mandar um cartão pra um agente (a mesma frase serve pra qualquer um):
 > Execute o cartão `docs/cartoes/m1.5/i3.md` do repositório Fierium, a partir da branch `<branch do marco>`. Siga o
 > AGENTS.md. No fim, escreva o relatório no próprio cartão e envie a branch.
 
-O orquestrador também pode abrir sessões do Claude sozinho (uma por cartão) e acompanhar por elas; o Codex o Marcelo
-dispara com a frase acima (ou o orquestrador, se tiver acesso).
+O Marcelo dispara os executores (Codex e OpenCode), um por um com a frase acima ou a onda toda com `pnpm despachar`;
+o orquestrador não abre sessões de executor (D28).
 
 ## Raias: quem mexe onde
 
@@ -103,13 +103,13 @@ lockfile não brigar.
 
 ## Como o Marcelo toca (no Happier)
 
-Você roda os executores (Codex e Claude) no Happier; a sessão do orquestrador é onde você fala comigo. Os comandos
+Você roda os executores (Codex e OpenCode) no Happier ou com `pnpm despachar`; a sessão do orquestrador é onde você fala comigo. Os comandos
 são todos pro orquestrador; pro executor é sempre a mesma frase, que o orquestrador te entrega pronta.
 
 | Você quer | Diga pro orquestrador | O que eu faço |
 |---|---|---|
 | Ver como está | `/orquestra painel` | Busco as branches, rodo `pnpm cartoes`, digo o que está pronto, parado e o próximo passo |
-| Começar uma onda | `/orquestra despacha m3 1` | Faço a onda 0 se faltar, marco os cartões e te dou a frase de cada um, dizendo qual vai pro Codex e qual pro Claude |
+| Começar uma onda | `/orquestra despacha m3 1` | Faço a onda 0 se faltar, marco os cartões e te dou a frase de cada um, dizendo qual vai pro Codex e qual pro OpenCode |
 | Um executor terminou | `/orquestra revisa m1.5/i4` | Confiro o cartão contra a branch; aprovo ou devolvo com o motivo e a frase de correção |
 | Juntar o aprovado | `/orquestra junta m1.5/i4` | Merge na branch do marco, portões integrados, envio |
 | Fechar o marco | `/orquestra fecha m1.5` | Integração, prints, pacote Linux, JORNAL; paro no checkpoint pra você testar |
@@ -124,12 +124,12 @@ pnpm despachar m1.5 1
 
 Cada cartão da onda ganha uma pasta separada (`../fierium-agentes/<marco>-<cartão>`, um git worktree na branch do
 cartão, com `pnpm install` feito) e uma sessão própria de agente numa janela do tmux, todas em paralelo, alternando
-Codex e Claude. Quando o agente termina, o script faz o commit do que sobrou (se sobrou) e envia a branch. Acompanhar:
+**Codex e OpenCode** (o Claude é o orquestrador: não executa, revisa no fim). Quando o agente termina, o script faz o commit do que sobrou (se sobrou) e envia a branch. Acompanhar:
 `tmux attach -t fierium-m1_5-1` (Ctrl+B, N passa de janela) ou os logs em `../fierium-agentes/logs/`. Opções:
-`--so-claude`, `--so-codex`, `--simular` (só mostra quem faria o quê). Precisa: `tmux`, `codex` e `claude` instalados
+`--so-codex`, `--so-opencode`, `--modelo-opencode=<provedor/modelo>`, `--simular` (só mostra quem faria o quê). Precisa: `tmux`, `codex` e `opencode` instalados
 e logados, e o git do Linux com permissão de enviar pro GitHub. Ondas 🧭 o script recusa (são do orquestrador).
 
-Ou um por um, colando no Happier (Codex ou Claude):
+Ou um por um, colando no Happier (Codex ou OpenCode):
 
 > Execute o cartão `docs/cartoes/<marco>/<cartão>.md` do repositório Fierium, a partir da branch `<base>`. Siga o
 > AGENTS.md. No fim, escreva o relatório no próprio cartão e envie a branch.
@@ -137,7 +137,7 @@ Ou um por um, colando no Happier (Codex ou Claude):
 ```mermaid
 flowchart TD
   A([Você: /orquestra despacha marco onda]) --> B[Orquestrador: onda 0 se faltar<br/>e te entrega as frases]
-  B --> C[Você: cola cada frase num agente no Happier<br/>Codex e Claude alternando]
+  B --> C[Você: cola cada frase num agente no Happier<br/>Codex e OpenCode alternando]
   C --> D[Executores trabalham em paralelo<br/>cada um na sua branch agente/...]
   D --> E([Você: /orquestra revisa marco/cartão<br/>a cada um que terminar])
   E --> F{Aprovado?}
@@ -153,5 +153,6 @@ flowchart TD
   L --> A
 ```
 
-**Revisão cruzada sem esforço:** quando um cartão foi feito pelo Codex, eu reviso; quando foi feito pelo Claude, eu
-te dou também uma frase "revise a branch X contra o cartão Y" pra colar num Codex, e junto as duas opiniões.
+**Revisão (D28):** eu (Claude) reviso no fim, lendo o relatório, o `diff --stat` e os prints, pra gastar pouco. Se
+quiser uma segunda opinião antes, peça ao Codex pra revisar o que o OpenCode fez (e vice-versa) com a frase
+"revise a branch X contra o cartão Y e escreva o que achou no relatório".

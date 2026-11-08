@@ -1,8 +1,8 @@
 // Despacha uma onda inteira (docs/ORQUESTRACAO.md): cada cartão numa pasta separada (git worktree, na branch
-// agente/<marco>-<passo>) e numa sessão própria de agente, todas em paralelo, alternando Codex e Claude (revisão
+// agente/<marco>-<passo>) e numa sessão própria de agente, todas em paralelo, alternando Codex e OpenCode (revisão
 // cruzada). Quando o agente termina, o script envia a branch (o agente não precisa de rede pra isso).
 //
-// Uso:  pnpm despachar <marco> <onda> [--so-claude | --so-codex] [--simular]
+// Uso:  pnpm despachar <marco> <onda> [--so-codex | --so-opencode] [--modelo-opencode=<provedor/modelo>] [--simular]
 //   ex.: pnpm despachar m1.5 1
 // Acompanhar: tmux attach -t fierium-<marco>-<onda> (uma janela por cartão) ou os logs em ../fierium-agentes/logs/.
 import { execFileSync, spawnSync } from 'node:child_process';
@@ -19,7 +19,7 @@ function parar(msg) {
   console.error(`despachar: ${msg}`);
   process.exit(1);
 }
-if (!marco || !onda) parar('uso: pnpm despachar <marco> <onda> [--so-claude|--so-codex] [--simular]');
+if (!marco || !onda) parar('uso: pnpm despachar <marco> <onda> [--so-codex|--so-opencode] [--simular]');
 
 // ---------- quais cartões e de qual branch ----------
 const arqOndas = join(raiz, 'docs/cartoes', marco, 'ONDAS.md');
@@ -34,7 +34,9 @@ const cartoes = [...linha.matchAll(/\(([\w.-]+)\.md\)/g)].map((m) => m[1]);
 if (!cartoes.length) parar(`a onda ${onda} não tem cartões`);
 
 // ---------- quem executa ----------
-const agentes = flags.has('--so-claude') ? ['claude'] : flags.has('--so-codex') ? ['codex'] : ['codex', 'claude'];
+// o Claude fica de fora de propósito: ele é o orquestrador e revisa no fim (limite de uso, D27)
+const agentes = flags.has('--so-opencode') ? ['opencode'] : flags.has('--so-codex') ? ['codex'] : ['codex', 'opencode'];
+const modeloOpencode = [...flags].find((f) => f.startsWith('--modelo-opencode='))?.split('=')[1];
 const temComando = (c) => spawnSync('sh', ['-c', `command -v ${c}`]).status === 0;
 for (const a of new Set(agentes)) if (!temComando(a) && !simular) parar(`o comando "${a}" não está instalado`);
 if (!temComando('tmux') && !simular) parar('preciso do tmux (sudo apt install tmux)');
@@ -66,8 +68,7 @@ const frase = (p) =>
 const comandoAgente = (p) =>
   p.agente === 'codex'
     ? `codex exec --full-auto ${JSON.stringify(frase(p))}`
-    : `claude -p ${JSON.stringify(frase(p))} --permission-mode acceptEdits ` +
-      `--allowedTools "Bash(pnpm:*)" "Bash(git:*)" "Bash(node:*)" "Bash(cargo:*)" "Bash(ls:*)" "Bash(cat:*)"`;
+    : `opencode run ${modeloOpencode ? `-m ${modeloOpencode} ` : ''}${JSON.stringify(frase(p))}`;
 
 for (const p of plano) {
   const log = join(logs, `${marco}-${p.cartao}.log`);
