@@ -24,8 +24,11 @@ orquestrador, ondas, grafo); `pnpm cartoes` (painel: estado de cada cartão e se
 comando `/orquestra` (`.claude/commands/orquestra.md`: painel, despacha, revisa, junta, fecha); ORQUESTRACAO.md com
 "Como o Marcelo toca" (tabela de comandos + fluxograma); AGENTS.md: o executor marca o cartão "em revisão" no fim.
 **Decidido:** M7 em diante só é fatiado quando o M4 fechar (o tamanho certo dos cartões vem do que se aprender).
-**Onde parou:** ⏸ o Marcelo dispara a onda 1 do M1.5 no Happier (I.3, I.4, I.6, I.7) e me chama com
-`/orquestra revisa m1.5/<cartão>` a cada um que terminar.
+**Depois:** `pnpm despachar <marco> <onda>` (ferramentas/cartoes/despachar.mjs): um worktree e uma sessão de agente
+(tmux) por cartão, em paralelo, Codex e Claude alternando; o script envia a branch no fim. Testado num clone
+descartável com um GitHub local e agentes de mentira: 4 worktrees, 4 janelas, 4 branches enviadas.
+**Onde parou:** ⏸ o Marcelo roda `pnpm despachar m1.5 1` no Linux e me chama com `/orquestra revisa m1.5/<cartão>`
+a cada um que terminar.
 
 ## 2026-11-08 · M1.5 · plano de orquestração (vários agentes)
 

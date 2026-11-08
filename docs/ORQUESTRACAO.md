@@ -116,7 +116,20 @@ são todos pro orquestrador; pro executor é sempre a mesma frase, que o orquest
 
 (Sem o `/orquestra`, funciona falar normal: "revisa o i4", "despacha a onda 1 do m3".)
 
-Pro executor, no Happier (Codex ou Claude):
+**Despachar a onda inteira com um comando** (no terminal do teu Linux, na pasta do Fierium):
+
+```bash
+pnpm despachar m1.5 1
+```
+
+Cada cartão da onda ganha uma pasta separada (`../fierium-agentes/<marco>-<cartão>`, um git worktree na branch do
+cartão, com `pnpm install` feito) e uma sessão própria de agente numa janela do tmux, todas em paralelo, alternando
+Codex e Claude. Quando o agente termina, o script faz o commit do que sobrou (se sobrou) e envia a branch. Acompanhar:
+`tmux attach -t fierium-m1_5-1` (Ctrl+B, N passa de janela) ou os logs em `../fierium-agentes/logs/`. Opções:
+`--so-claude`, `--so-codex`, `--simular` (só mostra quem faria o quê). Precisa: `tmux`, `codex` e `claude` instalados
+e logados, e o git do Linux com permissão de enviar pro GitHub. Ondas 🧭 o script recusa (são do orquestrador).
+
+Ou um por um, colando no Happier (Codex ou Claude):
 
 > Execute o cartão `docs/cartoes/<marco>/<cartão>.md` do repositório Fierium, a partir da branch `<base>`. Siga o
 > AGENTS.md. No fim, escreva o relatório no próprio cartão e envie a branch.
