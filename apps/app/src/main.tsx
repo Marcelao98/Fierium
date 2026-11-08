@@ -14,6 +14,12 @@ import './casca/celular.css';
 const raiz = document.getElementById('raiz');
 if (!raiz) throw new Error('index.html sem o #raiz');
 
+// página de desenvolvimento do leitor de PDF (?dev=pdf&url=...): monta só o motor, sem o app (usada pelo e2e)
+if (new URL(location.href).searchParams.get('dev') === 'pdf') {
+  await (await import('./dev/PaginaPdf')).abrirPaginaPdf(raiz);
+  await new Promise<never>(() => undefined); // o resto do app não sobe
+}
+
 const plataforma = await escolherPlataforma(new URL(location.href));
 const paraConsole = (r: Registro) => {
   if (r.nivel !== 'debug') console.info(`[${r.origem}] ${r.mensagem}`, r.dados ?? '');
