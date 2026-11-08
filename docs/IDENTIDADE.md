@@ -1,4 +1,7 @@
-# Identidade de Fieri (proposta, 2026-11-08)
+# Identidade de Fieri (2026-11-08)
+
+> **Escolhido (D24): direção B "Céu antigo" com o selo B "Astrolábio".** Os passos de aplicação estão no
+> ROADMAP (M1.5). O resto deste documento é a proposta original, mantida como registro.
 
 > Pedido do Marcelo: "não gostei tanto do front". Fieri é a primordial dos sonhos e da imaginação: de onde vem tudo
 > que já foi imaginado. A biblioteca dela é a biblioteca de tudo que existe. A pessoa tem que sentir que está

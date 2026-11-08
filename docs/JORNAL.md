@@ -15,6 +15,16 @@ Uma entrada por sessão de trabalho, **a mais nova em cima**. Modelo:
 
 ---
 
+## 2026-11-08 · M1.5 · escolha: Céu antigo + Astrolábio; passos pra outros agentes
+
+**Pedido:** "vamos pelo B, astrolábio". Documentar a decisão, deixar o próximo passo do roadmap pronto e ver o que dá
+pra passar pra outros agentes (tipo o Codex); depois continuar.
+**Feito:** DECISOES D24–D26; ROADMAP com a seção do M1.5 (passos I.1–I.9, os delegáveis marcados com 🤖 e o "pronto
+quando" de cada um) e "Trabalhar com outros agentes"; IDENTIDADE.md com a escolha no topo.
+**Decidido:** D24 (direção B + selo Astrolábio), D25 (Cormorant + Cinzel embutidas; atualiza D12), D26 (passos 🤖
+em branch `agente/<marco>-<passo>`, revisados antes de juntar).
+**Onde parou:** começando o I.1 (tokens). I.2, I.3 e I.4 podem ir pra outro agente em paralelo.
+
 ## 2026-11-08 · M1.5 · três direções e três selos em print
 
 **Pedido:** continuar de onde parou: as três direções do IDENTIDADE.md em print (Nebulosa, Céu antigo, Aurora) e três

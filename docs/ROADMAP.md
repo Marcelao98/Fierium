@@ -19,7 +19,7 @@ entrega um pacote Linux pra testar.
 | 1 | M0 | Fundação e plano | — | ✅ (feito) |
 | 2 | M1 | Protótipo de interface + arquitetura modular | v0.1 | ⏸ |
 | 3 | M2 | Tauri no Linux (pacote Linux desde aqui) | v0.2 | ⏸ |
-| 3b | M1.5 | **Identidade de Fieri** (sonho, mundos, constelações; o selo novo) — [IDENTIDADE.md](IDENTIDADE.md) | v0.2.1 | ⏸ escolher a direção e o selo |
+| 3b | M1.5 | **Identidade de Fieri** (sonho, mundos, constelações; o selo novo) — [IDENTIDADE.md](IDENTIDADE.md) | v0.2.1 | 🟨 escolhido: B Céu antigo + selo Astrolábio (D24); aplicando |
 | 4 | M3 | Núcleo Rust e biblioteca de verdade | v0.3 | ⬜ (só planejado) |
 | 5 | M4 | Leitor de PDF | v0.4 | ⬜ |
 | 6 | M7 | Marcações, notas e ligações (no PDF) | v0.5 | ⬜ |
@@ -148,6 +148,45 @@ mudanças continuarem.
 
 **Aceite (CP2):** você instala o `.deb` (ou roda o AppImage) no teu Linux e o Fierium abre com a biblioteca de
 exemplo; o log do dia aparece em `~/.local/share/fierium/logs/`.
+
+## M1.5 — Identidade de Fieri 🟨
+
+**Objetivo:** o app com a cara do **Céu antigo** e o **selo Astrolábio** (D24), sem mudar o jeito de navegar.
+Referência visual: os prints `docs/imagens/identidade/ceu-*.jpg` e `selos.jpg`; o protótipo em `ferramentas/identidade/`
+(o selo B está em `selos.js → seloB`). 🤖 = dá pra passar pra outro agente (D26; veja "Trabalhar com outros agentes" abaixo).
+
+- [x] I.0 Três direções e três selos em print; o Marcelo escolheu B + Astrolábio
+- [ ] I.1 **Tokens do Céu antigo** em `packages/ui/src/tokens.css` (noite azul `#0a0f1e`, ouro `#e2b866`, pergaminho
+      `#f1e6c9`, raios finos, bordas gravadas), mantendo os nomes das variáveis que as telas já usam
+- [ ] I.2 🤖 **Fontes**: `@fontsource` de Cormorant Garamond e Cinzel em `packages/ui` (D25), variáveis
+      `--fonte-titulo` e `--fonte-rotulo`. Pronto quando: `pnpm check` passa e o build não busca nada na internet
+- [ ] I.3 🤖 **Selo Astrolábio** em `packages/ui/src/selo.ts`/`Selo.tsx` (grande, 32 e 16 px, como no `seloB`), o
+      ícone do app (`crates/fierium-app/icons/`) e o `docs/imagens/selo-fieri.svg`. Pronto quando: o teste do selo
+      cobre as três medidas e os ícones saem de um script (nada desenhado à mão)
+- [ ] I.4 🤖 **Fundo de mapa celeste** em `apps/app/src/casca/Atmosfera.tsx` (canvas: paralelos e meridianos, eclíptica,
+      estrelas, constelações com semente fixa; parado no movimento reduzido). Pronto quando: print igual ao protótipo e
+      sem custo por quadro com o app parado
+- [ ] I.5 **Início = Limiar do Sonho** (selo, frase, a obra em leitura no astrolábio, "Continuar lendo", os mundos)
+- [ ] I.6 🤖 **Capas e mundos**: moldura gravada dupla, foco em ouro, títulos em Cormorant e autor em itálico; mundos
+      com losango (em `compartilhado/Obras.tsx` e nos chips). Pronto quando: os testes de componente passam e o print
+      da Biblioteca bate com `ceu-biblioteca.jpg`
+- [ ] I.7 🤖 **Leitor em pergaminho**: página clara com moldura, capitular, marca-texto em ouro, notas com borda
+      gravada e o progresso num anel (em `recursos/leitor/leitor.css`); Literata continua como opção nos Ajustes
+- [ ] I.8 Transição de abrir obra: o anel do astrolábio gira e a página se abre em luz (interrompível; nada no
+      movimento reduzido)
+- [ ] I.9 Prints novos no README, `pnpm check` + `pnpm e2e` + `pnpm check:rust`, pacote Linux
+
+**Aceite (CP1.5):** você instala o pacote e o app tem a cara do Céu antigo: Início, Biblioteca e leitor batendo com os
+prints escolhidos, o selo novo no ícone e na abertura. Depois segue o M3.
+
+### Trabalhar com outros agentes (Codex etc.)
+
+O AGENTS.md vale pra qualquer agente. Pra passar um passo 🤖: abrir uma tarefa com **o número do passo, este trecho do
+ROADMAP e os arquivos citados**; o agente trabalha numa branch `agente/<marco>-<passo>` (ex.: `agente/m1.5-i3`),
+roda `pnpm check` (e `pnpm e2e` se mexeu em tela), e não mexe fora dos arquivos do passo. A revisão confere o "pronto
+quando" e junta. Passos sem 🤖 dependem de decisão de produto ou mexem em muita coisa ao mesmo tempo: ficam com a
+sessão principal. Passos 🤖 do mesmo marco podem rodar em paralelo quando não tocam nos mesmos arquivos (no M1.5:
+I.2, I.3 e I.4 juntos; I.6 e I.7 depois do I.1).
 
 ## M3 — Núcleo Rust e biblioteca de verdade ⬜
 
