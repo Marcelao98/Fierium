@@ -15,6 +15,20 @@ Uma entrada por sessão de trabalho, **a mais nova em cima**. Modelo:
 
 ---
 
+## 2026-11-08 · Trilha "Lendo de verdade" · biblioteca no Rust, pastas, leitores de PDF e EPUB
+
+**Pedido:** ler os livros dele hoje, gastando pouco: o Claude orquestra, executores Sonnet fazem as partes.
+**Feito:** onda 0 (contrato `pastas.*`/`biblioteca.varrer`, pdfjs-dist 4.10.38 e epubjs 0.3.93, crate
+`fierium-biblioteca`); quatro executores em paralelo, revisados e juntos: biblioteca no Rust (SQLite, varredura,
+progresso, limiar, comandos no app), Ajustes → Pastas de livros, motor de PDF (Range, páginas sob demanda) e motor de
+EPUB. CSP com iframe `blob:` pro epub.js. ESLint ignora `.claude/`.
+**Medido / conferido:** `pnpm check` e `pnpm check:rust` passam depois de juntar tudo.
+**Deu errado / aprendido:** três executores nasceram na `main` antiga em vez da base do dia (o worktree parte da
+branch padrão): tiveram que ir pra base certa no meio. Dois executores no mesmo `pnpm e2e` brigam pela porta 4180.
+**Onde parou:** os limites do Claude acabando: passagem pro **Codex** no cartão
+[cartoes/lendo/CONTINUAR.md](cartoes/lendo/CONTINUAR.md) (e2e completo, teste no app de verdade, `.deb`). Branch
+dele: `codex/lendo-de-verdade`.
+
 ## 2026-11-08 · Orquestração · cartões do M1.5 ao M4, painel e /orquestra
 
 **Pedido:** o Marcelo roda os agentes no Happier; eu só orquestro e verifico (sem abrir sessões nem executar

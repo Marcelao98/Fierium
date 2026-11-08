@@ -11,7 +11,7 @@ const proibir = (...grupos) => ({
 });
 
 export default tseslint.config(
-  { ignores: ['**/node_modules/**', '**/dist/**', 'target/**', '**/test-results/**'] },
+  { ignores: ['**/node_modules/**', '**/dist/**', 'target/**', '**/test-results/**', '.claude/**'] },
   js.configs.recommended,
   ...tseslint.configs.strict,
   {
