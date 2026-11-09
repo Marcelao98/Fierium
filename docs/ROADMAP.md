@@ -194,10 +194,10 @@ Detalhes e o esboço das ondas do M3 em [ORQUESTRACAO.md](ORQUESTRACAO.md#ondas-
 
 **Objetivo:** a tua pasta de livros de verdade dentro do Fierium.
 
-- [ ] SQLite com migrações numeradas e testadas
+- [x] SQLite com migrações numeradas e testadas (migração inicial)
 - [ ] Modelo obra → edição → arquivo; UUIDv7; registro de mudanças e relógio lógico (pronto pra sincronia)
-- [ ] Escolher pastas; varrer; perceber arquivo novo, movido e apagado
-- [ ] Identidade do arquivo pelo conteúdo
+- [x] Escolher pastas; varrer; perceber arquivo novo, movido e apagado
+- [x] Identidade do arquivo pelo conteúdo (BLAKE3)
 - [ ] Capa, título, autor, ano e série de PDF, EPUB e CBZ/CBR (e pelo nome do arquivo)
 - [ ] Reconhecer obra e série; juntar e separar à mão
 - [ ] Busca (FTS5): títulos, autores, assuntos, notas
@@ -212,7 +212,7 @@ acha por autor sem acento; abrir com 2.000 arquivos cumpre o orçamento.
 
 > Cartões e ondas: [cartoes/m4/ONDAS.md](cartoes/m4/ONDAS.md) (8 cartões; o motor sozinho na onda 1).
 
-- [ ] pdf.js recebendo aos pedaços; desenha só as páginas perto da tela
+- [x] pdf.js recebendo aos pedaços; desenha só as páginas perto da tela
 - [ ] Zoom (largura, página inteira, livre), página dupla
 - [ ] Sumário e busca no livro
 - [ ] Cortar margens
@@ -225,7 +225,7 @@ e abrir volta na mesma página.
 
 ## M5 — Leitor de EPUB ⬜
 
-- [ ] foliate-js (versão fixa, vendorizada) lendo pelo Rust
+- [x] epub.js (versão fixa) lendo o arquivo pela URL do Rust
 - [ ] Fonte, tamanho, entrelinha, margens, justificar; página ou rolagem; colunas na tela larga
 - [ ] Temas de leitura; sumário; busca no livro
 - [ ] Posição exata (CFI)

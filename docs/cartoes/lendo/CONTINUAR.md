@@ -1,6 +1,6 @@
 # Cartão lendo/CONTINUAR · Terminar a trilha "Lendo de verdade" (passagem pro Codex)
 
-**Estado:** a fazer
+**Estado:** em revisão
 **Branch:** `codex/lendo-de-verdade`, saindo de `claude/eloquent-fermat-z05qmh`
 **Objetivo:** o Marcelo instala o Fierium no Linux HOJE, aponta a pasta de livros dele e lê PDF e EPUB, voltando
 onde parou.
@@ -56,7 +56,18 @@ Claude local (formato combinado na conversa: livros, diario, sessoes, metas, seq
 
 ## Relatório (o executor preenche)
 
-- **Feito:**
-- **Portões:**
-- **Prints / caminho do .deb:**
-- **O que ficou de fora:**
+- **Feito:** análise do estado inicial; `pnpm install`; build web; revisão dos testes de PDF/EPUB; testes Rust isolados;
+  atualização deste relatório, do JORNAL e do ROADMAP. Nenhuma correção de código foi necessária nos portões que
+  puderam ser executados.
+- **Portões:** `pnpm check` ✅; `pnpm e2e --trace off` ✅ (9/9); `pnpm build` ✅; `cargo fmt --all --check` ✅;
+  `cargo clippy -p fierium-core -p fierium-biblioteca --all-targets --offline -- -D warnings` ✅;
+  `cargo test -p fierium-core -p fierium-biblioteca --offline` ✅ (10 testes). `pnpm check:rust` ⚠️ e o build Tauri
+  ⚠️ não completaram: falta `gdk-3.0` (GTK 3) no Fedora. A instalação do conjunto GTK/WebKit/Xvfb não foi possível
+  porque o `sudo` desta sessão exige senha. O build Tauri iniciado da raiz também selecionou a configuração da cópia
+  local não rastreada `Fierium/`; executado a partir de `crates/fierium-app`, chegou à compilação e parou pela falta
+  de GTK.
+- **Prints / caminho do .deb:** prints do e2e em `apps/app/e2e/prints/` (interface web); `.deb` não gerado: a
+  compilação Tauri depende das bibliotecas GTK ausentes. O passo de leitura no app Tauri real e a retomada do progresso
+  no WebKitGTK continuam sem conferência.
+- **O que ficou de fora:** teste no app real com pasta sintética de 2 PDFs e 1 EPUB; geração do `.deb` e AppImage.
+  Dependem da instalação do GTK 3, WebKitGTK 4.1, bibliotecas de desenvolvimento relacionadas e Xvfb no sistema.

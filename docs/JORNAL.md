@@ -13,6 +13,23 @@ Uma entrada por sessão de trabalho, **a mais nova em cima**. Modelo:
 **Onde parou:** estado exato e o próximo passo (e se está esperando o Marcelo).
 ```
 
+## 2026-11-09 · Trilha "Lendo de verdade" · validação e passagem para revisão
+
+**Pedido:** analisar o que já existia na pasta, executar `docs/cartoes/lendo/CONTINUAR.md`, corrigir o mínimo,
+preencher o cartão, atualizar os docs e enviar `codex/lendo-de-verdade`, sem abrir PR.
+**Feito:** `pnpm install`; todos os portões web passaram (`pnpm check`, e2e 9/9 e build). `cargo fmt` passou; clippy e
+testes de `fierium-core` e `fierium-biblioteca` passaram (10 testes). Relatório do cartão preenchido e roadmap marcado
+com as entregas confirmadas. Não foi necessária alteração de código.
+**Medido / conferido:** o e2e sintético de PDF e EPUB passou no Chromium. O app Tauri real e os pacotes não puderam ser
+gerados: falta GTK 3 (`gdk-3.0.pc`); `sudo` exige senha. Build Tauri executado do crate confirmou que a pasta de assets
+está correta e parou na dependência de sistema. Os prints web estão em `apps/app/e2e/prints/`; sem `.deb`.
+**Deu errado / aprendido:** `pnpm` é um wrapper de `npx` e precisa de acesso à rede; no build do Tauri, executar da
+raiz também selecionou a configuração da cópia local não rastreada `Fierium/`. A execução do build do crate evitou essa
+cópia, mas continua exigindo as bibliotecas nativas ausentes. As pastas `Fierium/` e `fierium-agentes/` já estavam
+não rastreadas no início e foram preservadas, fora dos commits.
+**Onde parou:** cartão em revisão; pendentes o teste no app Tauri real (pasta sintética com 2 PDFs e 1 EPUB) e os
+pacotes Linux, pois dependem de instalar GTK/WebKit/Xvfb no Fedora. Branch enviada ao remoto após os commits.
+
 ---
 
 ## 2026-11-08 · Trilha "Lendo de verdade" · biblioteca no Rust, pastas, leitores de PDF e EPUB
