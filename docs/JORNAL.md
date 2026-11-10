@@ -20,7 +20,8 @@ Uma entrada por sessão de trabalho, **a mais nova em cima**. Modelo:
 o bloco inicial de 4 MiB como o documento inteiro. O motor PDF agora usa `PDFDataRangeTransport` explícito; CORS e
 preflight foram incluídos no protocolo Tauri. O PDF de 19 MB que falhava renderizou no Tauri atualizado. A tela Tauri
 de Estatísticas informa que os dados reais ainda não estão disponíveis e não mostra o exemplo; sessões reais não
-alimentam as estatísticas de demonstração. Erros do PDF também registram o detalhe técnico no log.
+alimentam as estatísticas de demonstração. Erros do PDF também registram o detalhe técnico no log. README, ROADMAP e
+cartão atualizados com o estado do Linux, comandos de instalação e itens que ainda precisam de teste manual.
 **Medido / conferido:** `pnpm check`; `pnpm e2e --trace off` (9/9); `cargo fmt --all --check`; clippy com `-D warnings`;
 testes Rust (14); pacotes `.deb` e RPM gerados. AppImage não gerou porque o download de `AppRun` expirou.
 **Onde parou:** cartão atualizado para revisão; conferir retomada de posição e EPUB no Tauri. Branch segue

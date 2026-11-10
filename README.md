@@ -35,7 +35,8 @@ Na prática, é uma **biblioteca pessoal com leitores integrados**:
 - **Ler sem distração.** A interface some enquanto você lê; temas de papel, sépia, noite e tinta.
 - **Marcar e pensar.** Cores com o significado que você der, notas, ligações entre trechos de livros diferentes,
   tudo exportável em Markdown.
-- **Estatísticas sem culpa.** Tempo, sequência (hoje sem leitura não quebra), metas que você escolhe.
+- **Estatísticas sem culpa.** Tempo, sequência e metas fazem parte do produto; no app Linux elas ficam desativadas até
+  a implementação das estatísticas reais. Os números de demonstração aparecem apenas no navegador.
 - **Seu, pra sempre.** Funciona sem internet, sem conta, e nunca altera os seus arquivos.
 
 O Fierium vai **substituir o [KOFlibrary](https://github.com/Marcelao98/KOFLibrary)** quando fizer tudo o que ele faz.
@@ -56,14 +57,38 @@ O Fierium vai **substituir o [KOFlibrary](https://github.com/Marcelao98/KOFLibra
     <td><img src="docs/imagens/linux-abertura.jpg" alt="O Fierium rodando como programa no Linux (Tauri)"></td>
   </tr>
   <tr>
-    <td align="center"><sub>Estatísticas e o calendário do ano</sub></td>
+    <td align="center"><sub>Estatísticas de demonstração no navegador</sub></td>
     <td align="center"><sub>Rodando como programa de verdade no Linux</sub></td>
   </tr>
 </table>
 
-> **Próximo passo: a identidade de Fieri ([M1.5](docs/IDENTIDADE.md)).** O visual de hoje ainda é "um app escuro
-> com estrelas". O próximo marco traz a nebulosa viva, os mundos com cor própria, as capas como artefatos de luz e o
-> Selo de Fieri lá em cima.
+> **Próximo checkpoint: validar a leitura no Linux.** O cartão [lendo/CONTINUAR](docs/cartoes/lendo/CONTINUAR.md)
+> registra os testes feitos e o que ainda falta conferir no Tauri.
+
+## Estado atual no Linux
+
+O Tauri já conecta a biblioteca local em SQLite e abre PDFs pelo protocolo interno `fierium://`. PDFs grandes usam
+requisições por intervalos; como o PDF.js não reconhece esse esquema como HTTP, o app fornece um transporte Range
+próprio. A correção foi confirmada com um PDF real de 19 MB que antes não renderizava.
+
+O motor de EPUB e seus fluxos de navegador estão implementados, mas ainda falta confirmar a abertura e a retomada de
+posição de um EPUB no Tauri. A retomada de posição também precisa de conferência no app instalado. As estatísticas
+reais ainda não foram ligadas ao Rust: no Tauri, a tela informa isso e não exibe os números fictícios do exemplo.
+
+No Linux, o build desta trilha gerou `.deb` e `.rpm`. O AppImage não foi gerado porque o download do runtime `AppRun`
+expirou. Para instalar um pacote já gerado:
+
+```bash
+sudo apt install ./target/release/bundle/deb/Fierium_*_amd64.deb
+```
+
+No Fedora:
+
+```bash
+sudo dnf install ./target/release/bundle/rpm/Fierium-*.x86_64.rpm
+```
+
+Esses arquivos ficam em `target/` e são artefatos locais; para gerar novamente, use `pnpm tauri build --bundles deb,rpm`.
 
 ## Roadmap
 
@@ -74,12 +99,12 @@ Checklist completo em [docs/ROADMAP.md](docs/ROADMAP.md).
 |---|---|---|
 | ✅ | **M0** Fundação e plano | monorepo, regras de camada, CI, documentação |
 | ✅ | **M1** Interface e arquitetura modular | início, biblioteca (grade, lista, mapa), obra, coleções, leitor, notas, estatísticas |
-| ✅ | **M2** Programa Linux (Tauri 2) | núcleo Rust, log em arquivo, arquivo aos pedaços, `.deb` e AppImage |
+| ⏸️ | **M2** Programa Linux (Tauri 2) | núcleo Rust, log em arquivo, `.deb` e `.rpm`; AppImage pendente |
 | ⏭️ | **M1.5** Identidade de Fieri | o sonho, os mundos, as constelações, o selo |
-| ⬜ | **M3** Biblioteca de verdade | SQLite, as suas pastas, capas e metadados |
-| ⬜ | **M4** Leitor de PDF | páginas sob demanda, temas que repintam a página, PDFs escaneados |
+| 🟨 | **M3** Biblioteca de verdade | SQLite e pastas conectados; metadados e aceite pendentes |
+| 🟨 | **M4** Leitor de PDF | PDF por intervalos e páginas sob demanda; recursos e aceite pendentes |
 | ⬜ | **M7 · M8** Marcações e estatísticas reais | no PDF, com a sua leitura de verdade |
-| ⬜ | **M5 · M6** EPUB e mangá | CBZ e CBR, direita → esquerda, séries |
+| 🟨 | **M5** Leitor de EPUB · ⬜ **M6** mangá | motor EPUB implementado; validar Tauri; CBZ/CBR depois |
 | ⬜ | **M9 · M10** Backup, importar o KOFlibrary, v1.0 Linux | atualização assinada |
 | ⬜ | **M11–M13** Windows, Android, sincronia | e aí o KOFlibrary se aposenta |
 

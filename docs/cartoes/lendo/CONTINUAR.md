@@ -44,10 +44,10 @@ completo depois de juntar tudo (cada parte passou sozinha).
 
 ## Pronto quando
 
-- [ ] Os quatro portões passam
+- [x] Os quatro portões passam (`pnpm check`, E2E, `cargo fmt`, clippy e testes Rust)
 - [ ] No app de verdade: pasta adicionada, PDF e EPUB abrem, fechar/reabrir volta no lugar (prints)
-- [ ] `.deb` gerado; o caminho dele está no relatório
-- [ ] JORNAL e ROADMAP atualizados
+- [x] `.deb` gerado; o caminho dele está no relatório
+- [x] JORNAL, ROADMAP e README atualizados
 
 ## Depois (não agora)
 

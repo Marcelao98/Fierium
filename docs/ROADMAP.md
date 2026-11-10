@@ -23,11 +23,11 @@ entrega um pacote Linux pra testar.
 | 2 | M1 | Protótipo de interface + arquitetura modular | v0.1 | ⏸ |
 | 3 | M2 | Tauri no Linux (pacote Linux desde aqui) | v0.2 | ⏸ |
 | 3b | M1.5 | **Identidade de Fieri** (sonho, mundos, constelações; o selo novo) — [IDENTIDADE.md](IDENTIDADE.md) | v0.2.1 | 🟨 escolhido: B Céu antigo + selo Astrolábio (D24); aplicando |
-| 4 | M3 | Núcleo Rust e biblioteca de verdade | v0.3 | ⬜ (só planejado) |
-| 5 | M4 | Leitor de PDF | v0.4 | ⬜ |
+| 4 | M3 | Núcleo Rust e biblioteca de verdade | v0.3 | 🟨 base Rust, pastas e varredura implementadas; aceite pendente |
+| 5 | M4 | Leitor de PDF | v0.4 | 🟨 motor e leitura por intervalos implementados; aceite pendente |
 | 6 | M7 | Marcações, notas e ligações (no PDF) | v0.5 | ⬜ |
 | 7 | M8 | Estatísticas e metas reais | v0.6 | ⬜ |
-| 8 | M5 | Leitor de EPUB | v0.7 | ⬜ |
+| 8 | M5 | Leitor de EPUB | v0.7 | 🟨 motor implementado; validar Tauri e fechar o marco |
 | 9 | M6 | Leitor de mangá e HQ | v0.8 | ⬜ |
 | 10 | M9 | Backup e importar o KOFlibrary | v0.9 | ⬜ |
 | 11 | M10 | Lançamento Linux | v1.0 | ⬜ |
