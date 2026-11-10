@@ -27,7 +27,7 @@ export interface EventosMotor {
   /** toque/clique no conteúdo sem selecionar nada (a casca alterna o véu) */
   toque(): void;
   /** algo deu errado dentro do motor (vai pro log e pro aviso) */
-  erro(codigo: string, mensagem: string): void;
+  erro(codigo: string, mensagem: string, detalhe?: string): void;
 }
 
 export interface OpcoesMotor {

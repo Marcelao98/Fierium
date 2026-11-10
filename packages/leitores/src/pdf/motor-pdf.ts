@@ -3,7 +3,13 @@
 // Posição = "pagina:fracao" (ex.: "37:0.42"). Marcações e seleção de texto no PDF ainda não existem.
 import type { ConfigLeitura } from '@fierium/contratos';
 import * as pdfjs from 'pdfjs-dist';
-import type { PDFDocumentProxy, PDFPageProxy, RenderTask } from 'pdfjs-dist';
+import {
+  PDFDataRangeTransport,
+  type PDFDocumentLoadingTask,
+  type PDFDocumentProxy,
+  type PDFPageProxy,
+  type RenderTask,
+} from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import type { MotorDeLeitura, OpcoesMotor, SessaoLeitura } from '../motor';
 import './pdf.css';
@@ -45,6 +51,33 @@ function configurarWorker() {
   workerConfigurado = true;
 }
 
+/** O pdf.js só habilita Range automaticamente em URLs HTTP(S); `fierium://` precisa de um transporte explícito. */
+class TransportePdf extends PDFDataRangeTransport {
+  constructor(
+    readonly url: string,
+    tamanho: number,
+    dadosIniciais: Uint8Array,
+    private readonly falha: (e: unknown) => void,
+  ) {
+    super(tamanho, dadosIniciais);
+  }
+
+  override requestDataRange(inicio: number, fim: number) {
+    void fetch(this.url, { headers: { Range: `bytes=${inicio}-${fim - 1}` } })
+      .then(async (r) => {
+        if (r.status !== 206) throw new Error(`resposta ${r.status} ao pedir bytes ${inicio}-${fim - 1}`);
+        const intervalo = r.headers.get('Content-Range');
+        if (!intervalo?.startsWith(`bytes ${inicio}-`))
+          throw new Error(`intervalo inesperado: ${intervalo ?? 'ausente'}`);
+        this.onDataRange(inicio, new Uint8Array(await r.arrayBuffer()));
+      })
+      .catch((e: unknown) => {
+        this.falha(e);
+        this.onDataRange(inicio, new Uint8Array());
+      });
+  }
+}
+
 export const motorPdf: MotorDeLeitura = {
   nome: 'pdf',
   aceita: (f) => f.tipo === 'arquivo' && f.formato === 'pdf',
@@ -72,22 +105,30 @@ export const motorPdf: MotorDeLeitura = {
     });
 
     configurarWorker();
-    const tarefaCarga = pdfjs.getDocument({
-      url: fonte.url,
-      rangeChunkSize: 65536,
-      disableAutoFetch: true,
-      disableStream: true,
-      length: fonte.tamanho,
-    });
+    const controle: { transporte?: TransportePdf; tarefa?: PDFDocumentLoadingTask } = {};
+    const tarefaCarga = (async () => {
+      const resposta = await fetch(fonte.url, { headers: { Range: 'bytes=0-65535' } });
+      if (resposta.status !== 206) throw new Error(`resposta ${resposta.status} ao pedir os bytes iniciais do PDF`);
+      const contentRange = resposta.headers.get('Content-Range');
+      if (!contentRange?.startsWith('bytes 0-'))
+        throw new Error(`intervalo inicial inesperado: ${contentRange ?? 'ausente'}`);
+      const dados = new Uint8Array(await resposta.arrayBuffer());
+      controle.transporte = new TransportePdf(fonte.url, fonte.tamanho, dados, (e) => {
+        op.eventos.erro('PDF_INTERVALO', 'Não consegui carregar uma parte deste PDF.', String(e));
+      });
+      controle.transporte.transportReady();
+      controle.tarefa = pdfjs.getDocument({ range: controle.transporte });
+      return controle.tarefa.promise;
+    })();
     let documento: PDFDocumentProxy;
     let primeira: PDFPageProxy;
     try {
-      documento = await tarefaCarga.promise;
+      documento = await tarefaCarga;
       primeira = await documento.getPage(1);
     } catch (e) {
       const { codigo, mensagem } = classificarErro(e);
-      op.eventos.erro(codigo, mensagem);
-      void tarefaCarga.destroy();
+      op.eventos.erro(codigo, mensagem, e instanceof Error ? `${e.name}: ${e.message}` : String(e));
+      controle.transporte?.abort();
       return sessaoVazia();
     }
     const n = documento.numPages;
@@ -368,7 +409,7 @@ export const motorPdf: MotorDeLeitura = {
         doc.removeEventListener('keydown', aoTeclar);
         for (let i = 0; i < n; i++) liberar(i);
         rolagem.remove();
-        void tarefaCarga.destroy();
+        void controle.tarefa?.destroy();
       },
     };
   },

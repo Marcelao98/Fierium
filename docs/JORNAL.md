@@ -13,6 +13,31 @@ Uma entrada por sessão de trabalho, **a mais nova em cima**. Modelo:
 **Onde parou:** estado exato e o próximo passo (e se está esperando o Marcelo).
 ```
 
+## 2026-11-09 · Trilha "Lendo de verdade" · PDFs grandes e estatísticas de demonstração
+
+**Pedido:** descobrir por que alguns PDFs reais não renderizam antes do commit e remover as estatísticas falsas.
+**Feito:** a causa era o esquema `fierium://`: o PDF.js só habilita Range automático em URLs HTTP(S), então tratava
+o bloco inicial de 4 MiB como o documento inteiro. O motor PDF agora usa `PDFDataRangeTransport` explícito; CORS e
+preflight foram incluídos no protocolo Tauri. O PDF de 19 MB que falhava renderizou no Tauri atualizado. A tela Tauri
+de Estatísticas informa que os dados reais ainda não estão disponíveis e não mostra o exemplo; sessões reais não
+alimentam as estatísticas de demonstração. Erros do PDF também registram o detalhe técnico no log.
+**Medido / conferido:** `pnpm check`; `pnpm e2e --trace off` (9/9); `cargo fmt --all --check`; clippy com `-D warnings`;
+testes Rust (14); pacotes `.deb` e RPM gerados. AppImage não gerou porque o download de `AppRun` expirou.
+**Onde parou:** cartão atualizado para revisão; conferir retomada de posição e EPUB no Tauri. Branch segue
+`codex/lendo-de-verdade`, sem PR.
+
+## 2026-11-09 · Trilha "Lendo de verdade" · CORS do protocolo e Tauri aberto para teste
+
+**Pedido:** depois de instalar GTK/WebKit/Xvfb, continuar os testes; no fim, abrir o app real e deixá-lo disponível para
+o Marcelo testar.
+**Feito:** `pnpm check`, e2e (9/9), `cargo fmt`, clippy e testes da workspace passaram. No Tauri real, a pasta
+sintética foi adicionada e a varredura encontrou dois PDFs e um EPUB. A leitura inicial falhou: o WebKit rejeitou as
+requisições ao protocolo `fierium://` sem CORS. O protocolo agora envia `Access-Control-Allow-Origin` e responde ao
+preflight `OPTIONS` de `Range`, com teste Rust. `.deb` e RPM recompilados; AppImage parou no timeout do download de
+`AppRun`. Smoke do Tauri atualizado passou. App aberto na sessão gráfica para teste manual do Marcelo.
+**Onde parou:** aguardando o Marcelo abrir PDF/EPUB e conferir retomada. A leitura pós-CORS ainda precisa da confirmação
+manual; AppImage também depende do runtime que não baixou.
+
 ## 2026-11-09 · Trilha "Lendo de verdade" · validação e passagem para revisão
 
 **Pedido:** analisar o que já existia na pasta, executar `docs/cartoes/lendo/CONTINUAR.md`, corrigir o mínimo,

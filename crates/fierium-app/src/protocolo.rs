@@ -33,8 +33,25 @@ pub struct Resposta {
 fn erro(status: u16, e: ErroContrato) -> Resposta {
     Resposta {
         status,
-        cabecalhos: vec![("Content-Type", "application/json".into())],
+        cabecalhos: vec![
+            ("Content-Type", "application/json".into()),
+            ("Access-Control-Allow-Origin", "*".into()),
+        ],
         corpo: serde_json::to_vec(&e).expect("erro vira json"),
+    }
+}
+
+/// Responde ao preflight dos pedidos com `Range` feitos pelo pdf.js no WebKitGTK.
+pub fn preflight() -> Resposta {
+    Resposta {
+        status: 204,
+        cabecalhos: vec![
+            ("Access-Control-Allow-Origin", "*".into()),
+            ("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS".into()),
+            ("Access-Control-Allow-Headers", "Range".into()),
+            ("Access-Control-Max-Age", "86400".into()),
+        ],
+        corpo: Vec::new(),
     }
 }
 
@@ -91,6 +108,7 @@ pub fn responder(arquivos: &Arquivos, caminho_url: &str, range: Option<&str>) ->
                 ("Content-Range", format!("bytes {}-{}/{}", i.inicio, i.fim, total)),
                 ("Content-Length", corpo.len().to_string()),
                 ("Cache-Control", "no-store".into()),
+                ("Access-Control-Allow-Origin", "*".into()),
                 (
                     "Access-Control-Expose-Headers",
                     "Content-Range, Content-Length, Accept-Ranges".into(),
@@ -117,10 +135,19 @@ mod testes {
         assert_eq!((r.status, r.corpo.as_slice()), (206, &b"%PDF-1.7"[..]));
         assert!(r.cabecalhos.contains(&("Content-Range", "bytes 0-7/19".into())));
         assert!(r.cabecalhos.contains(&("Content-Type", "application/pdf".into())));
+        assert!(r.cabecalhos.contains(&("Access-Control-Allow-Origin", "*".into())));
         assert_eq!(responder(&a, "/arquivo/x1", None).status, 200);
         assert_eq!(responder(&a, "/arquivo/x1", Some("bytes=50-")).status, 416);
         // nada de caminho solto: só pelo id registrado
         assert_eq!(responder(&a, "/arquivo/..%2F..%2Fetc%2Fpasswd", None).status, 404);
         assert_eq!(responder(&a, "/outra/x1", None).status, 404);
+    }
+
+    #[test]
+    fn preflight_permite_range_no_webkit() {
+        let r = preflight();
+        assert_eq!(r.status, 204);
+        assert!(r.cabecalhos.contains(&("Access-Control-Allow-Origin", "*".into())));
+        assert!(r.cabecalhos.contains(&("Access-Control-Allow-Headers", "Range".into())));
     }
 }

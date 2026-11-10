@@ -28,3 +28,10 @@ export function criarClienteCombinado(rust: Cliente, reserva: Cliente, noRust: R
     chamar: (cmd, args) => (noRust.has(cmd) ? rust.chamar(cmd, args) : reserva.chamar(cmd, args)),
   };
 }
+
+/** Evita misturar sessões de livros reais com as sessões do acervo de demonstração. */
+export function criarClienteSemSessoesDeDemonstracao(cliente: Cliente): Cliente {
+  return {
+    chamar: (cmd, args) => (cmd === 'sessao.registrar' ? Promise.resolve(null) : cliente.chamar(cmd, args)),
+  };
+}

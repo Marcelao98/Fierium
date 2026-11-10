@@ -6,6 +6,7 @@
 import {
   criarClienteCombinado,
   criarClienteMemoria,
+  criarClienteSemSessoesDeDemonstracao,
   criarClienteTauri,
   type Cliente,
   type Invocar,
@@ -46,8 +47,9 @@ export async function escolherPlataforma(url: URL): Promise<Plataforma> {
   const invocar: Invocar = (cmd, args) => invoke(cmd, args);
   const rust = criarClienteTauri(invocar);
   const noRust = new Set(await rust.chamar('app.comandos', {}));
+  const combinado = criarClienteSemSessoesDeDemonstracao(criarClienteCombinado(rust, memoria, noRust));
   return {
-    cliente: criarClienteCombinado(rust, memoria, noRust),
+    cliente: combinado,
     enviarLog: (l) => void invocar('chamar', { cmd: 'log.escrever', args: l }).catch(() => undefined), // o log não pode gerar log
     nome: 'tauri',
   };

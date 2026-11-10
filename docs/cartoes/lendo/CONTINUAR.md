@@ -56,18 +56,17 @@ Claude local (formato combinado na conversa: livros, diario, sessoes, metas, seq
 
 ## Relatório (o executor preenche)
 
-- **Feito:** análise do estado inicial; `pnpm install`; build web; revisão dos testes de PDF/EPUB; testes Rust isolados;
-  atualização deste relatório, do JORNAL e do ROADMAP. Nenhuma correção de código foi necessária nos portões que
-  puderam ser executados.
+- **Feito:** o motivo dos PDFs grandes foi o PDF.js não reconhecer `fierium://` como HTTP e, por isso, tratar o bloco
+  inicial de 4 MiB como o arquivo inteiro. O leitor agora fornece um transporte explícito de intervalos ao PDF.js;
+  o protocolo Rust permite CORS e preflight de `Range` no WebKitGTK. O PDF real de 19 MB que falhava agora renderiza
+  no Tauri. A tela de Estatísticas não mostra mais os números de demonstração no Tauri, e sessões de livros reais
+  deixam de ser gravadas no banco de exemplo. Ajustes cadastrou a pasta sintética e a varredura Rust encontrou os
+  3 livros; o smoke confirmou comunicação interface–Rust.
 - **Portões:** `pnpm check` ✅; `pnpm e2e --trace off` ✅ (9/9); `pnpm build` ✅; `cargo fmt --all --check` ✅;
-  `cargo clippy -p fierium-core -p fierium-biblioteca --all-targets --offline -- -D warnings` ✅;
-  `cargo test -p fierium-core -p fierium-biblioteca --offline` ✅ (10 testes). `pnpm check:rust` ⚠️ e o build Tauri
-  ⚠️ não completaram: falta `gdk-3.0` (GTK 3) no Fedora. A instalação do conjunto GTK/WebKit/Xvfb não foi possível
-  porque o `sudo` desta sessão exige senha. O build Tauri iniciado da raiz também selecionou a configuração da cópia
-  local não rastreada `Fierium/`; executado a partir de `crates/fierium-app`, chegou à compilação e parou pela falta
-  de GTK.
-- **Prints / caminho do .deb:** prints do e2e em `apps/app/e2e/prints/` (interface web); `.deb` não gerado: a
-  compilação Tauri depende das bibliotecas GTK ausentes. O passo de leitura no app Tauri real e a retomada do progresso
-  no WebKitGTK continuam sem conferência.
-- **O que ficou de fora:** teste no app real com pasta sintética de 2 PDFs e 1 EPUB; geração do `.deb` e AppImage.
-  Dependem da instalação do GTK 3, WebKitGTK 4.1, bibliotecas de desenvolvimento relacionadas e Xvfb no sistema.
+  `cargo clippy --workspace --all-targets --offline -- -D warnings` ✅; `cargo test --workspace --offline` ✅ (14 testes).
+  `.deb` e RPM gerados. AppImage ⚠️: download do `AppRun` encerrou com `timeout: global`.
+- **Prints / caminho do .deb:** prints web em `apps/app/e2e/prints/`; captura da biblioteca Tauri em `/tmp/fierium-biblioteca.png`;
+  `.deb`: `target/release/bundle/deb/Fierium_0.2.0_amd64.deb`.
+- **O que ficou de fora:** confirmar a retomada de posição e a renderização de EPUB no Tauri atualizado. O PDF real
+  grande foi aberto e renderizado no Tauri; os fluxos PDF e EPUB no Chromium passaram nos E2E. AppImage pendente do
+  download do runtime `AppRun`.

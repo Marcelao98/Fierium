@@ -212,7 +212,7 @@ acha por autor sem acento; abrir com 2.000 arquivos cumpre o orçamento.
 
 > Cartões e ondas: [cartoes/m4/ONDAS.md](cartoes/m4/ONDAS.md) (8 cartões; o motor sozinho na onda 1).
 
-- [x] pdf.js recebendo aos pedaços; desenha só as páginas perto da tela
+- [x] pdf.js recebendo aos pedaços (inclui transporte Range explícito no `fierium://`); desenha só as páginas perto da tela
 - [ ] Zoom (largura, página inteira, livre), página dupla
 - [ ] Sumário e busca no livro
 - [ ] Cortar margens

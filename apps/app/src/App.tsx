@@ -22,7 +22,7 @@ import { TelaObra } from './recursos/obra/Tela';
 // a vitrine (cada componente sozinho) só existe em desenvolvimento e não entra no pacote final
 const Vitrine = import.meta.env.DEV ? lazy(() => import('./dev/Vitrine')) : null;
 
-export function App({ recursos }: { recursos: Recursos }) {
+export function App({ recursos, estatisticasDisponiveis }: { recursos: Recursos; estatisticasDisponiveis: boolean }) {
   const rota = useNavegacao((s) => s.rota);
   const leitura = useNavegacao((s) => s.leitura);
   const primeiraVez = useConfig()?.primeiraVez;
@@ -43,7 +43,17 @@ export function App({ recursos }: { recursos: Recursos }) {
         {rota.tela === 'colecoes' && <TelaColecoes colecoes={recursos.colecoes} />}
         {rota.tela === 'colecao' && <TelaColecao colecoes={recursos.colecoes} id={rota.id} />}
         {rota.tela === 'notas' && <TelaNotas notas={recursos.notas} />}
-        {rota.tela === 'estatisticas' && <TelaEstatisticas estatisticas={recursos.estatisticas} />}
+        {rota.tela === 'estatisticas' &&
+          (estatisticasDisponiveis ? (
+            <TelaEstatisticas estatisticas={recursos.estatisticas} />
+          ) : (
+            <section className="painel f-cartao">
+              <h1>Estatísticas</h1>
+              <p>
+                As estatísticas reais ainda não estão disponíveis neste app. Nenhum dado de demonstração é mostrado.
+              </p>
+            </section>
+          ))}
         {rota.tela === 'ajustes' && <TelaAjustes pastas={recursos.pastas} />}
         {rota.tela === 'vitrine' && Vitrine && (
           <Suspense fallback={null}>

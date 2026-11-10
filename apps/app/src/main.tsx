@@ -55,7 +55,7 @@ async function iniciar(raiz: HTMLElement) {
   createRoot(raiz).render(
     <StrictMode>
       <ProvedorNucleo valor={{ servicos: app.servicos, config: app.config }}>
-        <App recursos={app.recursos} />
+        <App recursos={app.recursos} estatisticasDisponiveis={plataforma.nome === 'navegador'} />
       </ProvedorNucleo>
     </StrictMode>,
   );

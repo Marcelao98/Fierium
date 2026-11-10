@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { criarClienteMemoria } from './memoria/memoria';
-import { criarClienteCombinado, criarClienteTauri } from './tauri';
+import { criarClienteCombinado, criarClienteSemSessoesDeDemonstracao, criarClienteTauri } from './tauri';
 
 describe('adaptador Tauri e combinado', () => {
   it('manda o comando pela porta única e traz o erro do Rust com o código', async () => {
@@ -24,5 +24,12 @@ describe('adaptador Tauri e combinado', () => {
     const c = criarClienteCombinado(rust, criarClienteMemoria(), new Set(['app.info']));
     expect((await c.chamar('app.info', {})).adaptador).toBe('tauri');
     expect((await c.chamar('obras.listar', {})).length).toBe(40);
+  });
+  it('não registra no acervo de demonstração sessões de livros reais', async () => {
+    const memoria = criarClienteMemoria();
+    const c = criarClienteSemSessoesDeDemonstracao(memoria);
+    const antes = await memoria.chamar('estatisticas.resumo', {});
+    await expect(c.chamar('sessao.registrar', { edicaoId: 'real', segundos: 30, paginas: 2 })).resolves.toBeNull();
+    expect(await memoria.chamar('estatisticas.resumo', {})).toEqual(antes);
   });
 });

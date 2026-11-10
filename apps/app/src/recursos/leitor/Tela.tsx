@@ -84,8 +84,8 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
               leitor.selecionar(null);
               setVeu((v) => !v);
             },
-            erro: (codigo, mensagem) => {
-              servicos.log.registrar('erro', 'leitor', `${codigo}: ${mensagem}`);
+            erro: (codigo, mensagem, detalhe) => {
+              servicos.log.registrar('erro', 'leitor', `${codigo}: ${mensagem}`, detalhe ? { detalhe } : undefined);
               servicos.avisar(`${mensagem} (${codigo})`, 'erro');
             },
           },

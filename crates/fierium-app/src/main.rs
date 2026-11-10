@@ -44,6 +44,15 @@ fn main() {
         .manage(ctx)
         .register_asynchronous_uri_scheme_protocol("fierium", |ctx, pedido, responder| {
             use tauri::Manager;
+            if pedido.method() == tauri::http::Method::OPTIONS {
+                let r = protocolo::preflight();
+                let mut b = tauri::http::Response::builder().status(r.status);
+                for (k, v) in r.cabecalhos {
+                    b = b.header(k, v);
+                }
+                responder.respond(b.body(r.corpo).expect("preflight do protocolo"));
+                return;
+            }
             let ctx = ctx.app_handle().state::<comandos::Contexto>();
             let range = pedido
                 .headers()
