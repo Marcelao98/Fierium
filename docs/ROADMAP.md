@@ -22,7 +22,7 @@ entrega um pacote Linux pra testar.
 | 1 | M0 | Fundação e plano | — | ✅ (feito) |
 | 2 | M1 | Protótipo de interface + arquitetura modular | v0.1 | ⏸ |
 | 3 | M2 | Tauri no Linux (pacote Linux desde aqui) | v0.2 | ⏸ |
-| 3b | M1.5 | **Identidade de Fieri** (sonho, mundos, constelações; o selo novo) — [IDENTIDADE.md](IDENTIDADE.md) | v0.2.1 | 🟨 escolhido: B Céu antigo + selo Astrolábio (D24); aplicando |
+| 3b | M1.5 | **Identidade de Fieri** (sonho, mundos, constelações; o selo novo) — [IDENTIDADE.md](IDENTIDADE.md) | v0.2.1 | 🟨 I.1, I.2, I.5 feitos; I.7 pronto pra revisar (`agente/m1.5-i7`); I.3, I.4, I.6, I.8, I.9 a fazer |
 | 4 | M3 | Núcleo Rust e biblioteca de verdade | v0.3 | 🟨 base Rust, pastas e varredura implementadas; aceite pendente |
 | 5 | M4 | Leitor de PDF | v0.4 | 🟨 motor e leitura por intervalos implementados; aceite pendente |
 | 6 | M7 | Marcações, notas e ligações (no PDF) | v0.5 | ⬜ |
