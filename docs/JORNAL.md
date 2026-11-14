@@ -58,6 +58,16 @@ pacotes Linux, pois dependem de instalar GTK/WebKit/Xvfb no Fedora. Branch envia
 
 ---
 
+## 2026-11-14 · Passagem · o Codex fechou a trilha "Lendo de verdade"; próximo agente
+
+**Feito (Codex, branch `codex/lendo-de-verdade`, já trazida pra `claude/eloquent-fermat-z05qmh`):** PDF grande
+consertado (o pdf.js não tratava `fierium://` como HTTP: transporte de intervalos próprio + CORS/preflight de Range no
+protocolo); Estatísticas sem números de demonstração no Tauri; 4 portões verdes; `.deb` e RPM gerados (AppImage
+falhou no download do `AppRun`). PDF real de 19 MB abriu no Tauri.
+**Falta conferir:** EPUB no Tauri e a volta na posição ao reabrir.
+**Onde parou:** ROADMAP com o estado real; ordem pro próximo agente em
+[cartoes/PROXIMO.md](cartoes/PROXIMO.md): CP "Lendo" → importar estatísticas do KOFlibrary → resto do M3 → M4 → M1.5.
+
 ## 2026-11-08 · Trilha "Lendo de verdade" · biblioteca no Rust, pastas, leitores de PDF e EPUB
 
 **Pedido:** ler os livros dele hoje, gastando pouco: o Claude orquestra, executores Sonnet fazem as partes.
