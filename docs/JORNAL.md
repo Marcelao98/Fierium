@@ -58,6 +58,16 @@ pacotes Linux, pois dependem de instalar GTK/WebKit/Xvfb no Fedora. Branch envia
 
 ---
 
+## 2026-11-16 · Prioridade nova · temas da página e marcações/citações
+
+**Pedido:** prioridade = temas do PDF (todos os do KOFlibrary, mais até ~100, cor de fundo e de letra livres) e
+marcações/citações com um jeito de acessar depois.
+**Feito:** os 22 temas e o algoritmo do Pintor tirados do KOFlibrary (`nucleo/Temas.kf`, `nucleo/Pintor.kf`) e
+escritos no cartão; cartões [m7/t1](cartoes/m7/t1-temas-da-pagina.md), [m7/m1](cartoes/m7/m1-marcacoes.md),
+[m7/m2](cartoes/m7/m2-citacoes.md) e a fila nova em [PROXIMO.md](cartoes/PROXIMO.md).
+**Decidido:** D29.
+**Onde parou:** ⏸ o Marcelo dispara o próximo agente (CP "Lendo" → T1 → M1 → M2 → CP7a).
+
 ## 2026-11-14 · Passagem · o Codex fechou a trilha "Lendo de verdade"; próximo agente
 
 **Feito (Codex, branch `codex/lendo-de-verdade`, já trazida pra `claude/eloquent-fermat-z05qmh`):** PDF grande

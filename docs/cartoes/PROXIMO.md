@@ -17,19 +17,23 @@
 
 ## Ordem recomendada (cada item = um commit ou mais; ⏸ = parar)
 
+> **Prioridade do Marcelo (2026-11-16, D29):** temas da página e marcações/citações vêm logo depois do CP "Lendo":
+> cartões em [m7/ONDAS.md](m7/ONDAS.md) (T1 temas → M1 marcações → M2 citações → ⏸ CP7a).
+
 1. **CP "Lendo"** ⏸ — no app de verdade (Linux, `ferramentas/fumaca-linux.sh` ajuda): pasta sintética com PDF e EPUB,
    abrir, rolar, fechar, reabrir → volta no lugar. Consertar o que falhar. Gerar o `.deb`. Parar: o Marcelo instala e lê.
-2. **Importar as estatísticas do KOFlibrary** (pedido do Marcelo) — ler `~/fierium-importar/koflibrary-estatisticas.json`
+2. **Temas, marcações e citações** — [m7/ONDAS.md](m7/ONDAS.md), na ordem T1 → M1 → M2. ⏸ CP7a
+3. **Importar as estatísticas do KOFlibrary** (pedido do Marcelo) — ler `~/fierium-importar/koflibrary-estatisticas.json`
    (formato: `versao, origem, livros[], diario[], sessoes[], metas[], sequencia`): um comando Rust `importar.koflibrary`
    que grava sessões/diário e casa o progresso pelos livros de mesmo nome+tamanho; um botão em Ajustes; a tela de
    Estatísticas passando a ler o Rust. Cartão novo em `docs/cartoes/m9/importar-koflibrary.md` antes de codar. ⏸
-3. **M3, o que falta** — cartões `docs/cartoes/m3/03`, `04`, `05` (título/autor/capa de dentro do arquivo), `08`, `09`,
+4. **M3, o que falta** — cartões `docs/cartoes/m3/03`, `04`, `05` (título/autor/capa de dentro do arquivo), `08`, `09`,
    `10`, `13`. Os cartões existentes assumem a estrutura planejada (`fierium-dados`); adapte à crate que existe
    (`fierium-biblioteca`) e anote a diferença no relatório. ⏸ CP3
-4. **M4, o que falta** — `docs/cartoes/m4/02`–`08`. ⏸ CP4
-5. **M1.5, o que falta** — revisar e juntar `agente/m1.5-i7`; cartões `i3`, `i4`, `i6`, `i8`; depois I.9 (prints,
+5. **M4, o que falta** — `docs/cartoes/m4/02`–`08` (o 05, Pintor, já sai no T1). ⏸ CP4
+6. **M1.5, o que falta** — revisar e juntar `agente/m1.5-i7`; cartões `i3`, `i4`, `i6`, `i8`; depois I.9 (prints,
    README, pacote). ⏸ CP1.5
-6. M7, M8… — fatiar em cartões quando chegar (veja `docs/ORQUESTRACAO.md`).
+7. O resto do M7 (ligações entre marcações), M8… — fatiar em cartões quando chegar (veja `docs/ORQUESTRACAO.md`).
 
 ## Portões (sempre)
 
