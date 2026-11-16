@@ -38,4 +38,4 @@ dependências, integração).
 ## O dono
 
 Marcelo (Marcelao98). Português do Brasil, informal, direto; escreve por voz (muitos erros de digitação: entenda a
-intenção). Usa **Linux** (prioridade). Liga pra economia de tokens: faça o que foi pedido.
+intenção). Usa **Linux, Fedora** (prioridade): pacote `.rpm` ou o executável direto (`cargo build --release -p fierium-app --features tauri/custom-protocol` depois do `pnpm build`), nunca `.deb`. Liga pra economia de tokens: faça o que foi pedido.
