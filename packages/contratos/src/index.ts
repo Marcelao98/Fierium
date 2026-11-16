@@ -289,6 +289,8 @@ export interface Comandos {
   'pastas.listar': [Record<string, never>, PastaBiblioteca[]];
   'pastas.adicionar': [{ caminho: string }, PastaBiblioteca[]];
   'pastas.remover': [{ caminho: string }, PastaBiblioteca[]];
+  /** pastas comuns que existem neste computador (~/Livros, ~/Documentos…) e ainda dá pra sugerir */
+  'pastas.sugestoes': [Record<string, never>, string[]];
   /** M3: procura PDF e EPUB nas pastas e atualiza a biblioteca */
   'biblioteca.varrer': [Record<string, never>, ResultadoVarredura];
 }

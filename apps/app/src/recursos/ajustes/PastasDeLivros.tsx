@@ -7,6 +7,7 @@ export function PastasDeLivros({ pastas }: { pastas: Pastas }) {
   const varrendo = useFatia(pastas.store, (s) => s.varrendo);
   const resultado = useFatia(pastas.store, (s) => s.resultado);
   const erro = useFatia(pastas.store, (s) => s.erro);
+  const sugestoes = useFatia(pastas.store, (s) => s.sugestoes);
   const [caminho, setCaminho] = useState('');
 
   useEffect(() => void pastas.carregar(), [pastas]);
@@ -21,7 +22,12 @@ export function PastasDeLivros({ pastas }: { pastas: Pastas }) {
       <div className="pastas-cab">
         <div>
           Pastas de livros
-          <small>Onde moram os seus PDF e EPUB. Digite ou cole o caminho (ex.: ~/Livros)</small>
+          <small>
+            Onde moram os seus PDF e EPUB.{' '}
+            {pastas.podeEscolher
+              ? 'Escolha a pasta no seletor do sistema.'
+              : 'Digite ou cole o caminho (ex.: ~/Livros).'}
+          </small>
         </div>
         <button className="f-botao" disabled={varrendo || lista.length === 0} onClick={() => void pastas.varrer()}>
           {varrendo ? 'Procurando…' : 'Procurar livros agora'}
@@ -44,6 +50,30 @@ export function PastasDeLivros({ pastas }: { pastas: Pastas }) {
           </li>
         ))}
       </ul>
+      {pastas.podeEscolher && (
+        <div className="pastas-escolher">
+          <button className="f-botao" data-tipo="luz" disabled={varrendo} onClick={() => void pastas.escolher()}>
+            Escolher pasta…
+          </button>
+        </div>
+      )}
+      {sugestoes.length > 0 && (
+        <div className="pastas-sugestoes" aria-label="Pastas sugeridas">
+          <small>Sugestões:</small>
+          {sugestoes.map((c) => (
+            <button
+              key={c}
+              className="f-botao"
+              data-tamanho="p"
+              disabled={varrendo}
+              onClick={() => void pastas.adicionar(c)}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
+      {pastas.podeEscolher && <small className="pastas-ou">ou digite o caminho</small>}
       <form
         className="pastas-novo"
         onSubmit={(e) => {

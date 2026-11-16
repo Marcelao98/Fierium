@@ -26,6 +26,8 @@ export interface Plataforma {
   cliente: Cliente;
   /** manda uma linha pro log em arquivo do núcleo (só no app; no navegador não existe) */
   enviarLog: ((linha: { nivel: string; origem: string; mensagem: string; dados?: unknown }) => void) | null;
+  /** seletor de pastas do sistema (só no app) */
+  escolherPastas: (() => Promise<string[]>) | null;
   nome: 'tauri' | 'navegador';
 }
 
@@ -41,16 +43,22 @@ export async function escolherPlataforma(url: URL): Promise<Plataforma> {
   }
   const atraso = Number(url.searchParams.get('atraso') ?? 0);
   const memoria = criarClienteMemoria({ guardar, ...(atraso > 0 ? { atraso } : {}) });
-  if (!ehTauri()) return { cliente: memoria, enviarLog: null, nome: 'navegador' };
+  if (!ehTauri()) return { cliente: memoria, enviarLog: null, escolherPastas: null, nome: 'navegador' };
 
   const { invoke } = await import('@tauri-apps/api/core');
   const invocar: Invocar = (cmd, args) => invoke(cmd, args);
+  const { open } = await import('@tauri-apps/plugin-dialog');
+  const escolherPastas = async () => {
+    const r = await open({ directory: true, multiple: true, title: 'Escolha a pasta dos seus livros' });
+    return r === null ? [] : Array.isArray(r) ? r : [r];
+  };
   const rust = criarClienteTauri(invocar);
   const noRust = new Set(await rust.chamar('app.comandos', {}));
   const combinado = criarClienteSemSessoesDeDemonstracao(criarClienteCombinado(rust, memoria, noRust));
   return {
     cliente: combinado,
     enviarLog: (l) => void invocar('chamar', { cmd: 'log.escrever', args: l }).catch(() => undefined), // o log não pode gerar log
+    escolherPastas,
     nome: 'tauri',
   };
 }

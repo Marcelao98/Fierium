@@ -28,7 +28,26 @@ export function Abertura() {
     );
     setPasso('formando');
   };
-  const escolher = () => {
+  const escolher = async () => {
+    // no app: abre o seletor direto; sem seletor (ou se a pessoa cancelar), cai nos Ajustes
+    if (servicos.escolherPastas) {
+      let escolhidas: string[] = [];
+      try {
+        escolhidas = await servicos.escolherPastas();
+      } catch (e) {
+        servicos.avisar(`Não consegui abrir o seletor de pastas: ${(e as Error)?.message ?? String(e)}`, 'erro');
+      }
+      for (const caminho of escolhidas) {
+        await servicos.chamar('pastas.adicionar', { caminho }).catch(() => undefined); // o aviso já saiu
+      }
+      if (escolhidas.length > 0) {
+        await servicos.chamar('biblioteca.varrer', {}).catch(() => undefined);
+        servicos.eventos.emitir('biblioteca-mudou', {});
+        void config.mudar((c) => ({ ...c, primeiraVez: false })).catch(() => undefined);
+        ir({ tela: 'inicio' });
+        return;
+      }
+    }
     ir({ tela: 'ajustes' });
     void config.mudar((c) => ({ ...c, primeiraVez: false })).catch(() => undefined);
   };
@@ -63,7 +82,7 @@ export function Abertura() {
             <div className="abertura-acoes">
               {noApp ? (
                 <>
-                  <button className="f-botao" data-tipo="luz" onClick={escolher}>
+                  <button className="f-botao" data-tipo="luz" onClick={() => void escolher()}>
                     Escolher a pasta dos meus livros
                   </button>
                   <button className="f-botao" data-tipo="fantasma" onClick={exemplo}>

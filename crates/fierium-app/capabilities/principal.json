@@ -3,5 +3,5 @@
   "identifier": "principal",
   "description": "O que a janela principal pode fazer: só o mínimo do núcleo do Tauri e os comandos do Fierium.",
   "windows": ["principal"],
-  "permissions": ["core:default"]
+  "permissions": ["core:default", "dialog:allow-open"]
 }

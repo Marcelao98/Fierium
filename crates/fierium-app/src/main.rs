@@ -41,6 +41,7 @@ fn main() {
     };
 
     let resultado = tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .manage(ctx)
         .register_asynchronous_uri_scheme_protocol("fierium", |ctx, pedido, responder| {
             use tauri::Manager;
