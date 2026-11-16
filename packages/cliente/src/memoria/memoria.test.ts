@@ -115,3 +115,37 @@ describe('guardar entre recarregamentos', () => {
     expect((await b.chamar('obra.obter', { id: o!.id })).relacao.favorita).toBe(true);
   });
 });
+
+describe('obra ≠ arquivo', () => {
+  it('juntar duas obras soma as edições e as marcações; separar devolve a edição numa obra própria', async () => {
+    const c = cliente();
+    const [dc] = await c.chamar('obras.listar', { texto: 'dom casmurro' });
+    const [ira] = await c.chamar('obras.listar', { texto: 'iracema' });
+    const antes = (await c.chamar('obras.listar', {})).length;
+    const marcasDc = (await c.chamar('marcacoes.listar', { obraId: dc!.id })).length;
+    const marcasIra = (await c.chamar('marcacoes.listar', { obraId: ira!.id })).length;
+
+    const junta = await c.chamar('obra.juntar', { ids: [dc!.id, ira!.id] });
+    expect(junta.id).toBe(dc!.id);
+    expect(junta.edicoes.map((e) => e.id).sort()).toEqual([dc!.edicoes[0]!.id, ira!.edicoes[0]!.id].sort());
+    expect(junta.edicoes.every((e) => e.obraId === dc!.id)).toBe(true);
+    expect((await c.chamar('obras.listar', {})).length).toBe(antes - 1);
+    expect((await c.chamar('marcacoes.listar', { obraId: dc!.id })).length).toBe(marcasDc + marcasIra);
+    await expect(c.chamar('obra.obter', { id: ira!.id })).rejects.toMatchObject({ codigo: 'NAO_ENCONTRADO' });
+
+    const nova = await c.chamar('edicao.separar', { edicaoId: ira!.edicoes[0]!.id });
+    expect(nova.id).not.toBe(dc!.id);
+    expect(nova.edicoes.map((e) => e.id)).toEqual([ira!.edicoes[0]!.id]);
+    expect((await c.chamar('obra.obter', { id: dc!.id })).edicoes.length).toBe(1);
+    expect((await c.chamar('obras.listar', {})).length).toBe(antes);
+    expect((await c.chamar('marcacoes.listar', { obraId: nova.id })).length).toBe(marcasIra);
+  });
+  it('não junta uma obra com ela mesma nem separa a única edição', async () => {
+    const c = cliente();
+    const [dc] = await c.chamar('obras.listar', { texto: 'dom casmurro' });
+    await expect(c.chamar('obra.juntar', { ids: [dc!.id, dc!.id] })).rejects.toBeInstanceOf(ErroFierium);
+    await expect(c.chamar('edicao.separar', { edicaoId: dc!.edicoes[0]!.id })).rejects.toMatchObject({
+      codigo: 'ARGUMENTO_INVALIDO',
+    });
+  });
+});

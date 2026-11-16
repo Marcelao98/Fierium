@@ -2,7 +2,7 @@
 import type { EstadoLeitura, Formato, Ordem } from '@fierium/contratos';
 import { Icone } from '@fierium/ui';
 import { useEffect, useMemo, useState } from 'react';
-import { autorDe, Capa, CartaoObra, fracaoDe } from '../../compartilhado/Obras';
+import { autorDe, Capa, CartaoObra, formatosDe, fracaoDe } from '../../compartilhado/Obras';
 import { useFatia } from '../../nucleo/contexto';
 import { ir } from '../../nucleo/navegacao';
 import type { Biblioteca } from './estado';
@@ -175,7 +175,7 @@ export function TelaBiblioteca({ biblioteca, lente }: { biblioteca: Biblioteca; 
                   <Capa obra={o} compacto />
                   <span>{o.titulo}</span>
                   <span className="secundario">{autorDe(o)}</span>
-                  <span className="secundario">{o.edicoes[0]?.formato.toUpperCase()}</span>
+                  <span className="secundario">{formatosDe(o)}</span>
                   <span className="secundario">
                     {o.relacao.estado === 'lida'
                       ? 'Lida'

@@ -57,9 +57,28 @@ export function criarObra(s: Servicos) {
   };
   s.eventos.ouvir('marcacoes-mudaram', recarregar);
   s.eventos.ouvir('colecoes-mudaram', () => recarregar());
+  /** Junta outra obra nesta (as edições, as marcações e o progresso da outra vêm pra cá). */
+  async function juntar(outraId: string) {
+    const o = store.getState().obra;
+    if (!o) return;
+    const obra = await s.chamar('obra.juntar', { ids: [o.id, outraId] });
+    store.setState({ obra });
+    s.eventos.emitir('biblioteca-mudou', {});
+    await abrir(obra.id);
+  }
+  /** Separa uma edição: ela vira uma obra própria. Devolve o id da obra nova. */
+  async function separar(edicaoId: string): Promise<string> {
+    const nova = await s.chamar('edicao.separar', { edicaoId });
+    s.eventos.emitir('biblioteca-mudou', {});
+    if (atual) await abrir(atual);
+    return nova.id;
+  }
   return {
     store,
     abrir,
+    juntar,
+    separar,
+    todas: () => s.chamar('obras.listar', { ordem: 'titulo' }),
     favoritar: (favorita: boolean) => atualizar({ favorita }),
     marcarComoLida: () => atualizar({ estado: 'lida' }),
   };

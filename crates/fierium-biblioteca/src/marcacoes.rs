@@ -122,7 +122,7 @@ impl Biblioteca {
         let achou: Option<String> = self
             .bd
             .query_row(
-                "SELECT o.id FROM obras o WHERE o.id = ?1 AND o.arquivo_id = ?2",
+                "SELECT obra_id FROM edicoes WHERE obra_id = ?1 AND id = ?2",
                 params![obra_id, edicao_id],
                 |r| r.get(0),
             )
@@ -343,7 +343,7 @@ mod testes {
     }
 
     #[test]
-    fn banco_v1_migra_pra_v2_sem_perder_nada() {
+    fn banco_v1_migra_ate_a_versao_atual_sem_perder_nada() {
         let dados = tempfile::tempdir().unwrap();
         let caminho = dados.path().join("fierium.db");
         {
@@ -373,7 +373,7 @@ mod testes {
         let m = nova(&b, "o1", "a1", "oi", "importante");
         assert_eq!(m["obraId"], "o1");
         let v: i64 = b.bd.query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
-        assert_eq!(v, 2);
+        assert_eq!(v, super::super::VERSAO_BANCO);
     }
 
     #[test]

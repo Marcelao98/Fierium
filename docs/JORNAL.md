@@ -13,6 +13,27 @@ Uma entrada por sessão de trabalho, **a mais nova em cima**. Modelo:
 **Onde parou:** estado exato e o próximo passo (e se está esperando o Marcelo).
 ```
 
+## 2026-11-16 · Cartão local/epub-e-obras · EPUB no app de verdade e obra ≠ arquivo
+
+**Pedido:** na biblioteca, PDFs e EPUBs juntos e todos funcionando no app instalado (ler, mudar página/capítulo,
+tema da página, anotar, voltar no lugar); o mesmo livro em PDF e EPUB (ou em duas pastas) como UMA obra com edições.
+**Feito:** (1) o EPUB do Marcelo não aparecia porque a varredura só rodava nos Ajustes: agora roda ao abrir o app, fora
+da linha da janela. (2) No WebKit, o iframe do epub.js sem `allow-scripts` não roda nenhum ouvinte: não dava pra
+marcar, nem botão direito, nem teclado dentro do capítulo; liguei `allowScriptedContent` e o motor arranca os scripts
+do livro. (3) Coluna do EPUB centralizada; tempo limite no abrir. (4) Migração v3: obra → edições → arquivos, chave por
+título + autor, mesma impressão = uma edição; `obra.juntar` e `edicao.separar` (Rust, contrato, exemplo, página da
+obra); cópia do banco antes de migrar. Detalhes no relatório do cartão.
+**Medido / conferido:** `pnpm check` (93), `pnpm check:rust` (25), `pnpm e2e --trace off` (20/20). No executável de
+release, com a pasta real (13 PDFs + 1 EPUB): os 14 abrem; EPUB e 3 PDFs com página/capítulo, tema, marcação com nota
+e reabrir no lugar. Cópia do banco real migrou sem perder os 4 progressos.
+**Deu errado / aprendido:** a CSP não era o problema; o e2e no Chromium não pega o que só o WebKit faz (iframe em
+sandbox). Pra testar o app de verdade sem mão humana: um roteiro JS injetado na janela (`on_page_load` + `eval`,
+remendo local que NÃO foi commitado) e o console do WebKit no stdout. `tauri dev` não serve pra conferir CSP (o
+conteúdo vem do Vite); o que vale é o executável com `tauri/custom-protocol`.
+**Onde parou:** branch `local/epub-e-obras` enviada, sem PR; executável instalado com `ferramentas/instalar-linux.sh`.
+Esperando o Marcelo testar. Próximo passo natural: ler título/autor/capa de dentro do EPUB e do PDF (m3/03–04), que
+é o que falta pra obra juntar sozinha quando os nomes dos arquivos não batem.
+
 ## 2026-11-09 · Trilha "Lendo de verdade" · PDFs grandes e estatísticas de demonstração
 
 **Pedido:** descobrir por que alguns PDFs reais não renderizam antes do commit e remover as estatísticas falsas.

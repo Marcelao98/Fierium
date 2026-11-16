@@ -132,3 +132,46 @@
   margin-right: 6px;
   background: var(--cor-marca);
 }
+
+.edicao-acoes {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.juntar {
+  margin-top: 12px;
+  padding: 14px;
+  display: grid;
+  gap: 10px;
+}
+.juntar p {
+  margin: 0;
+  color: var(--texto-2);
+}
+.juntar-lista {
+  display: grid;
+  gap: 4px;
+}
+.juntar-item {
+  display: grid;
+  gap: 2px;
+  text-align: left;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+.juntar-item:hover,
+.juntar-item:focus-visible {
+  border-color: var(--luz);
+}
+.juntar-item span,
+.juntar-vazio {
+  color: var(--texto-3);
+  font-size: 0.85em;
+}
+.secao > .f-botao {
+  margin-top: var(--espaco-2);
+}

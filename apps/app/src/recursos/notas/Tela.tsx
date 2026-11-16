@@ -84,7 +84,7 @@ export function TelaNotas({ notas }: { notas: Notas }) {
   };
   const textoCitacao = (m: Marcacao) => citacao(m, obras.get(m.obraId), formato);
   const exportar = (lista: Marcacao[], arquivo: string) => baixar(arquivo, paraMarkdown(lista, obras, nomeCor));
-  const abrir = (obra: Obra, e: React.MouseEvent, m: Marcacao) => lerObra(obra, e, m.id);
+  const abrir = (obra: Obra, e: React.MouseEvent, m: Marcacao) => lerObra(obra, e, m.id, m.edicaoId);
 
   return (
     <>

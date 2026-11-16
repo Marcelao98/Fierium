@@ -1,12 +1,14 @@
 // A página de uma obra: a obra (não o arquivo). Mostra as edições e os arquivos de cada uma, o progresso, as marcações
 // e as obras da mesma constelação (mesmo autor, mesma área, mesmos assuntos).
 import { Anel, Icone } from '@fierium/ui';
-import { useEffect } from 'react';
+import type { Obra } from '@fierium/contratos';
+import { useEffect, useState } from 'react';
 import { CartaoMarcacao, useCores } from '../../compartilhado/Marcacoes';
 import {
   autorDe,
   Capa,
   CartaoObra,
+  formatosDe,
   fracaoDe,
   haQuanto,
   lerObra,
@@ -23,7 +25,9 @@ const tamanho = (b: number) => (b > 1e6 ? `${(b / 1e6).toFixed(1)} MB` : `${Math
 export function TelaObra({ estado, id }: { estado: PaginaObraEstado; id: string }) {
   const { obra, marcacoes: marcacoesDaObra, colecoes, parecidas } = useFatia(estado.store, (s) => s);
   const cores = useCores();
+  const [juntando, setJuntando] = useState(false);
   useEffect(() => {
+    setJuntando(false);
     void estado.abrir(id).catch(() => undefined);
   }, [estado, id]);
   if (!obra || obra.id !== id) return <p className="carregando">Abrindo…</p>;
@@ -95,23 +99,76 @@ export function TelaObra({ estado, id }: { estado: PaginaObraEstado; id: string 
 
           <section className="secao">
             <h2>Edições e arquivos</h2>
-            {obra.edicoes.map((e) => (
-              <div key={e.id} className="edicao f-cartao">
-                <span className="formato">{e.formato.toUpperCase()}</span>
-                <div>
-                  {e.descricao} · {e.idioma}
-                  {e.paginas ? ` · ${e.paginas} páginas` : ''}
-                  {e.arquivos.map((a) => (
-                    <small key={a.id}>
-                      {a.caminho} · {tamanho(a.tamanho)}
-                    </small>
-                  ))}
+            {obra.edicoes.map((e) => {
+              const detalhes = [
+                e.descricao,
+                e.idioma,
+                e.paginas ? `${e.paginas} páginas` : '',
+                e.progresso ? `${Math.round(e.progresso.fracao * 100)}% lido` : 'nunca aberta',
+              ].filter(Boolean);
+              const disponivel = e.arquivos.some((a) => a.disponivel);
+              return (
+                <div key={e.id} className="edicao f-cartao">
+                  <span className="formato">{e.formato.toUpperCase()}</span>
+                  <div>
+                    {detalhes.join(' · ')}
+                    {e.arquivos.map((a) => (
+                      <small key={a.id}>
+                        {a.caminho} · {tamanho(a.tamanho)}
+                        {a.disponivel ? '' : ' · arquivo não encontrado'}
+                      </small>
+                    ))}
+                  </div>
+                  <div className="edicao-acoes">
+                    <button
+                      className="f-botao"
+                      data-tamanho="p"
+                      disabled={!disponivel}
+                      aria-label={`Abrir a edição ${e.formato.toUpperCase()}`}
+                      onClick={(ev) => lerObra(obra, ev, undefined, e.id)}
+                    >
+                      Abrir
+                    </button>
+                    {obra.edicoes.length > 1 && (
+                      <button
+                        className="f-botao"
+                        data-tipo="fantasma"
+                        data-tamanho="p"
+                        title="Esta edição é de outro livro: separar numa obra própria"
+                        aria-label={`Separar a edição ${e.formato.toUpperCase()}`}
+                        onClick={() =>
+                          void estado.separar(e.id).then(
+                            (nova) => ir({ tela: 'obra', id: nova }),
+                            () => undefined, // o aviso já saiu
+                          )
+                        }
+                      >
+                        Separar
+                      </button>
+                    )}
+                  </div>
                 </div>
-                <button className="f-botao" data-tamanho="p" onClick={(ev) => lerObra(obra, ev)}>
-                  Abrir
-                </button>
-              </div>
-            ))}
+              );
+            })}
+            <button
+              className="f-botao"
+              data-tipo="fantasma"
+              data-tamanho="p"
+              aria-expanded={juntando}
+              onClick={() => setJuntando(!juntando)}
+            >
+              Juntar com outra obra…
+            </button>
+            {juntando && (
+              <JuntarObra
+                obra={obra}
+                todas={estado.todas}
+                aoEscolher={(outra) => {
+                  setJuntando(false);
+                  void estado.juntar(outra.id).catch(() => undefined); // o aviso já saiu
+                }}
+              />
+            )}
           </section>
 
           {obra.colecaoIds.length > 0 && (
@@ -140,7 +197,7 @@ export function TelaObra({ estado, id }: { estado: PaginaObraEstado; id: string 
                     cores={cores}
                     acoes={
                       m.ancora.tipo === 'texto' ? (
-                        <button onClick={(e) => lerObra(obra, e, m.id)}>Ir para o trecho</button>
+                        <button onClick={(e) => lerObra(obra, e, m.id, m.edicaoId)}>Ir para o trecho</button>
                       ) : undefined
                     }
                   />
@@ -162,5 +219,59 @@ export function TelaObra({ estado, id }: { estado: PaginaObraEstado; id: string 
         </Prateleira>
       )}
     </>
+  );
+}
+
+/** Escolher a outra obra que é o mesmo livro (o PDF de um EPUB, a cópia com outro nome…): ela vira edição desta. */
+function JuntarObra({
+  obra,
+  todas,
+  aoEscolher,
+}: {
+  obra: Obra;
+  todas: () => Promise<Obra[]>;
+  aoEscolher: (outra: Obra) => void;
+}) {
+  const [lista, setLista] = useState<Obra[]>([]);
+  const [texto, setTexto] = useState('');
+  useEffect(() => {
+    let vivo = true;
+    void todas().then(
+      (l) => vivo && setLista(l.filter((o) => o.id !== obra.id)),
+      () => undefined, // o aviso já saiu
+    );
+    return () => {
+      vivo = false;
+    };
+  }, [obra.id, todas]);
+  const simples = (t: string) =>
+    t
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase();
+  const palavras = simples(texto).split(/\s+/).filter(Boolean);
+  const achadas = lista.filter((o) => palavras.every((p) => simples(`${o.titulo} ${autorDe(o)}`).includes(p)));
+  return (
+    <div className="juntar f-cartao" role="group" aria-label="Juntar com outra obra">
+      <p>Escolha a obra que é o mesmo livro. As edições, o progresso e as marcações dela vêm pra cá.</p>
+      <input
+        className="f-campo"
+        type="search"
+        placeholder="Buscar por título ou autor…"
+        aria-label="Buscar a obra pra juntar"
+        value={texto}
+        onChange={(e) => setTexto(e.target.value)}
+        autoFocus
+      />
+      <div className="juntar-lista">
+        {achadas.slice(0, 8).map((o) => (
+          <button key={o.id} className="juntar-item" onClick={() => aoEscolher(o)}>
+            <strong>{o.titulo}</strong>
+            <span>{[autorDe(o), formatosDe(o)].filter(Boolean).join(' · ')}</span>
+          </button>
+        ))}
+        {!achadas.length && <p className="juntar-vazio">Nenhuma outra obra com esse nome.</p>}
+      </div>
+    </div>
   );
 }
