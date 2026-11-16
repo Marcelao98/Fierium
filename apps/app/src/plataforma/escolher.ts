@@ -31,6 +31,23 @@ export interface Plataforma {
   nome: 'tauri' | 'navegador';
 }
 
+/**
+ * Só pro e2e no navegador: `?arquivo=pdf|epub&arquivoUrl=/x.pdf&arquivoTamanho=N` faz o exemplo em memória devolver
+ * um arquivo de verdade em `edicao.abrir` (o exemplo só tem texto), pra testar o leitor com os motores de PDF e EPUB.
+ */
+function comArquivoDeTeste(c: Cliente, url: URL): Cliente {
+  const formato = url.searchParams.get('arquivo');
+  const arquivoUrl = url.searchParams.get('arquivoUrl');
+  if ((formato !== 'pdf' && formato !== 'epub') || !arquivoUrl) return c;
+  const tamanho = Number(url.searchParams.get('arquivoTamanho') ?? 0);
+  return {
+    chamar: ((cmd: string, args: { edicaoId: string }) =>
+      cmd === 'edicao.abrir'
+        ? Promise.resolve({ tipo: 'arquivo', edicaoId: args.edicaoId, formato, url: arquivoUrl, tamanho })
+        : (c.chamar as (cmd: string, args: unknown) => Promise<unknown>)(cmd, args)) as Cliente['chamar'],
+  };
+}
+
 export const ehTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 export async function escolherPlataforma(url: URL): Promise<Plataforma> {
@@ -43,7 +60,8 @@ export async function escolherPlataforma(url: URL): Promise<Plataforma> {
   }
   const atraso = Number(url.searchParams.get('atraso') ?? 0);
   const memoria = criarClienteMemoria({ guardar, ...(atraso > 0 ? { atraso } : {}) });
-  if (!ehTauri()) return { cliente: memoria, enviarLog: null, escolherPastas: null, nome: 'navegador' };
+  if (!ehTauri())
+    return { cliente: comArquivoDeTeste(memoria, url), enviarLog: null, escolherPastas: null, nome: 'navegador' };
 
   const { invoke } = await import('@tauri-apps/api/core');
   const invocar: Invocar = (cmd, args) => invoke(cmd, args);
