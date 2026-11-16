@@ -2,7 +2,7 @@
 // se lê (o véu) e volta ao mexer o mouse ou tocar. A casca (barra, véu, temas, painel, balão) é a mesma pra todos os
 // formatos; o conteúdo é desenhado pelo motor certo (@fierium/leitores), montado num elemento e conversando por
 // eventos. Trocar de formato = trocar de motor; a casca não muda.
-import type { ConfigLeitura, Marcacao, PaginaLeitura, TemaLeitura } from '@fierium/contratos';
+import type { Ancora, ConfigLeitura, Marcacao, PaginaLeitura, TemaLeitura } from '@fierium/contratos';
 import { escolherMotor, MOTORES, type Caixa, type SessaoLeitura, type Selecao } from '@fierium/leitores';
 import { Icone } from '@fierium/ui';
 import type { CSSProperties } from 'react';
@@ -43,6 +43,7 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
   const palco = useRef<HTMLDivElement>(null);
   const sessao = useRef<SessaoLeitura | null>(null);
   const tempoVeu = useRef(0);
+  const posicaoAtual = useRef('');
 
   // abrir a obra (e fechar ao sair: registra o tempo lido, grava a posição)
   useEffect(() => {
@@ -72,7 +73,10 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
           marcacoes: leitor.store.getState().marcacoes,
           cores,
           eventos: {
-            posicao: (p, f) => leitor.posicaoMudou(p, f),
+            posicao: (p, f) => {
+              posicaoAtual.current = p;
+              leitor.posicaoMudou(p, f);
+            },
             selecao: (s) => {
               leitor.selecionar(null);
               setBalao(s ? { caixa: s.caixa, nova: s, marcacaoId: null } : null);
@@ -146,6 +150,19 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
     // eslint-disable-next-line react-hooks/exhaustive-deps -- acordar só usa refs e o leitor
   }, [painel, balao, leitor]);
 
+  /** Marcador de página: lembra o lugar (sem trecho). Clicar de novo no mesmo lugar tira. */
+  const marcarPagina = () => {
+    const ancora = ancoraDaPosicao(fonte?.tipo === 'arquivo' ? fonte.formato : 'texto', posicaoAtual.current);
+    if (!ancora) return;
+    const igual = marcacoes.find((m) => m.tipo === 'marcador' && JSON.stringify(m.ancora) === JSON.stringify(ancora));
+    if (igual) {
+      void leitor.apagarMarcacao(igual.id).catch(() => undefined);
+      return;
+    }
+    const rotulo = ancora.tipo === 'pdf' ? `Página ${ancora.pagina}` : `Marcador (${Math.round(fracao * 100)}%)`;
+    void leitor.marcar(ancora, rotulo, cores[0]?.id ?? '', 'marcador').catch(() => undefined);
+  };
+
   if (!cfg) return null;
   const mudar = (m: Partial<ConfigLeitura>) => void config.mudar((c) => ({ ...c, leitura: { ...c.leitura, ...m } }));
   const edicao = obra?.edicoes.find((e) => e.id === leitura.edicaoId);
@@ -178,6 +195,9 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
           {obra ? `${obra.titulo} · ${Math.round(fracao * 100)}%` : 'Abrindo…'}
           {edicao ? ` · ${edicao.formato.toUpperCase()}` : ''}
         </span>
+        <button className="f-botao" data-tamanho="p" aria-label="Marcador de página" onClick={marcarPagina}>
+          <Icone nome="marcador" tamanho={16} /> Marcar página
+        </button>
         <button
           className="f-botao"
           data-tamanho="p"
@@ -323,4 +343,18 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
       </div>
     </div>
   );
+}
+
+/** A posição de leitura do motor → a âncora de um marcador de página (sem trecho). */
+export function ancoraDaPosicao(formato: string, posicao: string): Ancora | null {
+  if (!posicao) return null;
+  if (formato === 'pdf') {
+    const pagina = Number(posicao.split(':')[0]);
+    return Number.isInteger(pagina) && pagina >= 1 ? { tipo: 'pdf', pagina, retangulos: [] } : null;
+  }
+  if (formato === 'epub') return { tipo: 'epub', cfiInicio: posicao, cfiFim: posicao };
+  const [capitulo, paragrafo] = posicao.split(':').map(Number);
+  return Number.isInteger(capitulo) && Number.isInteger(paragrafo)
+    ? { tipo: 'texto', capitulo: capitulo!, paragrafo: paragrafo!, inicio: 0, fim: 0 }
+    : null;
 }

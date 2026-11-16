@@ -71,13 +71,13 @@ export function criarLeitor(s: Servicos, visivel: () => boolean = () => !documen
     store.setState({ obra: null, fonte: null, marcacoes: [], selecionada: null });
   }
 
-  async function marcar(ancora: Ancora, trecho: string, cor: string) {
+  async function marcar(ancora: Ancora, trecho: string, cor: string, tipo: 'destaque' | 'marcador' = 'destaque') {
     const { obra } = store.getState();
     if (!obra) return null;
     const m = await s.chamar('marcacao.criar', {
       obraId: obra.id,
       edicaoId: sessao.edicaoId,
-      tipo: 'destaque',
+      tipo,
       ancora,
       trecho,
       cor,
