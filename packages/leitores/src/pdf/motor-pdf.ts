@@ -1,21 +1,26 @@
 // Motor de PDF (pdf.js): rolagem vertical contínua. Todas as páginas têm o tamanho reservado, mas só as que estão
 // perto da tela (±2) têm canvas; o arquivo é lido aos pedaços (Range), então PDFs de centenas de MB abrem rápido.
-// Posição = "pagina:fracao" (ex.: "37:0.42"). Marcações e seleção de texto no PDF ainda não existem.
-import type { ConfigLeitura } from '@fierium/contratos';
+// Posição = "pagina:fracao" (ex.: "37:0.42"). Texto selecionável (camada de texto do pdf.js) e marcações (camada própria por cima, sem ser repintada pelo tema).
+import type { ConfigLeitura, CorMarcacao, Marcacao } from '@fierium/contratos';
 import * as pdfjs from 'pdfjs-dist';
 import {
   PDFDataRangeTransport,
   type PDFDocumentLoadingTask,
   type PDFDocumentProxy,
   type PDFPageProxy,
+  TextLayer,
   type RenderTask,
 } from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import type { MotorDeLeitura, OpcoesMotor, SessaoLeitura } from '../motor';
+import { caixaDe, type Caixa, type MotorDeLeitura, type OpcoesMotor, type Selecao, type SessaoLeitura } from '../motor';
 import { criarPintor, rgbParaHex, type Pintor } from '../pintor/pintor';
 import { parametrosDaPagina } from '../pintor/temas';
 import './pdf.css';
+import { dentro, dividirPorPagina, enxugar, juntarPartes, type Parte, type Ret } from './marcas';
 import { escalaBase, formatarPosicao, lerPosicao, limitarZoom, paginaEm, type PosicaoPdf } from './posicao';
+
+const dentroTela = (r: DOMRect, e: MouseEvent) =>
+  e.clientX >= r.left - 2 && e.clientX <= r.right + 2 && e.clientY >= r.top - 2 && e.clientY <= r.bottom + 2;
 
 const MARGEM = 2; // páginas desenhadas além das visíveis
 const ESPACO = 12; // px entre páginas
@@ -31,6 +36,12 @@ interface Pagina {
   conhecida: boolean; // dimensões reais já lidas
   /** pixels como o pdf.js desenhou, guardados enquanto um tema repinta o canvas (null = o canvas está cru) */
   crua: ImageData | null;
+  /** camada de texto selecionável (transparente, por cima do canvas) */
+  texto: HTMLDivElement | null;
+  textoPedido: number;
+  textoCamada: TextLayer | null;
+  /** camada das marcações (retângulos coloridos) */
+  marcas: HTMLDivElement | null;
 }
 
 /** O fundo em volta das páginas: o papel um tom mais escuro. */
@@ -151,6 +162,10 @@ export const motorPdf: MotorDeLeitura = {
         pedido: 0,
         conhecida: false,
         crua: null,
+        texto: null,
+        textoPedido: 0,
+        textoCamada: null,
+        marcas: null,
       });
     }
     paginas[0]!.conhecida = true;
@@ -175,6 +190,7 @@ export const motorPdf: MotorDeLeitura = {
         p.el.style.top = `${t}px`;
         p.el.style.width = `${p.w * escala()}px`;
         p.el.style.height = `${altura}px`;
+        p.el.style.setProperty('--scale-factor', String(escala()));
         maior = Math.max(maior, p.w * escala());
         y += altura + ESPACO;
         return t;
@@ -223,6 +239,11 @@ export const motorPdf: MotorDeLeitura = {
       }
       p.desenhadaEm = 0;
       p.crua = null;
+      p.textoPedido++;
+      p.textoCamada?.cancel();
+      p.textoCamada = null;
+      p.texto?.remove();
+      p.texto = null;
       delete p.el.dataset.pronta;
       const pg = cache.get(i + 1);
       if (pg && i !== 0) {
@@ -286,10 +307,124 @@ export const motorPdf: MotorDeLeitura = {
         p.tarefa = null;
         p.el.append(canvas);
         p.el.dataset.pronta = 'sim';
+        void camadaDeTexto(i, pg);
       } catch (e) {
         if ((e as { name?: string } | null)?.name === 'RenderingCancelledException') return;
         if (meu === p.pedido) op.eventos.erro('PDF_PAGINA', `Não consegui desenhar a página ${i + 1} do PDF.`);
       }
+    }
+
+    /** A camada de texto transparente (pra selecionar): criada uma vez por página desenhada; acompanha o zoom por CSS. */
+    async function camadaDeTexto(i: number, pg: PDFPageProxy) {
+      const p = paginas[i]!;
+      if (p.texto || !p.canvas) return;
+      const meu = ++p.textoPedido;
+      const div = doc.createElement('div');
+      div.className = 'fl-pdf-texto';
+      try {
+        const camada = new TextLayer({
+          textContentSource: pg.streamTextContent(),
+          container: div,
+          viewport: pg.getViewport({ scale: 1 }),
+        });
+        p.textoCamada = camada;
+        await camada.render();
+        if (desmontada || meu !== p.textoPedido) return;
+        p.texto = div;
+        p.el.append(div);
+        p.el.dataset.texto = 'sim';
+      } catch (e) {
+        if ((e as { name?: string } | null)?.name === 'AbortException') return;
+        if (meu === p.textoPedido) op.eventos.erro('PDF_TEXTO', `Não consegui ler o texto da página ${i + 1} do PDF.`);
+      }
+    }
+
+    // --- marcações: retângulos coloridos numa camada própria (em %, então acompanham o zoom sozinhos) ---
+    let marcacoes: Marcacao[] = op.marcacoes;
+    let cores: CorMarcacao[] = op.cores;
+    let selecionada: string | null = null;
+    const corDe = (id: string) => cores.find((c) => c.id === id)?.cor ?? '#a99be6';
+    const partesDe = (m: Marcacao): Parte[] =>
+      m.ancora.tipo === 'pdf' ? dividirPorPagina(m.ancora.pagina, m.ancora.retangulos as Ret[]) : [];
+
+    function desenharMarcas() {
+      for (const p of paginas) p.marcas?.replaceChildren();
+      for (const m of marcacoes) {
+        for (const { pagina: pg, ret } of partesDe(m)) {
+          const p = paginas[pg - 1];
+          if (!p) continue;
+          if (!p.marcas) {
+            p.marcas = doc.createElement('div');
+            p.marcas.className = 'fl-pdf-marcas';
+            p.el.append(p.marcas);
+          }
+          const r = doc.createElement('i');
+          r.className = 'fl-pdf-marca';
+          r.dataset.id = m.id;
+          r.dataset.nota = String(!!m.nota);
+          r.dataset.selecionada = String(selecionada === m.id);
+          r.style.cssText = `left:${ret[0] * 100}%;top:${ret[1] * 100}%;width:${ret[2] * 100}%;height:${ret[3] * 100}%;--cor-marca:${corDe(m.cor)}`;
+          p.marcas.append(r);
+        }
+      }
+    }
+    desenharMarcas();
+
+    /** A marcação sob um ponto da tela, se houver (o clique é resolvido aqui porque a camada de texto fica por cima). */
+    function marcaEm(cx: number, cy: number): { id: string; caixa: Caixa } | null {
+      for (let i = marcacoes.length - 1; i >= 0; i--) {
+        const m = marcacoes[i]!;
+        for (const { pagina: pg, ret } of partesDe(m)) {
+          const b = paginas[pg - 1]?.el.getBoundingClientRect();
+          if (!b?.width) continue;
+          if (dentro(ret, (cx - b.left) / b.width, (cy - b.top) / b.height))
+            return {
+              id: m.id,
+              caixa: caixaDe({
+                left: b.left + ret[0] * b.width,
+                top: b.top + ret[1] * b.height,
+                width: ret[2] * b.width,
+                height: ret[3] * b.height,
+              }),
+            };
+        }
+      }
+      return null;
+    }
+
+    /** A seleção atual do navegador como âncora: um retângulo por linha, uma marcação só mesmo cruzando páginas. */
+    function lerSelecao(): Selecao | null {
+      const s = doc.getSelection();
+      if (!s || s.isCollapsed || !s.rangeCount) return null;
+      const rg = s.getRangeAt(0);
+      if (!rolagem.contains(rg.commonAncestorContainer)) return null;
+      const trecho = s.toString().replace(/\s+/g, ' ').trim();
+      if (!trecho) return null;
+      const brutos = [...rg.getClientRects()].filter((r) => r.width > 1 && r.height > 1);
+      const partes: Parte[] = [];
+      let primeiro: DOMRect | null = null;
+      paginas.forEach((p, i) => {
+        if (!p.texto) return;
+        const b = p.el.getBoundingClientRect();
+        if (!b.width) return;
+        const meus = brutos.filter((r) => {
+          const cx = r.left + r.width / 2;
+          const cy = r.top + r.height / 2;
+          return cx >= b.left && cx <= b.right && cy >= b.top && cy <= b.bottom;
+        });
+        if (!meus.length) return;
+        primeiro ??= meus[0]!;
+        const norm = meus.map((r): Ret => [
+          (r.left - b.left) / b.width,
+          (r.top - b.top) / b.height,
+          r.width / b.width,
+          r.height / b.height,
+        ]);
+        for (const ret of enxugar(norm)) partes.push({ pagina: i + 1, ret });
+      });
+      const ancora = juntarPartes(partes);
+      if (!ancora || !primeiro) return null;
+      return { ancora: { tipo: 'pdf', ...ancora }, trecho, caixa: caixaDe(primeiro) };
     }
 
     function atualizarJanela() {
@@ -330,13 +465,14 @@ export const motorPdf: MotorDeLeitura = {
 
     // posição → casca (com atraso)
     let temporizadorPosicao: ReturnType<typeof setTimeout> | undefined;
+    const emitirPosicao = () => {
+      const p = posicaoAtual();
+      const fracao = (p.pagina - 1 + p.fracao) / n;
+      op.eventos.posicao(formatarPosicao(p), Math.min(1, Math.max(0, fracao)));
+    };
     const avisarPosicao = () => {
       clearTimeout(temporizadorPosicao);
-      temporizadorPosicao = setTimeout(() => {
-        const p = posicaoAtual();
-        const fracao = (p.pagina - 1 + p.fracao) / n;
-        op.eventos.posicao(formatarPosicao(p), Math.min(1, Math.max(0, fracao)));
-      }, 400);
+      temporizadorPosicao = setTimeout(emitirPosicao, 400);
     };
     const aoRolar = () => {
       if (!observador) atualizarJanela();
@@ -373,15 +509,61 @@ export const motorPdf: MotorDeLeitura = {
     };
     doc.addEventListener('keydown', aoTeclar);
 
-    // toque: clique sem arrastar
+    // ponteiro: soltar depois de arrastar = seleção de texto; clique sem arrastar = marcação sob o ponto ou toque
     let inicio: { x: number; y: number } | null = null;
-    const aoApertar = (e: PointerEvent) => (inicio = { x: e.clientX, y: e.clientY });
-    const aoSoltar = (e: PointerEvent) => {
-      if (inicio && Math.hypot(e.clientX - inicio.x, e.clientY - inicio.y) < 6) op.eventos.toque();
-      inicio = null;
+    let comSelecao = false;
+    const aoApertar = (e: PointerEvent) => {
+      if (e.button === 0) inicio = { x: e.clientX, y: e.clientY };
     };
+    const aoSoltar = (e: PointerEvent) => {
+      if (e.button !== 0) return; // o botão direito abre o menu (abaixo), não é clique nem seleção
+      const ini = inicio;
+      inicio = null;
+      if (!ini) return;
+      const clique = Math.hypot(e.clientX - ini.x, e.clientY - ini.y) < 6;
+      // o navegador fecha a seleção depois do pointerup (duplo clique, arrastar): lê no tick seguinte
+      setTimeout(() => {
+        if (desmontada) return;
+        const sel = lerSelecao();
+        if (sel) {
+          comSelecao = true;
+          op.eventos.selecao(sel);
+          return;
+        }
+        if (comSelecao) {
+          comSelecao = false;
+          op.eventos.selecao(null);
+          return;
+        }
+        if (!clique) return;
+        const marca = marcaEm(e.clientX, e.clientY);
+        if (marca) op.eventos.marcacaoClicada(marca.id, marca.caixa);
+        else op.eventos.toque();
+      }, 0);
+    };
+    // botão direito: no lugar do menu do navegador, a casca desenha o dela (com a seleção, a marcação ou a página)
+    const aoMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      const sel = lerSelecao();
+      const marca = marcaEm(e.clientX, e.clientY);
+      const pagina = paginas.findIndex((p) => {
+        const b = p.el.getBoundingClientRect();
+        return e.clientY >= b.top && e.clientY <= b.bottom;
+      });
+      // o clique caiu em cima de uma marcação e a seleção está em outro lugar: vale a marcação
+      const naSelecao =
+        !!sel && [...(doc.getSelection()?.getRangeAt(0).getClientRects() ?? [])].some((r) => dentroTela(r, e));
+      op.eventos.menu?.({
+        x: e.clientX,
+        y: e.clientY,
+        selecao: marca && !naSelecao ? null : sel,
+        marcacaoId: marca && !naSelecao ? marca.id : null,
+        pagina: pagina >= 0 ? pagina + 1 : undefined,
+      });
+    };
+    rolagem.addEventListener('contextmenu', aoMenu);
     rolagem.addEventListener('pointerdown', aoApertar);
-    rolagem.addEventListener('pointerup', aoSoltar);
+    doc.addEventListener('pointerup', aoSoltar);
 
     // largura do alvo mudou: reajusta a escala base
     let larguraVista = 0;
@@ -419,21 +601,39 @@ export const motorPdf: MotorDeLeitura = {
     disposicao();
     aplicarTema(op.aparencia);
     const inicial = op.alvo && 'posicao' in op.alvo ? lerPosicao(op.alvo.posicao) : null;
-    if (inicial) rolarPara(inicial);
+    const irParaAlvo = (a: { posicao: string } | { marcacaoId: string }) => {
+      let p: PosicaoPdf | null = null;
+      if ('posicao' in a) p = lerPosicao(a.posicao);
+      else {
+        const m = marcacoes.find((x) => x.id === a.marcacaoId);
+        const primeira = m ? partesDe(m)[0] : undefined;
+        // chega um pouco acima da marcação pra ela não ficar colada no topo
+        if (primeira) p = { pagina: primeira.pagina, fracao: Math.max(0, primeira.ret[1] - 0.06) };
+        else if (m?.ancora.tipo === 'pdf') p = { pagina: m.ancora.pagina, fracao: 0 }; // marcador de página
+      }
+      if (p) {
+        rolarPara(p);
+        atualizarJanela();
+      }
+    };
+    if (op.alvo && 'marcacaoId' in op.alvo) irParaAlvo(op.alvo);
+    else if (inicial) rolarPara(inicial);
     atualizarJanela();
+    emitirPosicao(); // a casca precisa saber a página já na abertura (marcador de página, menu), sem esperar rolar
 
     return {
       aplicarAparencia: aplicarTema,
-      mostrarMarcacoes: () => undefined, // PDF ainda sem marcações
-      limparSelecao: () => undefined,
-      irPara(a) {
-        if (!('posicao' in a)) return;
-        const p = lerPosicao(a.posicao);
-        if (p) {
-          rolarPara(p);
-          atualizarJanela();
-        }
+      mostrarMarcacoes(novas, novasCores, sel) {
+        marcacoes = novas;
+        cores = novasCores;
+        selecionada = sel ?? null;
+        desenharMarcas();
       },
+      limparSelecao() {
+        comSelecao = false;
+        doc.getSelection()?.removeAllRanges();
+      },
+      irPara: irParaAlvo,
       desmontar() {
         desmontada = true;
         clearTimeout(temporizadorPosicao);
@@ -441,6 +641,8 @@ export const motorPdf: MotorDeLeitura = {
         observador?.disconnect();
         redim?.disconnect();
         doc.removeEventListener('keydown', aoTeclar);
+        doc.removeEventListener('pointerup', aoSoltar);
+        rolagem.removeEventListener('contextmenu', aoMenu);
         for (let i = 0; i < n; i++) liberar(i);
         rolagem.remove();
         void controle.tarefa?.destroy();

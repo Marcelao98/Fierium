@@ -2,15 +2,26 @@
 // se lê (o véu) e volta ao mexer o mouse ou tocar. A casca (barra, véu, temas, painel, balão) é a mesma pra todos os
 // formatos; o conteúdo é desenhado pelo motor certo (@fierium/leitores), montado num elemento e conversando por
 // eventos. Trocar de formato = trocar de motor; a casca não muda.
-import type { ConfigLeitura, Marcacao, PaginaLeitura, TemaLeitura } from '@fierium/contratos';
-import { escolherMotor, MOTORES, type Caixa, type SessaoLeitura, type Selecao } from '@fierium/leitores';
+import type { Ancora, ConfigLeitura, Marcacao, PaginaLeitura, TemaLeitura } from '@fierium/contratos';
+import {
+  escolherMotor,
+  MOTORES,
+  type Caixa,
+  type PedidoMenu,
+  type SessaoLeitura,
+  type Selecao,
+} from '@fierium/leitores';
 import { Icone } from '@fierium/ui';
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
-import { corDe, useCores } from '../../compartilhado/Marcacoes';
+import { citacao, formatoLembrado } from '../../compartilhado/citacao';
+import { useCores } from '../../compartilhado/Marcacoes';
 import { useConfig, useConfigApp, useFatia, useServicos } from '../../nucleo/contexto';
 import { fecharLeitura, type Leitura } from '../../nucleo/navegacao';
 import { Balao } from './Balao';
+import { MenuContexto } from './MenuContexto';
+import { PainelNotas } from './PainelNotas';
+import { itensDoMenu, type CasoMenu } from './menuItens';
 import { PainelPagina } from './PainelPagina';
 import type { Leitor as EstadoLeitor } from './estado';
 import './leitor.css';
@@ -28,7 +39,7 @@ const FONTES: [ConfigLeitura['fonte'], string, string][] = [
   ['inter', 'Inter', 'var(--fonte-ui)'],
 ];
 
-type EstadoBalao = { caixa: Caixa; nova: Selecao | null; marcacaoId: string | null };
+type EstadoBalao = { caixa: Caixa; nova: Selecao | null; marcacaoId: string | null; focar?: boolean };
 
 export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Leitura }) {
   const { obra, fonte, marcacoes, selecionada, fracao } = useFatia(leitor.store, (s) => s);
@@ -37,12 +48,15 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
   const servicos = useServicos();
   const cores = useCores();
   const [veu, setVeu] = useState(false);
-  const [painel, setPainel] = useState<'aparencia' | 'marcacoes' | null>(null);
+  const [painel, setPainel] = useState<'aparencia' | 'notas' | null>(null);
   const [balao, setBalao] = useState<EstadoBalao | null>(null);
+  const [menu, setMenu] = useState<PedidoMenu | null>(null);
+  const selecaoAtual = useRef<Selecao | null>(null);
   const [previa, setPrevia] = useState<PaginaLeitura | null>(null);
   const palco = useRef<HTMLDivElement>(null);
   const sessao = useRef<SessaoLeitura | null>(null);
   const tempoVeu = useRef(0);
+  const posicaoAtual = useRef('');
 
   // abrir a obra (e fechar ao sair: registra o tempo lido, grava a posição)
   useEffect(() => {
@@ -72,17 +86,30 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
           marcacoes: leitor.store.getState().marcacoes,
           cores,
           eventos: {
-            posicao: (p, f) => leitor.posicaoMudou(p, f),
+            posicao: (p, f) => {
+              posicaoAtual.current = p;
+              leitor.posicaoMudou(p, f);
+            },
             selecao: (s) => {
+              selecaoAtual.current = s;
               leitor.selecionar(null);
+              setMenu(null);
               setBalao(s ? { caixa: s.caixa, nova: s, marcacaoId: null } : null);
             },
             marcacaoClicada: (id, caixa) => {
               leitor.selecionar(id);
+              setMenu(null);
               setBalao({ caixa, nova: null, marcacaoId: id });
+            },
+            menu: (p) => {
+              selecaoAtual.current = p.selecao;
+              if (p.marcacaoId) leitor.selecionar(p.marcacaoId);
+              setBalao(null);
+              setMenu(p);
             },
             toque: () => {
               setBalao(null);
+              setMenu(null);
               leitor.selecionar(null);
               setVeu((v) => !v);
             },
@@ -133,8 +160,31 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
     acordar();
     const tecla = (e: KeyboardEvent) => {
       leitor.mexeu();
+      if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
+        e.preventDefault();
+        const s = selecaoAtual.current;
+        const r = palco.current?.getBoundingClientRect();
+        abrirMenu({
+          x: s ? s.caixa.x + s.caixa.largura / 2 : (r?.left ?? 0) + (r?.width ?? innerWidth) / 2,
+          y: s ? s.caixa.y + s.caixa.altura : (r?.top ?? 0) + (r?.height ?? innerHeight) / 3,
+          selecao: s,
+          marcacaoId: s ? null : leitor.store.getState().selecionada,
+        });
+        return;
+      }
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'n') {
+        e.preventDefault();
+        setPainel((p) => (p === 'notas' ? null : 'notas'));
+        return;
+      }
+      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'c' && selecaoAtual.current) {
+        e.preventDefault();
+        copiarCitacao(selecaoAtual.current);
+        return;
+      }
       if (e.key !== 'Escape') return;
-      if (balao) setBalao(null);
+      if (menu) setMenu(null);
+      else if (balao) setBalao(null);
       else if (painel) setPainel(null);
       else fecharLeitura();
     };
@@ -144,7 +194,49 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
       clearTimeout(tempoVeu.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- acordar só usa refs e o leitor
-  }, [painel, balao, leitor]);
+  }, [painel, balao, menu, leitor]);
+
+  const formato: 'pdf' | 'epub' | 'texto' =
+    fonte?.tipo === 'arquivo' ? (fonte.formato === 'pdf' ? 'pdf' : 'epub') : 'texto';
+
+  function abrirMenu(p: PedidoMenu) {
+    setBalao(null);
+    setMenu(p);
+  }
+  const copiar = async (texto: string, msg: string) => {
+    try {
+      await navigator.clipboard.writeText(texto);
+      servicos.avisar(msg);
+    } catch {
+      servicos.avisar('Não consegui copiar: o sistema não deixou acessar a área de transferência.', 'erro');
+    }
+  };
+  function copiarCitacao(t: { trecho: string; ancora: Ancora }) {
+    void copiar(citacao(t, obra ?? undefined, formatoLembrado()), 'Citação copiada.');
+  }
+  const corPadrao = cores.find((c) => c.id !== 'citacao')?.id ?? cores[0]?.id ?? '';
+  const corCitacao = cores.find((c) => c.id === 'citacao')?.id ?? corPadrao;
+  /** marca o trecho selecionado; devolve a marcação (o chamador decide o que abrir depois) */
+  const marcarSelecao = (s: Selecao, cor: string) => {
+    sessao.current?.limparSelecao();
+    selecaoAtual.current = null;
+    return leitor.marcar(s.ancora, s.trecho, cor).catch(() => null);
+  };
+
+  /** Marcador de página: lembra o lugar (sem trecho). Clicar de novo no mesmo lugar tira. */
+  const marcarPagina = (pagina?: number) => {
+    const fmt = fonte?.tipo === 'arquivo' ? fonte.formato : 'texto';
+    const ancora: Ancora | null =
+      fmt === 'pdf' && pagina ? { tipo: 'pdf', pagina, retangulos: [] } : ancoraDaPosicao(fmt, posicaoAtual.current);
+    if (!ancora) return;
+    const igual = marcacoes.find((m) => m.tipo === 'marcador' && JSON.stringify(m.ancora) === JSON.stringify(ancora));
+    if (igual) {
+      void leitor.apagarMarcacao(igual.id).catch(() => undefined);
+      return;
+    }
+    const rotulo = ancora.tipo === 'pdf' ? `Página ${ancora.pagina}` : `Marcador (${Math.round(fracao * 100)}%)`;
+    void leitor.marcar(ancora, rotulo, cores[0]?.id ?? '', 'marcador').catch(() => undefined);
+  };
 
   if (!cfg) return null;
   const mudar = (m: Partial<ConfigLeitura>) => void config.mudar((c) => ({ ...c, leitura: { ...c.leitura, ...m } }));
@@ -153,13 +245,24 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
     ? (marcacoes.find((m) => m.id === balao.marcacaoId) ?? null)
     : null;
 
+  const marcadaNoMenu = menu?.marcacaoId ? (marcacoes.find((m) => m.id === menu.marcacaoId) ?? null) : null;
+  const casoDoMenu: CasoMenu = menu?.selecao ? 'selecao' : marcadaNoMenu ? 'marcacao' : 'pagina';
+  const paginaDoMenu = menu?.pagina ?? (formato === 'pdf' ? Number(posicaoAtual.current.split(':')[0]) : 0);
+  const paginaMarcada = marcacoes.some(
+    (m) =>
+      m.tipo === 'marcador' &&
+      (formato === 'pdf'
+        ? m.ancora.tipo === 'pdf' && m.ancora.pagina === paginaDoMenu
+        : JSON.stringify(m.ancora) === JSON.stringify(ancoraDaPosicao(formato, posicaoAtual.current))),
+  );
+
   return (
     <div
       className="leitor"
       role="dialog"
       aria-label={obra ? `Lendo ${obra.titulo}` : 'Abrindo'}
       data-tema={cfg.tema}
-      data-veu={veu && !painel && !balao}
+      data-veu={veu && !painel && !balao && !menu}
       style={
         {
           '--origem-x': `${leitura.origem.x}px`,
@@ -169,6 +272,12 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
         } as CSSProperties
       }
       onPointerMove={acordar}
+      // o menu do navegador nunca aparece aqui; PDF e EPUB pedem o nosso pelo motor, o texto corrido pela casca
+      onContextMenu={(e) => {
+        e.preventDefault();
+        if (formato === 'texto' && palco.current?.contains(e.target as Node))
+          abrirMenu({ x: e.clientX, y: e.clientY, selecao: selecaoAtual.current, marcacaoId: null });
+      }}
     >
       <header className="leitor-barra">
         <button className="f-botao" data-tamanho="p" onClick={() => fecharLeitura()} aria-label="Voltar">
@@ -178,12 +287,16 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
           {obra ? `${obra.titulo} · ${Math.round(fracao * 100)}%` : 'Abrindo…'}
           {edicao ? ` · ${edicao.formato.toUpperCase()}` : ''}
         </span>
+        <button className="f-botao" data-tamanho="p" aria-label="Marcador de página" onClick={() => marcarPagina()}>
+          <Icone nome="marcador" tamanho={16} /> Marcar página
+        </button>
         <button
           className="f-botao"
           data-tamanho="p"
-          aria-pressed={painel === 'marcacoes'}
+          aria-pressed={painel === 'notas'}
           aria-label="Marcações deste livro"
-          onClick={() => setPainel(painel === 'marcacoes' ? null : 'marcacoes')}
+          title="Notas deste livro (Ctrl+Shift+N)"
+          onClick={() => setPainel(painel === 'notas' ? null : 'notas')}
         >
           <Icone nome="marcador" tamanho={16} /> {marcacoes.length}
         </button>
@@ -267,29 +380,101 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
         </aside>
       )}
 
-      {painel === 'marcacoes' && (
-        <aside className="leitor-painel" aria-label="Marcações deste livro">
-          <h3>Marcações deste livro</h3>
-          {!marcacoes.length && <p>Selecione um trecho do texto para marcar.</p>}
-          {marcacoes.map((m) => (
-            <button
-              key={m.id}
-              className="painel-marcacao"
-              style={{ '--cor-marca': corDe(cores, m.cor).cor } as CSSProperties}
-              onClick={() => {
-                sessao.current?.irPara({ marcacaoId: m.id });
-                leitor.selecionar(m.id);
-                setPainel(null);
-              }}
-            >
-              {m.trecho.length > 120 ? m.trecho.slice(0, 118) + '…' : m.trecho}
-              {m.nota && <small className="painel-marcacao-nota">✎ {m.nota}</small>}
-            </button>
-          ))}
-        </aside>
+      {painel === 'notas' && (
+        <PainelNotas
+          marcacoes={marcacoes}
+          cores={cores}
+          aoIr={(m) => {
+            sessao.current?.irPara({ marcacaoId: m.id });
+            leitor.selecionar(m.id);
+          }}
+          aoCopiarCitacao={copiarCitacao}
+          aoApagar={(m) => void leitor.apagarMarcacao(m.id).catch(() => undefined)}
+        />
       )}
 
       <div className="leitor-palco" ref={palco} />
+
+      {menu && (
+        <MenuContexto
+          x={menu.x}
+          y={menu.y}
+          aoFechar={() => setMenu(null)}
+          itens={itensDoMenu({
+            caso: casoDoMenu,
+            cores,
+            corAtual: marcadaNoMenu?.cor,
+            formato,
+            paginaMarcada,
+            acoes: {
+              marcarCor: (cor) => {
+                setMenu(null);
+                if (menu.selecao) void marcarSelecao(menu.selecao, cor);
+              },
+              anotar: () => {
+                const s = menu.selecao;
+                setMenu(null);
+                if (!s) return;
+                void marcarSelecao(s, corPadrao).then(
+                  (m) => m && setBalao({ caixa: s.caixa, nova: null, marcacaoId: m.id, focar: true }),
+                );
+              },
+              salvarCitacao: () => {
+                const s = menu.selecao;
+                setMenu(null);
+                if (!s) return;
+                void marcarSelecao(s, corCitacao).then((m) => m && servicos.avisar('Citação salva em Notas.'));
+              },
+              copiar: () => {
+                setMenu(null);
+                const t = menu.selecao?.trecho ?? marcadaNoMenu?.trecho;
+                if (t) void copiar(t, 'Copiado.');
+              },
+              copiarCitacao: () => {
+                setMenu(null);
+                const t = menu.selecao ?? marcadaNoMenu;
+                if (t) copiarCitacao(t);
+              },
+              editarNota: () => {
+                setMenu(null);
+                if (!marcadaNoMenu) return;
+                leitor.selecionar(marcadaNoMenu.id);
+                setBalao({
+                  caixa: { x: menu.x, y: menu.y, largura: 0, altura: 0 },
+                  nova: null,
+                  marcacaoId: marcadaNoMenu.id,
+                  focar: true,
+                });
+              },
+              trocarCor: (cor) => {
+                setMenu(null);
+                if (marcadaNoMenu) void leitor.mudarMarcacao(marcadaNoMenu.id, { cor }).catch(() => undefined);
+              },
+              apagar: () => {
+                setMenu(null);
+                if (marcadaNoMenu) void leitor.apagarMarcacao(marcadaNoMenu.id).catch(() => undefined);
+              },
+              marcarPagina: () => {
+                setMenu(null);
+                marcarPagina(menu.pagina);
+              },
+              abrirNotas: () => {
+                setMenu(null);
+                setPainel('notas');
+              },
+              abrirTema: () => {
+                setMenu(null);
+                setPainel('aparencia');
+              },
+              copiarPagina: () => {
+                setMenu(null);
+                const n = menu.pagina ?? Number(posicaoAtual.current.split(':')[0]);
+                if (n) void copiar(String(n), `Página ${n} copiada.`);
+              },
+            },
+          })}
+        />
+      )}
 
       {balao && (balao.nova || marcada) && (
         <Balao
@@ -316,6 +501,7 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
             setBalao(null);
           }}
           aoFechar={() => setBalao(null)}
+          focarNota={balao.focar}
         />
       )}
       <div className="leitor-progresso" aria-hidden="true">
@@ -323,4 +509,18 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
       </div>
     </div>
   );
+}
+
+/** A posição de leitura do motor → a âncora de um marcador de página (sem trecho). */
+export function ancoraDaPosicao(formato: string, posicao: string): Ancora | null {
+  if (!posicao) return null;
+  if (formato === 'pdf') {
+    const pagina = Number(posicao.split(':')[0]);
+    return Number.isInteger(pagina) && pagina >= 1 ? { tipo: 'pdf', pagina, retangulos: [] } : null;
+  }
+  if (formato === 'epub') return { tipo: 'epub', cfiInicio: posicao, cfiFim: posicao };
+  const [capitulo, paragrafo] = posicao.split(':').map(Number);
+  return Number.isInteger(capitulo) && Number.isInteger(paragrafo)
+    ? { tipo: 'texto', capitulo: capitulo!, paragrafo: paragrafo!, inicio: 0, fim: 0 }
+    : null;
 }
