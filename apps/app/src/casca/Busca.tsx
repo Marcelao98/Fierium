@@ -140,6 +140,19 @@ export function Busca() {
       else if (r.tipo === 'criador') {
         ir({ tela: 'biblioteca', lente: 'grade' });
         window.dispatchEvent(new CustomEvent('fierium:buscar', { detail: r.titulo }));
+      } else if (r.tipo === 'marcacao' && r.obraId) {
+        // abre o leitor no trecho marcado (se não der pra abrir, cai na página da obra)
+        const obraId = r.obraId;
+        void servicos.chamar('obra.obter', { id: obraId }).then(
+          (o) =>
+            abrirLeitura({
+              obraId: o.id,
+              edicaoId: o.edicoes[0]!.id,
+              origem: { x: innerWidth / 2, y: innerHeight / 2 },
+              marcacaoId: r.id,
+            }),
+          () => ir({ tela: 'obra', id: obraId }),
+        );
       } else if (r.obraId) ir({ tela: 'obra', id: r.obraId });
     },
   }));

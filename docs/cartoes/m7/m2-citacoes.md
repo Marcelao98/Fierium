@@ -1,6 +1,6 @@
 # Cartão m7/m2 · Citações e o jeito de achar tudo depois
 
-**Estado:** a fazer
+**Estado:** em revisão
 **Branch:** a mesma do M1 (sequencial)
 **Depende de:** M1 · **Destrava:** CP7a
 
@@ -44,4 +44,7 @@ como citação pronta e exportar.
 
 ## Relatório (o executor preenche)
 
-- **Feito:** · **Portões:** · **Prints / .deb:** · **Ficou de fora:**
+- **Feito:** itens 1 a 4 no front: Notas lê tudo (store sem filtro, filtros na tela: livro, cor/significado, tipo, texto sem acento, com contagem), agrupada por livro e ordenada pela posição; botões Abrir no trecho, Copiar citação (simples ou ABNT, lembrado), editar nota, apagar (com confirmação); aba Citações em leitura corrida; exportar tudo / um livro / filtro e copiar tudo do filtro; Ctrl+K abre a marcação no trecho (`obra.obter` + leitor com `marcacaoId`). Funções puras em `recursos/notas/citacao.ts` (+ teste).
+- **Portões:** `pnpm check` ok; `pnpm e2e --trace off` 13/13 (novo `apps/app/e2e/notas.spec.ts`). `pnpm check:rust` e `.deb` não rodados aqui.
+- **Prints / .deb:** `apps/app/e2e/prints/notas-todas.png` e `notas-citacoes.png` (gerados pelo e2e); .deb não gerado.
+- **Ficou de fora:** "e as favoritas" na aba Citações (marcação não tem favorita); Abrir no trecho em PDF/EPUB depende do leitor (só testado no texto de exemplo); ABNT é simples (sobrenome = última palavra); EPUB sem capítulo na citação (só tem CFI); JORNAL/ROADMAP e CP7a não feitos.

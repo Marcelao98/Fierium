@@ -2,3 +2,66 @@
 .ligacao {
   color: var(--violeta) !important;
 }
+.notas-exportar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.notas-abas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.notas-abas [role='tab'] {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--borda, currentColor);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.notas-abas [role='tab'][aria-selected='true'] {
+  background: var(--violeta, #a99be6);
+  color: #14111f;
+}
+.notas-formato {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.notas-grupo {
+  margin-bottom: 28px;
+}
+.notas-grupo > header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.notas-grupo > header h2 {
+  margin: 0;
+  flex: 1;
+}
+.notas-aviso {
+  color: var(--violeta);
+}
+.citacoes {
+  display: grid;
+  gap: 22px;
+  max-width: 62ch;
+}
+.citacao {
+  margin: 0;
+}
+.citacao blockquote {
+  margin: 0 0 6px;
+  font-size: 1.15rem;
+  line-height: 1.6;
+}
+.citacao figcaption {
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
