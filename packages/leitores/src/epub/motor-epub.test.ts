@@ -1,9 +1,10 @@
+// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import { MOTORES } from '../index';
 import { escolherMotor } from '../motor';
 import { coresDoEpub, estiloDoCorpo, familiaDe } from './aparencia';
 import { PAGINA_PADRAO } from '../pintor/pintor';
-import { motorEpub } from './motor-epub';
+import { motorEpub, tirarScripts } from './motor-epub';
 
 const arq = (formato: 'epub' | 'pdf') => ({ tipo: 'arquivo' as const, edicaoId: 'e1', formato, url: 'x', tamanho: 1 });
 
@@ -43,5 +44,20 @@ describe('motor de EPUB', () => {
     });
     const quente = coresDoEpub({ ...base, pagina: { ...PAGINA_PADRAO, tema: 'meu-1', quente: 100 }, temasMeus: [meu] });
     expect(quente.fundo).not.toBe('#ffffff');
+  });
+  it('arranca os scripts do livro antes de montar o capítulo', () => {
+    const d = document.implementation.createHTMLDocument('capítulo');
+    d.head.innerHTML = '<script>alert(1)</script>';
+    d.body.setAttribute('onload', 'x()');
+    d.body.innerHTML =
+      '<p onclick="y()">oi</p><a href="javascript:z()">a</a><a href="c2.xhtml">b</a><img src="capa.png"/>';
+    tirarScripts(d);
+    expect(d.querySelector('script')).toBeNull();
+    expect(d.body.hasAttribute('onload')).toBe(false);
+    expect(d.querySelector('p')!.hasAttribute('onclick')).toBe(false);
+    expect(d.querySelectorAll('a')[0]!.hasAttribute('href')).toBe(false);
+    expect(d.querySelectorAll('a')[1]!.getAttribute('href')).toBe('c2.xhtml');
+    expect(d.querySelector('img')!.getAttribute('src')).toBe('capa.png');
+    expect(d.querySelector('p')!.textContent).toBe('oi');
   });
 });

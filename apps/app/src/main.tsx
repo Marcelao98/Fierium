@@ -52,6 +52,18 @@ async function iniciar(raiz: HTMLElement) {
   if (import.meta.env.DEV || new URL(location.href).searchParams.has('depurar'))
     (window as unknown as { __fierium: unknown }).__fierium = app;
 
+  // no app: procura livros novos nas pastas ao abrir (um arquivo posto na pasta aparece sem ir aos Ajustes)
+  if (plataforma.nome === 'tauri')
+    void plataforma.cliente.chamar('biblioteca.varrer', {}).then(
+      (r) => {
+        if (r.novos || r.sumiram) {
+          log.registrar('info', 'app', `varredura ao abrir: ${r.novos} novos, ${r.sumiram} sumiram`);
+          app.servicos.eventos.emitir('biblioteca-mudou', {});
+        }
+      },
+      (e: unknown) => log.registrar('aviso', 'app', 'a varredura ao abrir falhou', { erro: String(e) }),
+    );
+
   ligarEndereco();
   // a configuração vem antes da primeira tela (tema, movimento); se falhar, o aviso aparece e abre com o padrão
   await app.config.carregar().catch(() => undefined);

@@ -30,6 +30,9 @@ export function coresDoEpub(a: ConfigLeitura): { fundo: string; texto: string } 
   return { fundo: c.papel, texto: c.tinta };
 }
 
+const MARGEM = '0 auto';
+const RESPIRO = '2rem 1.25rem 4rem';
+
 /** As propriedades que vão no <body> do capítulo. */
 export function estiloDoCorpo(a: ConfigLeitura): Record<string, string> {
   const t = coresDoEpub(a);
@@ -40,8 +43,8 @@ export function estiloDoCorpo(a: ConfigLeitura): Record<string, string> {
     'font-size': `${a.tamanho}px`,
     'line-height': String(a.entrelinha),
     'max-width': `${a.largura}ch`,
-    margin: '0 auto',
-    padding: '2rem 1.25rem 4rem',
+    margin: MARGEM,
+    padding: RESPIRO,
   };
 }
 
@@ -49,6 +52,9 @@ export function estiloDoCorpo(a: ConfigLeitura): Record<string, string> {
 export function regrasGerais(a: ConfigLeitura): Record<string, Record<string, string>> {
   const t = coresDoEpub(a);
   return {
+    // o epub.js regrava a margem e o respiro do <body> a cada redimensionamento (a coluna ia parar colada na
+    // esquerda); a regra com !important vale mais que o estilo que ele escreve
+    body: { margin: `${MARGEM} !important`, padding: `${RESPIRO} !important` },
     'a, a:link, a:visited': { color: `${t.texto} !important`, 'text-decoration': 'underline' },
     img: { 'max-width': '100% !important', height: 'auto !important' },
   };
