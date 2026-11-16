@@ -203,6 +203,68 @@ export interface ResultadoVarredura {
   milissegundos: number;
 }
 
+/** O que existe no mundo (catálogos públicos), mesmo que não esteja no computador da pessoa (D30). */
+export type TipoItem = 'livro' | 'manga' | 'hq' | 'revista' | 'artigo';
+
+/** Onde baixar um item. Só aparece com licença aberta (domínio público, Creative Commons…). */
+export interface OfertaCatalogo {
+  /** id da fonte: "gutenberg", "standardebooks", "wikisource"… */
+  fonte: string;
+  formato: Formato;
+  url: string;
+  licenca: string;
+  tamanho?: number;
+}
+
+export interface ItemCatalogo {
+  /** "<fonte>:<id na fonte>", ex. "gutenberg:55752" */
+  id: string;
+  tipo: TipoItem;
+  titulo: string;
+  pessoas: Criador[];
+  idioma: string;
+  ano?: number;
+  assuntos: string[];
+  serie?: { nome: string; volume: number };
+  sinopse?: string;
+  /** endereço da capa (cache local), se houver */
+  capa?: string;
+  ofertas: OfertaCatalogo[];
+  /** a obra da biblioteca que corresponde a este item, se a pessoa já tem (aí ele aparece colorido, não cinza) */
+  obraId?: Id;
+}
+
+export interface FiltroCatalogo {
+  texto?: string;
+  /** "pt", "en"… */
+  idioma?: string;
+  tipo?: TipoItem;
+  autor?: string;
+  limite?: number;
+  deslocamento?: number;
+}
+
+export interface FonteCatalogo {
+  id: string;
+  nome: string;
+  ligada: boolean;
+  itens: number;
+  /** quando o catálogo desta fonte foi atualizado pela última vez */
+  atualizadaEm?: Instante;
+}
+
+/** Uma sugestão de dados certos pra uma obra (vinda de dentro do arquivo, do catálogo, da Open Library/Wikidata). */
+export interface SugestaoObra {
+  id: string;
+  origem: string;
+  titulo: string;
+  pessoas: Criador[];
+  ano?: number;
+  serie?: { nome: string; volume: number };
+  capa?: string;
+  confianca: number;
+}
+
 export type Ordem = 'recentes' | 'titulo' | 'autor' | 'progresso';
 
 export interface FiltroObras {
@@ -331,6 +393,31 @@ export interface Comandos {
   'pastas.remover': [{ caminho: string }, PastaBiblioteca[]];
   /** pastas comuns que existem neste computador (~/Livros, ~/Documentos…) e ainda dá pra sugerir */
   'pastas.sugestoes': [Record<string, never>, string[]];
+  /** D30: catálogo público (o "cinza" da biblioteca) */
+  'catalogo.buscar': [FiltroCatalogo, { itens: ItemCatalogo[]; total: number }];
+  'catalogo.item': [{ id: string }, ItemCatalogo];
+  /** baixa pra pasta de baixados (que entra na biblioteca sozinha) e devolve a obra pronta pra abrir */
+  'catalogo.baixar': [{ id: string; oferta?: number }, { obraId: Id; edicaoId: Id }];
+  'catalogo.fontes': [Record<string, never>, FonteCatalogo[]];
+  /** baixa/atualiza o catálogo de uma fonte (ex. o do Gutenberg) */
+  'catalogo.atualizar': [{ fonte: string }, FonteCatalogo];
+  /** sugestões de título/autor/série/capa pra uma obra */
+  'obra.sugestoes': [{ id: Id }, SugestaoObra[]];
+  'obra.aplicarSugestao': [{ id: Id; sugestaoId: string }, Obra];
+  /** edição à mão do que a pessoa sabe que é o certo */
+  'obra.editar': [
+    {
+      id: Id;
+      titulo?: string;
+      autores?: string[];
+      serie?: { nome: string; volume: number } | null;
+      ano?: number | null;
+    },
+    Obra,
+  ];
+  /** o interruptor de rede (Ajustes): sem ele, nada sai do computador */
+  'rede.ler': [Record<string, never>, { permitida: boolean }];
+  'rede.definir': [{ permitida: boolean }, { permitida: boolean }];
   /** M3: procura PDF e EPUB nas pastas e atualiza a biblioteca */
   'biblioteca.varrer': [Record<string, never>, ResultadoVarredura];
 }
