@@ -58,6 +58,17 @@ pacotes Linux, pois dependem de instalar GTK/WebKit/Xvfb no Fedora. Branch envia
 
 ---
 
+## 2026-11-16 · M7 adiantado · temas, anotações, citações, menu, pasta fácil e instalador
+
+**Feito (executores Sonnet, revisados e juntos):** temas da página (Pintor do KOFlibrary, 102 temas, cor livre,
+Meus temas), marcações no Rust (migração v2, busca, eco), anotações no PDF e no EPUB, menu do botão direito,
+painel "Notas deste livro", tela de Notas e Citações (copiar citação, ABNT, exportar), seletor de pastas do sistema
+com sugestões, instalador Linux com ícone (`ferramentas/instalar-linux.sh`). CSP com `blob:` em estilos e fontes
+(suspeita do EPUB não abrir no app).
+**Medido / conferido:** `pnpm check`, `pnpm check:rust` e e2e verdes ao juntar; executável passou na fumaça.
+**Onde parou:** ⏸ o Marcelo testa o pacote `fierium-linux.tar.gz`. O Claude local dele faz o cartão
+[local/epub-e-obras](cartoes/local/epub-e-obras.md) (EPUB no app de verdade + obra ≠ arquivo); depois juntar.
+
 ## 2026-11-16 · Prioridade nova · temas da página e marcações/citações
 
 **Pedido:** prioridade = temas do PDF (todos os do KOFlibrary, mais até ~100, cor de fundo e de letra livres) e
