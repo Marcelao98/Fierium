@@ -9,7 +9,9 @@ use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
-const VERSAO_BANCO: i64 = 1;
+const VERSAO_BANCO: i64 = 2;
+
+mod marcacoes;
 const LIDA: f64 = 0.98;
 const BLOCO: u64 = 64 * 1024;
 
@@ -264,7 +266,7 @@ impl Biblioteca {
         let v: i64 = self.bd.query_row("PRAGMA user_version", [], |r| r.get(0)).map_err(bd)?;
         if v < 1 {
             self.bd
-                .execute_batch(&format!(
+                .execute_batch(
                     "BEGIN;
                      CREATE TABLE pastas (caminho TEXT PRIMARY KEY, adicionada_em INTEGER NOT NULL);
                      CREATE TABLE arquivos (
@@ -280,6 +282,21 @@ impl Biblioteca {
                      CREATE TABLE progresso (
                         edicao_id TEXT PRIMARY KEY REFERENCES arquivos(id), posicao TEXT NOT NULL,
                         fracao REAL NOT NULL, quando INTEGER NOT NULL);
+                     PRAGMA user_version = 1;
+                     COMMIT;",
+                )
+                .map_err(bd)?;
+        }
+        if v < 2 {
+            self.bd
+                .execute_batch(&format!(
+                    "BEGIN;
+                     CREATE TABLE marcacoes (
+                        id TEXT PRIMARY KEY, obra_id TEXT NOT NULL, edicao_id TEXT NOT NULL, tipo TEXT NOT NULL,
+                        ancora TEXT NOT NULL, trecho TEXT NOT NULL, cor TEXT NOT NULL, nota TEXT,
+                        etiquetas TEXT NOT NULL DEFAULT '[]', ligacoes TEXT NOT NULL DEFAULT '[]',
+                        criada_em INTEGER NOT NULL, editada_em INTEGER NOT NULL, apagado_em INTEGER);
+                     CREATE INDEX marcacoes_obra ON marcacoes (obra_id);
                      PRAGMA user_version = {VERSAO_BANCO};
                      COMMIT;"
                 ))
@@ -632,7 +649,7 @@ impl Biblioteca {
         Ok(json!({
             "ultimo": ultimo,
             "emAndamento": lista(&lendo, 12),
-            "eco": null,
+            "eco": self.eco(agora())?,
             "novidades": lista(&novas, 12),
             "esquecidas": lista(&velhas, 3),
             "totalObras": todas.len(),
