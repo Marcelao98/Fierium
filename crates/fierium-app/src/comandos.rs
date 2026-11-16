@@ -27,6 +27,11 @@ pub const NO_RUST: &[&str] = &[
     "pastas.remover",
     "pastas.sugestoes",
     "biblioteca.varrer",
+    "marcacoes.listar",
+    "marcacao.criar",
+    "marcacao.atualizar",
+    "marcacao.apagar",
+    "busca.tudo",
 ];
 
 /// O estado do programa: a biblioteca (SQLite) e os arquivos que o protocolo `fierium://` pode entregar.
@@ -73,6 +78,11 @@ struct Atualizar {
     id: String,
     favorita: Option<bool>,
     estado: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct Busca {
+    texto: String,
 }
 
 #[derive(Deserialize)]
@@ -133,6 +143,14 @@ pub fn chamar(ctx: &Contexto, cmd: &str, a: Value) -> Result<Value, ErroFierium>
             ctx.registrar_arquivos()?;
             Ok(r)
         }
+        "marcacoes.listar" => b().marcacoes_listar(&a),
+        "marcacao.criar" => b().marcacao_criar(&a),
+        "marcacao.atualizar" => b().marcacao_atualizar(&a),
+        "marcacao.apagar" => {
+            b().marcacao_apagar(&args::<PorId>(a)?.id)?;
+            json(Value::Null)
+        }
+        "busca.tudo" => b().busca_tudo(&args::<Busca>(a)?.texto),
         outro => Err(ErroFierium::ComandoDesconhecido(outro.into())),
     }
 }
