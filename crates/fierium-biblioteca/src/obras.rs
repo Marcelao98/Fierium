@@ -405,6 +405,39 @@ fn ordem_do_formato(f: &str) -> u8 {
 }
 
 impl Biblioteca {
+    /// A obra que a pessoa já tem com este título e autor (mesma regra da varredura). Usado pelo catálogo público.
+    pub fn obra_por_chave(&self, titulo: &str, autor: &str) -> Result<Option<String>, ErroFierium> {
+        achar_obra(&self.bd, &chave_do_titulo(titulo), &chave_do_autor(autor))
+    }
+
+    /// (obra, edição) do arquivo que está neste caminho, se a biblioteca já o conhece.
+    pub fn edicao_do_caminho(&self, caminho: &std::path::Path) -> Result<Option<(String, String)>, ErroFierium> {
+        let alvo = caminho.canonicalize().unwrap_or_else(|_| caminho.to_path_buf());
+        let mut st = self
+            .bd
+            .prepare(
+                "SELECT a.pasta, a.caminho_rel, e.obra_id, e.id FROM arquivos a JOIN edicoes e ON e.id = a.edicao_id
+                 WHERE a.existe = 1",
+            )
+            .map_err(bd)?;
+        let linhas = st
+            .query_map([], |r| {
+                Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?, r.get(2)?, r.get(3)?))
+            })
+            .map_err(bd)?;
+        for l in linhas {
+            let (pasta, rel, obra, edicao) = l.map_err(bd)?;
+            let mut p = std::path::PathBuf::from(pasta);
+            p.extend(rel.split('/'));
+            if p == alvo {
+                return Ok(Some((obra, edicao)));
+            }
+        }
+        Ok(None)
+    }
+}
+
+impl Biblioteca {
     /// As obras (todas, ou só uma) já com as edições e os arquivos.
     pub(crate) fn carregar_obras(&self, so: Option<&str>) -> Result<Vec<ObraLinha>, ErroFierium> {
         let mut arquivos: HashMap<String, Vec<ArquivoLinha>> = HashMap::new();

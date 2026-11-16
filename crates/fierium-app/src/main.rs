@@ -11,7 +11,11 @@ use serde_json::Value;
 /// A porta única dos comandos (nomes iguais aos do contrato da interface). Roda fora da linha da janela (`async`):
 /// uma varredura grande não trava a interface.
 #[tauri::command(async)]
-fn chamar(ctx: tauri::State<comandos::Contexto>, cmd: String, args: Option<Value>) -> Result<Value, ErroContrato> {
+fn chamar(
+    ctx: tauri::State<std::sync::Arc<comandos::Contexto>>,
+    cmd: String,
+    args: Option<Value>,
+) -> Result<Value, ErroContrato> {
     comandos::chamar(&ctx, &cmd, args.unwrap_or(Value::Null)).map_err(|e| {
         if e.codigo() != "NAO_ENCONTRADO" {
             tracing::warn!(cmd, codigo = e.codigo(), "{e}");
@@ -41,6 +45,10 @@ fn main() {
         }
     };
 
+    let ctx = std::sync::Arc::new(ctx);
+    // primeira abertura com rede ligada e catálogo vazio: baixa o do Gutenberg em segundo plano
+    comandos::atualizar_se_vazio(ctx.clone());
+
     let resultado = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(ctx)
@@ -55,7 +63,7 @@ fn main() {
                 responder.respond(b.body(r.corpo).expect("preflight do protocolo"));
                 return;
             }
-            let ctx = ctx.app_handle().state::<comandos::Contexto>();
+            let ctx = ctx.app_handle().state::<std::sync::Arc<comandos::Contexto>>();
             let range = pedido
                 .headers()
                 .get("range")
