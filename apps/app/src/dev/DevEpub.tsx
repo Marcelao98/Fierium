@@ -1,10 +1,18 @@
 // Página de desenvolvimento do motor de EPUB (?dev=epub&url=...): monta só o motor, sem biblioteca nem núcleo.
 // Serve pra olhar um EPUB de verdade e pro teste e2e. Expõe window.__epub { posicao, fracao, erro, toques }.
 import type { ConfigLeitura } from '@fierium/contratos';
-import { motorEpub, type SessaoLeitura } from '@fierium/leitores';
+import { motorEpub, PAGINA_PADRAO, type SessaoLeitura } from '@fierium/leitores';
 import { useEffect, useRef } from 'react';
 
-const APARENCIA: ConfigLeitura = { fonte: 'literata', tamanho: 18, entrelinha: 1.6, largura: 68, tema: 'pergaminho' };
+const APARENCIA: ConfigLeitura = {
+  fonte: 'literata',
+  tamanho: 18,
+  entrelinha: 1.6,
+  largura: 68,
+  tema: 'pergaminho',
+  pagina: PAGINA_PADRAO,
+  temasMeus: [],
+};
 
 export default function DevEpub() {
   const ref = useRef<HTMLDivElement>(null);
@@ -19,7 +27,7 @@ export default function DevEpub() {
       .montar(el, {
         fonte: { tipo: 'arquivo', edicaoId: 'dev', formato: 'epub', url: q.get('url') ?? '', tamanho: 0 },
         alvo: q.get('cfi') ? { posicao: q.get('cfi')! } : undefined,
-        aparencia: { ...APARENCIA, tema: (q.get('tema') as ConfigLeitura['tema'] | null) ?? APARENCIA.tema },
+        aparencia: { ...APARENCIA, pagina: { ...PAGINA_PADRAO, tema: q.get('tema') ?? PAGINA_PADRAO.tema } },
         marcacoes: [],
         cores: [],
         eventos: {

@@ -1,6 +1,6 @@
 # Cartão m7/t1 · Temas da página (o Pintor) — PDF e EPUB
 
-**Estado:** a fazer
+**Estado:** em revisão
 **Branch:** a do executor (ex.: `codex/m7`), saindo de `claude/eloquent-fermat-z05qmh`
 **Depende de:** — · **Destrava:** M1, M2
 
@@ -77,4 +77,22 @@ Acessível 000000 FFFF00 · branco-total "Branco total" Acessível FFFFFF 000000
 
 ## Relatório (o executor preenche)
 
-- **Feito:** · **Portões:** · **Prints:** · **Medição (ms por página):** · **Ficou de fora:**
+- **Feito:** Pintor em `packages/leitores/src/pintor/pintor.ts` (porte do KOFlibrary, puro, com `pintar(dados, de?)`);
+  catálogo de 102 temas em `temas.ts` (os 22 com os mesmos ids + 80 novos em 12 grupos); contrato
+  `ConfigLeitura.pagina` (+ `papel`/`tinta` opcionais, usados quando `tema === 'personalizado'`) e `temasMeus`;
+  `completarLeitura` (config antiga abre com o padrão; fica em `@fierium/leitores` pra o contrato continuar só
+  tipos); PDF repinta o canvas de cada página (guarda os pixels crus pra trocar de tema sem recarregar) e o fundo em
+  volta acompanha o papel; EPUB usa as cores efetivas do tema (papel = fundo, tinta = texto, já com brilho/contraste/
+  luz quente aplicados às duas cores, então as imagens não são tocadas); painel "Página" (`PainelPagina.tsx`): grade
+  agrupada, busca, prévia ao passar o mouse, Personalizar (seletor + hex, aviso de contraste < 4,5:1, brilho,
+  contraste, luz quente, manter figuras), "Salvar como meu tema", renomear e apagar. O filtro CSS antigo do PDF
+  (`filtroDoTema`) saiu.
+- **Portões:** `pnpm check` e `pnpm e2e --trace off` (11 testes) passam. `pnpm check:rust` não rodado (nada de Rust
+  mudou, por ordem do orquestrador).
+- **Prints:** `apps/app/e2e/prints/5-pagina-grade.png` e `6-pagina-personalizar.png` (gerados pelo e2e, não
+  versionados).
+- **Medição (ms por página):** 36-44 ms numa página de 5,66 Mpx (dev page, 2×, VM lenta), ≈ 7 ms por megapixel
+  incluindo `createImageData` e `putImageData`: uma A4 em 2× (≈ 2 Mpx) fica em ≈ 14 ms, dentro dos ~16 ms. Não foi
+  preciso worker. Páginas maiores (zoom alto) passam de 16 ms; o worker (OffscreenCanvas) fica como melhoria.
+- **Ficou de fora:** o motor de texto (livros de exemplo) não usa o tema da página (o cartão fala de PDF e EPUB);
+  teste do EPUB com livro real pintado por pixel; `pnpm check:rust`.

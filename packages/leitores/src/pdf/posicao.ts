@@ -1,6 +1,4 @@
-// Funções puras do motor de PDF (testáveis sem canvas): posição "pagina:fracao", tema e escala.
-import type { TemaLeitura } from '@fierium/contratos';
-
+// Funções puras do motor de PDF (testáveis sem canvas): posição "pagina:fracao" e escala.
 export interface PosicaoPdf {
   /** 1..n */
   pagina: number;
@@ -20,13 +18,6 @@ export function lerPosicao(texto: string): PosicaoPdf | null {
   const fracao = m[2] === undefined ? 0 : Number(m[2]);
   if (!Number.isFinite(fracao)) return null;
   return { pagina, fracao: Math.min(1, Math.max(0, fracao)) };
-}
-
-/** O filtro CSS dos canvas pra cada tema. */
-export function filtroDoTema(tema: TemaLeitura): string {
-  if (tema === 'noite') return 'invert(0.88) hue-rotate(180deg)';
-  if (tema === 'pergaminho' || tema === 'sepia') return 'sepia(0.18) brightness(0.98)';
-  return 'none';
 }
 
 export const LARGURA_MAXIMA = 1000;

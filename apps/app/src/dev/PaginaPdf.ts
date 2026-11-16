@@ -1,7 +1,17 @@
 // Página de desenvolvimento (?dev=pdf&url=...&tamanho=N&posicao=37:0.42&tema=noite): monta só o motor de PDF numa
 // caixa de tela cheia. O e2e usa isso; a posição aparece em #posicao e o estado em #estado.
-import type { ConfigLeitura, TemaLeitura } from '@fierium/contratos';
-import { motorPdf } from '@fierium/leitores';
+import type { ConfigLeitura, PaginaLeitura } from '@fierium/contratos';
+import { motorPdf, PAGINA_PADRAO } from '@fierium/leitores';
+
+const paginaDaUrl = (): PaginaLeitura => {
+  const q = new URL(location.href).searchParams;
+  return {
+    ...PAGINA_PADRAO,
+    tema: q.get('tema') ?? 'papel',
+    papel: q.get('papel') ?? undefined,
+    tinta: q.get('tinta') ?? undefined,
+  };
+};
 
 export async function abrirPaginaPdf(raiz: HTMLElement) {
   const q = new URL(location.href).searchParams;
@@ -18,10 +28,12 @@ export async function abrirPaginaPdf(raiz: HTMLElement) {
     tamanho: 20,
     entrelinha: 1.7,
     largura: 66,
-    tema: (q.get('tema') ?? 'papel') as TemaLeitura,
+    tema: 'papel',
+    pagina: paginaDaUrl(),
+    temasMeus: [],
   };
   const posicao = q.get('posicao');
-  await motorPdf.montar(raiz, {
+  const sessao = await motorPdf.montar(raiz, {
     fonte: {
       tipo: 'arquivo',
       edicaoId: 'dev',
@@ -41,5 +53,8 @@ export async function abrirPaginaPdf(raiz: HTMLElement) {
       erro: (c, m) => (estado.textContent = `erro ${c}: ${m}`),
     },
   });
+  // o e2e troca o tema com o PDF aberto (sem recarregar o arquivo)
+  (window as unknown as { __aplicarPagina: (p: Partial<PaginaLeitura>) => void }).__aplicarPagina = (p) =>
+    sessao.aplicarAparencia({ ...aparencia, pagina: { ...aparencia.pagina, ...p } });
   if (!estado.textContent?.startsWith('erro')) estado.textContent = 'pronto';
 }

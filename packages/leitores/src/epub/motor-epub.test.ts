@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { MOTORES } from '../index';
 import { escolherMotor } from '../motor';
-import { estiloDoCorpo, familiaDe, TEMAS_EPUB } from './aparencia';
+import { coresDoEpub, estiloDoCorpo, familiaDe } from './aparencia';
+import { PAGINA_PADRAO } from '../pintor/pintor';
 import { motorEpub } from './motor-epub';
 
 const arq = (formato: 'epub' | 'pdf') => ({ tipo: 'arquivo' as const, edicaoId: 'e1', formato, url: 'x', tamanho: 1 });
@@ -21,13 +22,26 @@ describe('motor de EPUB', () => {
     expect(familiaDe('fraunces')).toContain('Cormorant Garamond Variable');
     expect(familiaDe('cormorant')).toContain('Cormorant Garamond Variable');
   });
-  it('mapeia os temas e as medidas', () => {
-    expect(TEMAS_EPUB.pergaminho).toEqual({ fundo: '#f1e6c9', texto: '#2b2216' });
-    const e = estiloDoCorpo({ fonte: 'inter', tema: 'noite', tamanho: 20, entrelinha: 1.7, largura: 60 });
-    expect(e.background).toBe('#12101f');
-    expect(e.color).toBe('#ddd6c8');
+  it('mapeia o tema da página e as medidas', () => {
+    const base = { fonte: 'inter' as const, tema: 'pergaminho' as const, tamanho: 20, entrelinha: 1.7, largura: 60 };
+    const noite = { ...base, pagina: { ...PAGINA_PADRAO, tema: 'noite' }, temasMeus: [] };
+    const e = estiloDoCorpo(noite);
+    expect(e.background).toBe('#141414');
+    expect(e.color).toBe('#d6d6d6');
     expect(e['font-size']).toBe('20px');
     expect(e['line-height']).toBe('1.7');
     expect(e['max-width']).toBe('60ch');
+  });
+  it('cores livres, "meus temas" e luz quente', () => {
+    const base = { fonte: 'inter' as const, tema: 'noite' as const, tamanho: 20, entrelinha: 1.7, largura: 60 };
+    const livre = { ...PAGINA_PADRAO, tema: 'personalizado', papel: '#102030', tinta: '#f0e0c0' };
+    expect(coresDoEpub({ ...base, pagina: livre, temasMeus: [] })).toEqual({ fundo: '#102030', texto: '#f0e0c0' });
+    const meu = { id: 'meu-1', nome: 'X', papel: '#ffffff', tinta: '#000000' };
+    expect(coresDoEpub({ ...base, pagina: { ...PAGINA_PADRAO, tema: 'meu-1' }, temasMeus: [meu] })).toEqual({
+      fundo: '#ffffff',
+      texto: '#000000',
+    });
+    const quente = coresDoEpub({ ...base, pagina: { ...PAGINA_PADRAO, tema: 'meu-1', quente: 100 }, temasMeus: [meu] });
+    expect(quente.fundo).not.toBe('#ffffff');
   });
 });
