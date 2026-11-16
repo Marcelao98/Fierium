@@ -47,7 +47,7 @@ test('abertura → início → ler → marcar com nota → Notas → recarregar 
   await expect(page.locator('mark[data-nota="true"]', { hasText: 'Agora que expliquei o título' })).toBeVisible();
 
   await leitor.getByRole('button', { name: 'Aparência' }).click();
-  await page.getByRole('button', { name: 'Sépia' }).click();
+  await page.getByRole('button', { name: 'Sépia', exact: true }).click();
   await page.screenshot({ path: `${PRINTS}/4-leitor-sepia.png` });
   await page.keyboard.press('Escape');
   await page.keyboard.press('Escape');

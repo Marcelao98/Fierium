@@ -260,3 +260,131 @@
 .balao-acoes button:hover {
   color: #fff;
 }
+
+/* ---------- seção "Página" do painel (temas da página, personalizar) ---------- */
+.painel-busca {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border-radius: var(--raio-2);
+  border: 1px solid var(--l-borda);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+}
+.temas-grupo h4 {
+  margin: var(--espaco-3) 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--l-texto-2);
+}
+.temas-grade {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.tema-celula {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.tema-amostra {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 62px;
+  padding: 4px;
+  border-radius: var(--raio-2);
+  border: 2px solid var(--l-borda);
+  cursor: pointer;
+  overflow: hidden;
+}
+.tema-amostra[aria-pressed='true'] {
+  border-color: #d9b56a;
+}
+.tema-aa {
+  font-family: var(--fonte-leitura);
+  font-size: 20px;
+  line-height: 1;
+}
+.tema-amostra small {
+  max-width: 100%;
+  font-size: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tema-acoes {
+  display: flex;
+  gap: 4px;
+}
+.tema-acoes button {
+  flex: 1;
+  font-size: 10px;
+  padding: 2px;
+  cursor: pointer;
+}
+.tema-acoes input {
+  width: 100%;
+  min-width: 0;
+  font-size: 11px;
+}
+.painel-vazio {
+  color: var(--l-texto-2);
+}
+.personalizar {
+  display: grid;
+  gap: 8px;
+  margin-top: var(--espaco-3);
+}
+.campo-cor {
+  display: grid;
+  grid-template-columns: 44px 84px 1fr;
+  align-items: center;
+  gap: 8px;
+}
+.campo-cor input[type='color'] {
+  width: 44px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--l-borda);
+  background: none;
+  cursor: pointer;
+}
+.campo-cor-hex {
+  font-family: var(--fonte-mono, monospace);
+  padding: 4px 6px;
+  border-radius: var(--raio-2);
+  border: 1px solid var(--l-borda);
+  background: transparent;
+  color: inherit;
+}
+.campo-cor-hex[aria-invalid='true'] {
+  border-color: #c4554a;
+}
+.aviso-contraste {
+  margin: 0;
+  font-size: 12px;
+  color: #c4554a;
+}
+.leitor-marcar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.salvar-tema {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+.salvar-tema input {
+  min-width: 0;
+  padding: 4px 8px;
+  border-radius: var(--raio-2);
+  border: 1px solid var(--l-borda);
+  background: transparent;
+  color: inherit;
+}

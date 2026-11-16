@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { MOTORES } from '../index';
 import { escolherMotor } from '../motor';
 import { classificarErro, motorPdf } from './motor-pdf';
-import { escalaBase, filtroDoTema, formatarPosicao, lerPosicao, limitarZoom, paginaEm } from './posicao';
+import { escalaBase, formatarPosicao, lerPosicao, limitarZoom, paginaEm } from './posicao';
 
 const pdf = { tipo: 'arquivo' as const, edicaoId: 'e', formato: 'pdf' as const, url: 'x', tamanho: 10 };
 
@@ -26,12 +26,7 @@ describe('motor de PDF', () => {
     expect(lerPosicao('abc')).toBeNull();
   });
 
-  it('tema, zoom, escala e página pela rolagem', () => {
-    expect(filtroDoTema('noite')).toContain('invert(0.88)');
-    expect(filtroDoTema('sepia')).toContain('sepia');
-    expect(filtroDoTema('pergaminho')).toContain('sepia');
-    expect(filtroDoTema('papel')).toBe('none');
-    expect(filtroDoTema('tinta')).toBe('none');
+  it('zoom, escala e página pela rolagem', () => {
     expect(limitarZoom(100)).toBe(5);
     expect(limitarZoom(0)).toBe(0.4);
     expect(escalaBase(2000, 500)).toBe(2); // máx. 1000 px

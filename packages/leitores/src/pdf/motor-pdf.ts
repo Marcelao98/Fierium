@@ -12,16 +12,10 @@ import {
 } from 'pdfjs-dist';
 import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import type { MotorDeLeitura, OpcoesMotor, SessaoLeitura } from '../motor';
+import { criarPintor, rgbParaHex, type Pintor } from '../pintor/pintor';
+import { parametrosDaPagina } from '../pintor/temas';
 import './pdf.css';
-import {
-  escalaBase,
-  filtroDoTema,
-  formatarPosicao,
-  lerPosicao,
-  limitarZoom,
-  paginaEm,
-  type PosicaoPdf,
-} from './posicao';
+import { escalaBase, formatarPosicao, lerPosicao, limitarZoom, paginaEm, type PosicaoPdf } from './posicao';
 
 const MARGEM = 2; // páginas desenhadas além das visíveis
 const ESPACO = 12; // px entre páginas
@@ -35,6 +29,14 @@ interface Pagina {
   tarefa: RenderTask | null;
   pedido: number; // contador pra ignorar desenhos antigos
   conhecida: boolean; // dimensões reais já lidas
+  /** pixels como o pdf.js desenhou, guardados enquanto um tema repinta o canvas (null = o canvas está cru) */
+  crua: ImageData | null;
+}
+
+/** O fundo em volta das páginas: o papel um tom mais escuro. */
+export function fundoAoRedor(papel: { r: number; g: number; b: number }, escuro: boolean): string {
+  const f = escuro ? 0.7 : 0.88;
+  return rgbParaHex({ r: papel.r * f, g: papel.g * f, b: papel.b * f });
 }
 
 export function classificarErro(e: unknown): { codigo: string; mensagem: string } {
@@ -148,6 +150,7 @@ export const motorPdf: MotorDeLeitura = {
         tarefa: null,
         pedido: 0,
         conhecida: false,
+        crua: null,
       });
     }
     paginas[0]!.conhecida = true;
@@ -155,6 +158,8 @@ export const motorPdf: MotorDeLeitura = {
 
     let zoom = 1;
     let aparencia: ConfigLeitura = op.aparencia;
+    let pintor: Pintor = criarPintor(parametrosDaPagina(aparencia.pagina, aparencia.temasMeus));
+    let chavePintor = '';
     let topos: number[] = [];
     let base = 1;
     const visiveis = new Set<number>();
@@ -217,12 +222,31 @@ export const motorPdf: MotorDeLeitura = {
         p.canvas = null;
       }
       p.desenhadaEm = 0;
+      p.crua = null;
       delete p.el.dataset.pronta;
       const pg = cache.get(i + 1);
       if (pg && i !== 0) {
         pg.cleanup();
         cache.delete(i + 1);
       }
+    }
+
+    /** Aplica o tema da página no canvas (repintando a partir dos pixels crus). */
+    function pintar(p: Pagina) {
+      const canvas = p.canvas;
+      const ctx = canvas?.getContext('2d');
+      if (!canvas || !ctx) return;
+      if (pintor.identidade) {
+        if (p.crua) ctx.putImageData(p.crua, 0, 0);
+        p.crua = null;
+        return;
+      }
+      const t0 = performance.now();
+      p.crua ??= ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const saida = ctx.createImageData(p.crua.width, p.crua.height);
+      pintor.pintar(saida.data, p.crua.data);
+      ctx.putImageData(saida, 0, 0);
+      rolagem.dataset.pinturaMs = (performance.now() - t0).toFixed(1);
     }
 
     async function desenhar(i: number) {
@@ -254,9 +278,10 @@ export const motorPdf: MotorDeLeitura = {
         p.tarefa = tarefa;
         await tarefa.promise;
         if (desmontada || meu !== p.pedido) return;
-        canvas.style.filter = filtroDoTema(aparencia.tema);
         p.canvas?.remove();
         p.canvas = canvas;
+        p.crua = null; // canvas novo, cru
+        pintar(p);
         p.desenhadaEm = chave;
         p.tarefa = null;
         p.el.append(canvas);
@@ -375,9 +400,18 @@ export const motorPdf: MotorDeLeitura = {
 
     function aplicarTema(a: ConfigLeitura) {
       aparencia = a;
-      rolagem.dataset.tema = a.tema;
-      const f = filtroDoTema(a.tema);
-      for (const p of paginas) if (p.canvas) p.canvas.style.filter = f;
+      const params = parametrosDaPagina(a.pagina, a.temasMeus);
+      const chave = JSON.stringify(params);
+      if (chave === chavePintor) return;
+      chavePintor = chave;
+      pintor = criarPintor(params);
+      const papel = rgbParaHex(pintor.papel);
+      rolagem.dataset.tema = a.pagina.tema;
+      rolagem.style.background = fundoAoRedor(pintor.papel, pintor.escuro);
+      for (const p of paginas) {
+        p.el.style.background = papel;
+        pintar(p);
+      }
     }
 
     larguraVista = rolagem.clientWidth;

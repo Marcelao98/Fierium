@@ -2,7 +2,7 @@
 // se lê (o véu) e volta ao mexer o mouse ou tocar. A casca (barra, véu, temas, painel, balão) é a mesma pra todos os
 // formatos; o conteúdo é desenhado pelo motor certo (@fierium/leitores), montado num elemento e conversando por
 // eventos. Trocar de formato = trocar de motor; a casca não muda.
-import type { ConfigLeitura, Marcacao, TemaLeitura } from '@fierium/contratos';
+import type { ConfigLeitura, Marcacao, PaginaLeitura, TemaLeitura } from '@fierium/contratos';
 import { escolherMotor, MOTORES, type Caixa, type SessaoLeitura, type Selecao } from '@fierium/leitores';
 import { Icone } from '@fierium/ui';
 import type { CSSProperties } from 'react';
@@ -11,6 +11,7 @@ import { corDe, useCores } from '../../compartilhado/Marcacoes';
 import { useConfig, useConfigApp, useFatia, useServicos } from '../../nucleo/contexto';
 import { fecharLeitura, type Leitura } from '../../nucleo/navegacao';
 import { Balao } from './Balao';
+import { PainelPagina } from './PainelPagina';
 import type { Leitor as EstadoLeitor } from './estado';
 import './leitor.css';
 
@@ -38,6 +39,7 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
   const [veu, setVeu] = useState(false);
   const [painel, setPainel] = useState<'aparencia' | 'marcacoes' | null>(null);
   const [balao, setBalao] = useState<EstadoBalao | null>(null);
+  const [previa, setPrevia] = useState<PaginaLeitura | null>(null);
   const palco = useRef<HTMLDivElement>(null);
   const sessao = useRef<SessaoLeitura | null>(null);
   const tempoVeu = useRef(0);
@@ -114,8 +116,8 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
   }, [fonte]);
 
   useEffect(() => {
-    if (cfg) sessao.current?.aplicarAparencia(cfg);
-  }, [cfg]);
+    if (cfg) sessao.current?.aplicarAparencia(previa ? { ...cfg, pagina: previa } : cfg);
+  }, [cfg, previa]);
   useEffect(() => {
     sessao.current?.mostrarMarcacoes(marcacoes, cores, selecionada);
   }, [marcacoes, cores, selecionada]);
@@ -198,7 +200,8 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
 
       {painel === 'aparencia' && (
         <aside className="leitor-painel" aria-label="Aparência da leitura">
-          <h3>Tema</h3>
+          <PainelPagina cfg={cfg} mudar={mudar} previa={setPrevia} />
+          <h3>Cor da interface</h3>
           <div className="temas-leitura">
             {TEMAS.map(([v, n, f, t]) => (
               <button

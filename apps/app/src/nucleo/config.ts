@@ -1,6 +1,7 @@
 // As preferências (tema, movimento, leitura, cores das marcações). Infraestrutura do app: a casca e as
 // funcionalidades leem daqui; só os Ajustes e o leitor mudam.
 import type { Config } from '@fierium/contratos';
+import { completarLeitura } from '@fierium/leitores';
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type { Servicos } from './servicos';
 
@@ -23,7 +24,8 @@ export function criarConfig(s: Servicos, aplicar: (c: Config) => void = aplicarN
   return {
     store,
     async carregar() {
-      const config = await s.chamar('config.ler', {});
+      const lida = await s.chamar('config.ler', {});
+      const config = { ...lida, leitura: completarLeitura(lida.leitura) };
       aplicar(config);
       store.setState({ config });
     },

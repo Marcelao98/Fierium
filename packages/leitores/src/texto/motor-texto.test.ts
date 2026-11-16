@@ -31,7 +31,15 @@ const fonte = {
   edicaoId: 'e',
   capitulos: [{ titulo: 'I', paragrafos: ['Uma noite destas, vindo da cidade.', 'Segundo parágrafo.'] }],
 };
-const aparencia = { fonte: 'literata' as const, tamanho: 20, entrelinha: 1.7, largura: 66, tema: 'noite' as const };
+const aparencia = {
+  fonte: 'literata' as const,
+  tamanho: 20,
+  entrelinha: 1.7,
+  largura: 66,
+  tema: 'noite' as const,
+  pagina: { tema: 'sepia', brilho: 0, contraste: 100, quente: 0, manterCores: true },
+  temasMeus: [],
+};
 
 describe('motor de texto', () => {
   it('pedaços: marcação sobreposta não duplica texto', () => {

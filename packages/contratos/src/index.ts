@@ -232,7 +232,39 @@ export interface ConfigLeitura {
   entrelinha: number;
   /** largura máxima da coluna em caracteres (ch) */
   largura: number;
+  /** cor da interface do leitor (a moldura); a cor da PÁGINA do PDF/EPUB está em `pagina` */
   tema: TemaLeitura;
+  /** tema da página (PDF e EPUB): padrão e `completarLeitura` em `@fierium/leitores` */
+  pagina: PaginaLeitura;
+  /** temas da página que a pessoa salvou */
+  temasMeus: TemaMeu[];
+}
+
+/**
+ * Como a página do livro é pintada. `tema` é o id de um tema do catálogo (`@fierium/leitores`), o id de um dos
+ * `temasMeus` ("meu-…") ou "personalizado" (aí valem `papel` e `tinta`, em `#rrggbb`).
+ */
+export interface PaginaLeitura {
+  tema: string;
+  /** -100..100 */
+  brilho: number;
+  /** 20..200 (100 = normal) */
+  contraste: number;
+  /** luz quente, 0..100 */
+  quente: number;
+  /** não repintar figuras coloridas (só escurece/clareia conforme o papel) */
+  manterCores: boolean;
+  papel?: string | undefined;
+  tinta?: string | undefined;
+}
+
+export interface TemaMeu {
+  id: string;
+  nome: string;
+  /** `#rrggbb` */
+  papel: string;
+  /** `#rrggbb` */
+  tinta: string;
 }
 
 export interface Config {
