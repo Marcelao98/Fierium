@@ -1,4 +1,4 @@
-// Notas: todas as marcações da biblioteca, filtro por cor, busca e editar a nota.
+// Notas: todas as marcações da biblioteca (os filtros ficam na tela), editar a nota e apagar.
 import type { Marcacao, Obra } from '@fierium/contratos';
 import { createStore } from 'zustand/vanilla';
 import type { Servicos } from '../../nucleo/servicos';
@@ -6,21 +6,14 @@ import type { Servicos } from '../../nucleo/servicos';
 export interface EstadoNotas {
   marcacoes: Marcacao[];
   obras: Map<string, Obra>;
-  cor: string | undefined;
-  texto: string;
 }
 
 export function criarNotas(s: Servicos) {
-  const store = createStore<EstadoNotas>(() => ({ marcacoes: [], obras: new Map(), cor: undefined, texto: '' }));
+  const store = createStore<EstadoNotas>(() => ({ marcacoes: [], obras: new Map() }));
   let pedido = 0;
-  async function carregar(m: { cor?: string | undefined; texto?: string } = {}) {
-    const st = { ...store.getState(), ...m };
-    store.setState({ cor: st.cor, texto: st.texto });
+  async function carregar() {
     const meu = ++pedido;
-    const [marcacoes, obras] = await Promise.all([
-      s.chamar('marcacoes.listar', { ...(st.cor ? { cor: st.cor } : {}), ...(st.texto ? { texto: st.texto } : {}) }),
-      s.chamar('obras.listar', {}),
-    ]);
+    const [marcacoes, obras] = await Promise.all([s.chamar('marcacoes.listar', {}), s.chamar('obras.listar', {})]);
     if (meu === pedido) store.setState({ marcacoes, obras: new Map(obras.map((o) => [o.id, o])) });
   }
   s.eventos.ouvir('marcacoes-mudaram', () => void carregar().catch(() => undefined));
@@ -30,6 +23,10 @@ export function criarNotas(s: Servicos) {
     async anotar(id: string, nota: string) {
       const nova = await s.chamar('marcacao.atualizar', { id, nota });
       store.setState((e) => ({ marcacoes: e.marcacoes.map((x) => (x.id === id ? nova : x)) }));
+    },
+    async apagar(id: string) {
+      await s.chamar('marcacao.apagar', { id });
+      store.setState((e) => ({ marcacoes: e.marcacoes.filter((x) => x.id !== id) }));
     },
   };
 }
