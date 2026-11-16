@@ -58,7 +58,18 @@ export function CartaoObra({ obra, detalhe }: { obra: Obra; detalhe?: ReactNode 
         <span style={{ width: `${f * 100}%` }} />
       </div>
       <span className="cartao-obra-titulo">{obra.titulo}</span>
-      <span className="cartao-obra-autor">{detalhe ?? autorDe(obra)}</span>
+      <span
+        className="cartao-obra-autor"
+        data-autor={!detalhe && autorDe(obra) ? '' : undefined}
+        title={!detalhe && autorDe(obra) ? `Obras de ${autorDe(obra)}` : undefined}
+        onClick={(e) => {
+          if (detalhe || !autorDe(obra)) return;
+          e.stopPropagation();
+          ir({ tela: 'autor', nome: autorDe(obra) });
+        }}
+      >
+        {detalhe ?? autorDe(obra)}
+      </span>
     </button>
   );
 }

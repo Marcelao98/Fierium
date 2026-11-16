@@ -2,6 +2,7 @@
 import type { EstadoLeitura, Formato, Ordem } from '@fierium/contratos';
 import { Icone } from '@fierium/ui';
 import { useEffect, useMemo, useState } from 'react';
+import { CartaoCinza, lerBaixado } from '../../compartilhado/Catalogo';
 import { autorDe, Capa, CartaoObra, formatosDe, fracaoDe } from '../../compartilhado/Obras';
 import { useFatia } from '../../nucleo/contexto';
 import { ir } from '../../nucleo/navegacao';
@@ -29,7 +30,8 @@ const ORDENS: [Ordem, string][] = [
 ];
 
 export function TelaBiblioteca({ biblioteca, lente }: { biblioteca: Biblioteca; lente: 'grade' | 'mapa' }) {
-  const { lista, filtro, visao, todas, carregando } = useFatia(biblioteca.store, (s) => s);
+  const { lista, filtro, visao, todas, carregando, paraBaixar, mostrarCatalogo } = useFatia(biblioteca.store, (s) => s);
+  const fases = useFatia(biblioteca.baixador.store, (s) => s);
   const { filtrar, mudarVisao } = biblioteca;
   const [texto, setTexto] = useState(filtro.texto ?? '');
   const areas = useMemo(
@@ -147,17 +149,25 @@ export function TelaBiblioteca({ biblioteca, lente }: { biblioteca: Biblioteca; 
             >
               ✦ Favoritas
             </button>
+            <label className="f-chip" style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+              <input
+                type="checkbox"
+                checked={mostrarCatalogo}
+                onChange={(e) => void biblioteca.mostrarCatalogo(e.target.checked).catch(() => undefined)}
+              />
+              Mostrar o que dá pra baixar
+            </label>
             <span className="contagem" aria-live="polite">
               {carregando ? 'buscando…' : `${lista.length} ${lista.length === 1 ? 'obra' : 'obras'}`}
             </span>
           </div>
 
-          {!lista.length && !carregando ? (
+          {!lista.length && !paraBaixar.length && !carregando ? (
             <div className="vazio">
               <h2>Nenhuma obra assim</h2>
               <p>Tente outras palavras ou limpe os filtros.</p>
             </div>
-          ) : visao === 'grade' ? (
+          ) : !lista.length ? null : visao === 'grade' ? (
             <div className="grade">
               {lista.map((o) => (
                 <CartaoObra key={o.id} obra={o} />
@@ -186,6 +196,22 @@ export function TelaBiblioteca({ biblioteca, lente }: { biblioteca: Biblioteca; 
                 </button>
               ))}
             </div>
+          )}
+          {paraBaixar.length > 0 && (
+            <section className="secao-baixar" aria-label="Pra baixar">
+              <h2>Pra baixar</h2>
+              <p>Nos catálogos abertos (domínio público). Clicou em Baixar, vira colorido e abre.</p>
+              <div className="grade">
+                {paraBaixar.map((i) => (
+                  <CartaoCinza
+                    key={i.id}
+                    item={i}
+                    fase={fases[i.id]}
+                    aoBaixar={() => void biblioteca.baixador.baixar(i.id).then(lerBaixado)}
+                  />
+                ))}
+              </div>
+            </section>
           )}
         </>
       )}

@@ -24,7 +24,7 @@ test('Obra: juntar com outra obra, ver as duas edições e separar', async ({ pa
   await page.getByRole('button', { name: 'Voltar' }).click();
   await page.goto('/#/biblioteca/grade');
   await page.getByLabel('Buscar na biblioteca').fill('iracema');
-  await expect(page.getByText('Nenhuma obra assim')).toBeVisible();
+  await expect(page.locator('.grade .cartao-obra')).toHaveCount(0);
   await page.getByLabel('Buscar na biblioteca').fill('dom casmurro');
   await page.locator('.cartao-obra', { hasText: 'Dom Casmurro' }).click();
   await expect(page.locator('.edicao')).toHaveCount(2);

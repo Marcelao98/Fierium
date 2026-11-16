@@ -1,11 +1,13 @@
 import type { Tema } from '@fierium/contratos';
 import { useConfig, useConfigApp, useServicos } from '../../nucleo/contexto';
 import { inspetor } from '../../nucleo/navegacao';
+import { InternetECatalogos } from './Internet';
 import { PastasDeLivros } from './PastasDeLivros';
 import type { Pastas } from './estado';
+import type { Internet } from './internet';
 import './ajustes.css';
 
-export function TelaAjustes({ pastas }: { pastas: Pastas }) {
+export function TelaAjustes({ pastas, internet }: { pastas: Pastas; internet: Internet }) {
   const c = useConfig();
   const { mudar: mudarConfig } = useConfigApp();
   const servicos = useServicos();
@@ -19,6 +21,7 @@ export function TelaAjustes({ pastas }: { pastas: Pastas }) {
         </div>
       </div>
       <PastasDeLivros pastas={pastas} />
+      <InternetECatalogos internet={internet} />
       <div className="ajuste">
         <div>
           Tema

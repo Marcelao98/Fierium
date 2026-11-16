@@ -10,6 +10,8 @@ import { useConfig } from './nucleo/contexto';
 import { useNavegacao } from './nucleo/navegacao';
 import type { Recursos } from './montar';
 import { TelaAjustes } from './recursos/ajustes/Tela';
+import { TelaAutor } from './recursos/autor/Tela';
+import { TelaDescobrir, TelaItem } from './recursos/descobrir/Tela';
 import { TelaBiblioteca } from './recursos/biblioteca/Tela';
 import { TelaColecao, TelaColecoes } from './recursos/colecoes/Tela';
 import { TelaEstatisticas } from './recursos/estatisticas/Tela';
@@ -40,6 +42,9 @@ export function App({ recursos, estatisticasDisponiveis }: { recursos: Recursos;
         {rota.tela === 'inicio' && <TelaInicio inicio={recursos.inicio} />}
         {rota.tela === 'biblioteca' && <TelaBiblioteca biblioteca={recursos.biblioteca} lente={rota.lente} />}
         {rota.tela === 'obra' && <TelaObra estado={recursos.obra} id={rota.id} />}
+        {rota.tela === 'descobrir' && <TelaDescobrir descobrir={recursos.descobrir} />}
+        {rota.tela === 'item' && <TelaItem descobrir={recursos.descobrir} id={rota.id} />}
+        {rota.tela === 'autor' && <TelaAutor autor={recursos.autor} nome={rota.nome} />}
         {rota.tela === 'colecoes' && <TelaColecoes colecoes={recursos.colecoes} />}
         {rota.tela === 'colecao' && <TelaColecao colecoes={recursos.colecoes} id={rota.id} />}
         {rota.tela === 'notas' && <TelaNotas notas={recursos.notas} />}
@@ -54,7 +59,7 @@ export function App({ recursos, estatisticasDisponiveis }: { recursos: Recursos;
               </p>
             </section>
           ))}
-        {rota.tela === 'ajustes' && <TelaAjustes pastas={recursos.pastas} />}
+        {rota.tela === 'ajustes' && <TelaAjustes pastas={recursos.pastas} internet={recursos.internet} />}
         {rota.tela === 'vitrine' && Vitrine && (
           <Suspense fallback={null}>
             <Vitrine />

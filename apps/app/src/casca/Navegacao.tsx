@@ -12,6 +12,13 @@ const DESTINOS: { nome: string; icone: NomeIcone; rota: Rota; ativo: (r: Rota) =
     celular: true,
   },
   {
+    nome: 'Descobrir',
+    icone: 'deriva',
+    rota: { tela: 'descobrir' },
+    ativo: (r) => r.tela === 'descobrir' || r.tela === 'autor' || r.tela === 'item',
+    celular: false,
+  },
+  {
     nome: 'Coleções',
     icone: 'colecoes',
     rota: { tela: 'colecoes' },

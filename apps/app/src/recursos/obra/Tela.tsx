@@ -17,6 +17,7 @@ import {
 } from '../../compartilhado/Obras';
 import { useFatia } from '../../nucleo/contexto';
 import { ir } from '../../nucleo/navegacao';
+import { CorrigirDados } from './Corrigir';
 import type { PaginaObraEstado } from './estado';
 import './obra.css';
 
@@ -26,8 +27,10 @@ export function TelaObra({ estado, id }: { estado: PaginaObraEstado; id: string 
   const { obra, marcacoes: marcacoesDaObra, colecoes, parecidas } = useFatia(estado.store, (s) => s);
   const cores = useCores();
   const [juntando, setJuntando] = useState(false);
+  const [corrigindo, setCorrigindo] = useState(false);
   useEffect(() => {
     setJuntando(false);
+    setCorrigindo(false);
     void estado.abrir(id).catch(() => undefined);
   }, [estado, id]);
   if (!obra || obra.id !== id) return <p className="carregando">Abrindo…</p>;
@@ -54,7 +57,15 @@ export function TelaObra({ estado, id }: { estado: PaginaObraEstado; id: string 
           </span>
           <h1>{obra.titulo}</h1>
           <p className="obra-autor">
-            {autorDe(obra)}
+            {autorDe(obra) ? (
+              <button
+                className="ficha-autor"
+                title={`Obras de ${autorDe(obra)}`}
+                onClick={() => ir({ tela: 'autor', nome: autorDe(obra) })}
+              >
+                {autorDe(obra)}
+              </button>
+            ) : null}
             {obra.ano ? `, ${obra.ano}` : ''}
           </p>
           <div className="obra-meta">
@@ -85,6 +96,14 @@ export function TelaObra({ estado, id }: { estado: PaginaObraEstado; id: string 
                 <Icone nome="check" /> Marcar como lida
               </button>
             )}
+            <button
+              className="f-botao"
+              data-tipo="fantasma"
+              aria-expanded={corrigindo}
+              onClick={() => setCorrigindo(!corrigindo)}
+            >
+              Corrigir dados…
+            </button>
             {f > 0 && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10, color: 'var(--texto-2)' }}>
                 <Anel fracao={f} />
@@ -96,6 +115,8 @@ export function TelaObra({ estado, id }: { estado: PaginaObraEstado; id: string 
               </span>
             )}
           </div>
+
+          {corrigindo && <CorrigirDados estado={estado} obra={obra} />}
 
           <section className="secao">
             <h2>Edições e arquivos</h2>

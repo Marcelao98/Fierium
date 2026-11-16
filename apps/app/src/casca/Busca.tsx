@@ -138,8 +138,7 @@ export function Busca() {
     fazer: () => {
       if (r.tipo === 'colecao') ir({ tela: 'colecao', id: r.id });
       else if (r.tipo === 'criador') {
-        ir({ tela: 'biblioteca', lente: 'grade' });
-        window.dispatchEvent(new CustomEvent('fierium:buscar', { detail: r.titulo }));
+        ir({ tela: 'autor', nome: r.titulo });
       } else if (r.tipo === 'marcacao' && r.obraId) {
         // abre o leitor no trecho marcado (se não der pra abrir, cai na página da obra)
         const obraId = r.obraId;

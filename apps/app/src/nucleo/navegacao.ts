@@ -7,6 +7,10 @@ export type Rota =
   | { tela: 'biblioteca'; lente: 'grade' | 'mapa' }
   | { tela: 'obra'; id: string }
   | { tela: 'colecoes' }
+  | { tela: 'descobrir' }
+  | { tela: 'autor'; nome: string }
+  /** a ficha de um item do catálogo público (D30) */
+  | { tela: 'item'; id: string }
   | { tela: 'colecao'; id: string }
   | { tela: 'notas' }
   | { tela: 'estatisticas' }
@@ -47,6 +51,10 @@ export function paraEndereco(r: Rota): string {
       return `#/obra/${r.id}`;
     case 'colecao':
       return `#/colecao/${r.id}`;
+    case 'autor':
+      return `#/autor/${encodeURIComponent(r.nome)}`;
+    case 'item':
+      return `#/item/${encodeURIComponent(r.id)}`;
     default:
       return `#/${r.tela}`;
   }
@@ -57,6 +65,9 @@ export function deEndereco(h: string): Rota {
   if (a === 'biblioteca') return { tela: 'biblioteca', lente: b === 'mapa' ? 'mapa' : 'grade' };
   if (a === 'obra' && b) return { tela: 'obra', id: b };
   if (a === 'colecao' && b) return { tela: 'colecao', id: b };
+  if (a === 'autor' && b) return { tela: 'autor', nome: decodeURIComponent(b) };
+  if (a === 'item' && b) return { tela: 'item', id: decodeURIComponent(b) };
+  if (a === 'descobrir') return { tela: 'descobrir' };
   if (a === 'colecoes' || a === 'notas' || a === 'estatisticas' || a === 'ajustes' || a === 'vitrine')
     return { tela: a };
   return { tela: 'inicio' };

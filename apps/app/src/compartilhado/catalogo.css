@@ -1,0 +1,139 @@
+/* catálogo (D30): o que existe nos catálogos abertos e a pessoa ainda não tem, em cinza */
+.cartao-cinza {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.cartao-cinza-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+}
+.cartao-cinza-capa {
+  position: relative;
+  display: block;
+  font-size: 13px;
+  filter: grayscale(1) brightness(0.9);
+  opacity: 0.55;
+  transition:
+    opacity var(--medio) var(--curva),
+    filter var(--medio) var(--curva);
+}
+.cartao-cinza-corpo:hover .cartao-cinza-capa,
+.cartao-cinza-corpo:focus-visible .cartao-cinza-capa {
+  opacity: 0.85;
+}
+.selo-licenca {
+  position: absolute;
+  left: 6px;
+  bottom: 6px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--vidro);
+  color: var(--texto-2);
+  font-family: var(--fonte-rotulo);
+  font-size: 8.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.cartao-cinza-autor {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--texto-3);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.cartao-cinza-autor:hover,
+.cartao-obra-autor[data-autor]:hover {
+  color: var(--luz);
+  text-decoration: underline;
+}
+.cartao-cinza-erro {
+  font-size: 11.5px;
+  color: var(--perigo);
+}
+.cartao-cinza .f-botao {
+  align-self: flex-start;
+}
+.secao-baixar h2 {
+  font-size: 20px;
+  margin: var(--espaco-6) 0 var(--espaco-1);
+}
+.secao-baixar > p {
+  color: var(--texto-3);
+  margin-bottom: var(--espaco-3);
+  font-size: 13px;
+}
+.ficha {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: var(--espaco-6);
+  align-items: start;
+}
+.ficha-capa {
+  font-size: 18px;
+  filter: grayscale(0.8);
+  opacity: 0.8;
+}
+.ficha dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px var(--espaco-4);
+  margin: var(--espaco-4) 0;
+}
+.ficha dt {
+  color: var(--texto-3);
+}
+.ficha-autor {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--luz);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.ficha-erro {
+  color: var(--perigo);
+  margin-top: var(--espaco-3);
+}
+.sugestao {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: var(--espaco-3);
+  align-items: center;
+  padding: var(--espaco-3);
+  margin-bottom: var(--espaco-2);
+}
+.sugestao small {
+  display: block;
+  color: var(--texto-3);
+}
+.form-editar {
+  display: grid;
+  gap: var(--espaco-2);
+  max-width: 460px;
+}
+.form-editar label {
+  display: grid;
+  gap: 2px;
+  font-size: 13px;
+  color: var(--texto-2);
+}
+@media (max-width: 720px) {
+  .ficha {
+    grid-template-columns: 1fr;
+  }
+}
