@@ -8,8 +8,9 @@ mod protocolo;
 use fierium_core::ErroContrato;
 use serde_json::Value;
 
-/// A porta única dos comandos (nomes iguais aos do contrato da interface).
-#[tauri::command]
+/// A porta única dos comandos (nomes iguais aos do contrato da interface). Roda fora da linha da janela (`async`):
+/// uma varredura grande não trava a interface.
+#[tauri::command(async)]
 fn chamar(ctx: tauri::State<comandos::Contexto>, cmd: String, args: Option<Value>) -> Result<Value, ErroContrato> {
     comandos::chamar(&ctx, &cmd, args.unwrap_or(Value::Null)).map_err(|e| {
         if e.codigo() != "NAO_ENCONTRADO" {

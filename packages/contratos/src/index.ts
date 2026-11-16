@@ -54,6 +54,10 @@ export interface Relacao {
   terminadaEm?: Instante;
 }
 
+/**
+ * A obra é o livro; cada edição é uma forma dele (o PDF, o EPUB, outra tradução); cada arquivo é uma cópia no disco.
+ * `edicoes[0]` é a que "Continuar"/"Ler" abre: a lida por último (nunca aberta: EPUB antes de PDF).
+ */
 export interface Obra {
   id: Id;
   titulo: string;
@@ -302,6 +306,10 @@ export interface Comandos {
   'obras.listar': [FiltroObras, Obra[]];
   'obra.obter': [{ id: Id }, Obra];
   'obra.atualizar': [{ id: Id; favorita?: boolean; estado?: EstadoLeitura }, Obra];
+  /** junta obras à mão: todas viram a primeira (`ids[0]`), com as edições, as marcações e a relação das outras */
+  'obra.juntar': [{ ids: Id[] }, Obra];
+  /** separa uma edição à mão: ela vira uma obra própria (devolvida aqui); a varredura não junta de novo */
+  'edicao.separar': [{ edicaoId: Id }, Obra];
   'colecoes.listar': [Record<string, never>, Colecao[]];
   'colecao.criar': [{ nome: string; descricao: string; matiz: number }, Colecao];
   'colecao.definirObras': [{ id: Id; obraIds: Id[] }, Colecao];

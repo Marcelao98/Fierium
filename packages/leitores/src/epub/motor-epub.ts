@@ -39,6 +39,21 @@ export function juntarCfi(cfiInicio: string, cfiFim: string): string | null {
   return `epubcfi(${ini.slice(0, corte)},${ini.slice(corte)},${fim.slice(corte)})`;
 }
 
+const TEMPO_LIMITE_MS = 30_000;
+
+/** Tira do capítulo tudo o que executaria código do livro: <script>, atributos on* e endereços javascript:. */
+export function tirarScripts(capitulo: Document): void {
+  for (const el of [...capitulo.querySelectorAll('script')]) el.remove();
+  for (const el of capitulo.querySelectorAll('*')) {
+    for (const at of [...el.attributes]) {
+      const nome = at.name.toLowerCase();
+      if (nome.startsWith('on')) el.removeAttribute(at.name);
+      else if ((nome === 'href' || nome === 'xlink:href' || nome === 'src') && /^\s*javascript:/i.test(at.value))
+        el.removeAttribute(at.name);
+    }
+  }
+}
+
 export const motorEpub: MotorDeLeitura = {
   nome: 'epub',
   aceita: (f) => f.tipo === 'arquivo' && f.formato === 'epub',
@@ -89,7 +104,16 @@ export const motorEpub: MotorDeLeitura = {
     let rendition: any;
     try {
       book = (ePub as any)(dados);
-      rendition = book.renderTo(palco, { flow: 'scrolled-doc', width: '100%', height: '100%' });
+      // O WebKit (o app no Linux e no Mac) não roda NENHUM ouvinte de evento num iframe sem 'allow-scripts', nem os
+      // nossos: sem isto, dentro do capítulo não há clique, seleção, botão direito nem teclado. Em troca, os scripts
+      // do próprio livro são arrancados antes de o capítulo ser montado (e a CSP do app também não os deixa rodar).
+      book.spine.hooks.content.register((capitulo: Document) => tirarScripts(capitulo));
+      rendition = book.renderTo(palco, {
+        flow: 'scrolled-doc',
+        width: '100%',
+        height: '100%',
+        allowScriptedContent: true,
+      });
     } catch (e) {
       raiz.remove();
       return falhar(e instanceof Error ? e.message : 'formato inválido');
@@ -324,14 +348,23 @@ export const motorEpub: MotorDeLeitura = {
       doc.removeEventListener('keydown', tecla);
     };
     try {
-      await book.opened; // rejeita quando o zip ou o OPF não abrem (o ready sozinho ficaria esperando)
-      await book.ready;
+      // um EPUB torto pode deixar o epub.js esperando pra sempre: depois do tempo limite vira erro, não tela parada
+      const noTempo = <T>(p: Promise<T>): Promise<T> =>
+        new Promise<T>((ok, falha) => {
+          const t = setTimeout(() => falha(new Error('demorou demais pra abrir')), TEMPO_LIMITE_MS);
+          p.then(
+            (v) => (clearTimeout(t), ok(v)),
+            (e: unknown) => (clearTimeout(t), falha(e instanceof Error ? e : new Error(String(e)))),
+          );
+        });
+      await noTempo(book.opened); // rejeita quando o zip ou o OPF não abrem (o ready sozinho ficaria esperando)
+      await noTempo(book.ready);
       try {
-        await rendition.display(inicio);
+        await noTempo(rendition.display(inicio));
       } catch (e) {
         if (!inicio) throw e;
         // CFI que não vale mais (arquivo trocado): abre do começo em vez de falhar
-        await rendition.display();
+        await noTempo(rendition.display());
       }
     } catch (e) {
       desfazer();

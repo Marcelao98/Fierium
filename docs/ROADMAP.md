@@ -195,11 +195,14 @@ Detalhes e o esboço das ondas do M3 em [ORQUESTRACAO.md](ORQUESTRACAO.md#ondas-
 **Objetivo:** a tua pasta de livros de verdade dentro do Fierium.
 
 - [x] SQLite com migrações numeradas e testadas (migração inicial)
-- [ ] Modelo obra → edição → arquivo; UUIDv7; registro de mudanças e relógio lógico (pronto pra sincronia)
+- [x] Modelo obra → edição → arquivo (migração v3, com cópia do banco antes); UUIDv7
+- [ ] Registro de mudanças e relógio lógico (pronto pra sincronia)
 - [x] Escolher pastas; varrer; perceber arquivo novo, movido e apagado
 - [x] Identidade do arquivo pelo conteúdo (BLAKE3)
 - [ ] Capa, título, autor, ano e série de PDF, EPUB e CBZ/CBR (e pelo nome do arquivo)
-- [ ] Reconhecer obra e série; juntar e separar à mão
+- [x] Reconhecer a obra (título + autor normalizados): PDF e EPUB do mesmo livro = uma obra com duas edições; o
+      mesmo arquivo em duas pastas = uma edição; juntar e separar à mão, na página da obra (cartão 08, parte de obras)
+- [ ] Reconhecer série e volume (resto do cartão 08; depende dos metadados dos cartões 03–06)
 - [ ] Busca (FTS5): títulos, autores, assuntos, notas
 - [ ] Coleções no banco
 - [ ] Front ligado ao Rust (o exemplo continua pro `pnpm dev` e os testes)
@@ -226,6 +229,8 @@ e abrir volta na mesma página.
 ## M5 — Leitor de EPUB ⬜
 
 - [x] epub.js (versão fixa) lendo o arquivo pela URL do Rust
+- [x] Conferido no app de verdade (WebKitGTK, Fedora): abrir, mudar de capítulo, tema da página, marcar com nota e
+      voltar no lugar ao reabrir
 - [ ] Fonte, tamanho, entrelinha, margens, justificar; página ou rolagem; colunas na tela larga
 - [ ] Temas de leitura; sumário; busca no livro
 - [ ] Posição exata (CFI)

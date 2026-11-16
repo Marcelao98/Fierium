@@ -1,5 +1,6 @@
 //! A biblioteca de verdade (trilha "Lendo de verdade", M3 enxuto): pastas escolhidas, varredura de PDF e EPUB,
 //! SQLite, obra deduzida do nome do arquivo, progresso. Sem Tauri: o `fierium-app` só chama isto.
+//! Obra ≠ edição ≠ arquivo: o mesmo livro em PDF e EPUB é UMA obra com duas edições (ver `obras.rs`).
 //! As respostas JSON têm o formato EXATO dos tipos do contrato TypeScript (camelCase).
 use fierium_core::ErroFierium;
 use rusqlite::{params, Connection, OptionalExtension};
@@ -9,9 +10,12 @@ use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
-const VERSAO_BANCO: i64 = 2;
+const VERSAO_BANCO: i64 = 3;
 
 mod marcacoes;
+mod obras;
+use obras::ObraLinha;
+pub use obras::{chave_do_autor, chave_do_titulo};
 const LIDA: f64 = 0.98;
 const BLOCO: u64 = 64 * 1024;
 
@@ -142,108 +146,6 @@ struct Linha {
     existe: bool,
 }
 
-struct ObraLinha {
-    id: String,
-    arquivo_id: String,
-    titulo: String,
-    autor: String,
-    matiz: i64,
-    adicionada_em: i64,
-    estado: String,
-    favorita: bool,
-    ultima_leitura: Option<i64>,
-    terminada_em: Option<i64>,
-    nome: String,
-    rel: String,
-    formato: String,
-    tamanho: i64,
-    existe: bool,
-    progresso: Option<(String, f64, i64)>,
-}
-
-impl ObraLinha {
-    fn fracao(&self) -> f64 {
-        self.progresso.as_ref().map_or(0.0, |p| p.1)
-    }
-
-    fn json(&self) -> Value {
-        let mut relacao = json!({
-            "estado": self.estado,
-            "favorita": self.favorita,
-            "adicionadaEm": self.adicionada_em,
-        });
-        if let Some(u) = self.ultima_leitura {
-            relacao["ultimaLeitura"] = json!(u);
-        }
-        if let Some(t) = self.terminada_em {
-            relacao["terminadaEm"] = json!(t);
-        }
-        let mut edicao = json!({
-            "id": self.arquivo_id,
-            "obraId": self.id,
-            "formato": self.formato,
-            "idioma": "",
-            "descricao": "",
-            "arquivos": [{
-                "id": self.arquivo_id,
-                "nome": self.nome,
-                "caminho": self.rel,
-                "tamanho": self.tamanho,
-                "disponivel": self.existe,
-            }],
-        });
-        if let Some((posicao, fracao, quando)) = &self.progresso {
-            edicao["progresso"] = json!({ "posicao": posicao, "fracao": fracao, "quando": quando });
-        }
-        let criadores = if self.autor.is_empty() {
-            json!([])
-        } else {
-            json!([{ "nome": self.autor, "papel": "autor" }])
-        };
-        json!({
-            "id": self.id,
-            "titulo": self.titulo,
-            "criadores": criadores,
-            "assuntos": [],
-            "reino": "biblioteca",
-            "matiz": self.matiz,
-            "colecaoIds": [],
-            "edicoes": [edicao],
-            "relacao": relacao,
-        })
-    }
-}
-
-const SELECAO: &str = "SELECT o.id, o.arquivo_id, o.titulo, o.autor, o.matiz, o.adicionada_em, o.estado, o.favorita, \
-    o.ultima_leitura, o.terminada_em, a.nome, a.caminho_rel, a.formato, a.tamanho, a.existe, \
-    p.posicao, p.fracao, p.quando \
-    FROM obras o JOIN arquivos a ON a.id = o.arquivo_id LEFT JOIN progresso p ON p.edicao_id = a.id";
-
-fn ler_obra(r: &rusqlite::Row) -> rusqlite::Result<ObraLinha> {
-    let posicao: Option<String> = r.get(15)?;
-    Ok(ObraLinha {
-        id: r.get(0)?,
-        arquivo_id: r.get(1)?,
-        titulo: r.get(2)?,
-        autor: r.get(3)?,
-        matiz: r.get(4)?,
-        adicionada_em: r.get(5)?,
-        estado: r.get(6)?,
-        favorita: r.get::<_, i64>(7)? != 0,
-        ultima_leitura: r.get(8)?,
-        terminada_em: r.get(9)?,
-        nome: r.get(10)?,
-        rel: r.get(11)?,
-        formato: r.get(12)?,
-        tamanho: r.get(13)?,
-        existe: r.get::<_, i64>(14)? != 0,
-        progresso: match posicao {
-            Some(p) => Some((p, r.get(16)?, r.get(17)?)),
-            None => None,
-        },
-    })
-}
-
 pub struct Biblioteca {
     bd: Connection,
 }
@@ -258,12 +160,22 @@ impl Biblioteca {
             .execute_batch("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;")
             .map_err(bd)?;
         let mut b = Self { bd: conexao };
-        b.migrar()?;
+        b.migrar(caminho_db)?;
         Ok(b)
     }
 
-    fn migrar(&mut self) -> Result<(), ErroFierium> {
+    fn migrar(&mut self, caminho_db: &Path) -> Result<(), ErroFierium> {
         let v: i64 = self.bd.query_row("PRAGMA user_version", [], |r| r.get(0)).map_err(bd)?;
+        if (1..VERSAO_BANCO).contains(&v) {
+            // antes de mexer num banco que já tem coisa: uma cópia inteira ao lado (fierium.db.v2.bak)
+            let copia = PathBuf::from(format!("{}.v{v}.bak", caminho_db.display()));
+            if !copia.exists() {
+                self.bd
+                    .execute("VACUUM INTO ?1", params![copia.to_string_lossy()])
+                    .map_err(bd)?;
+                tracing::info!(de = v, para = VERSAO_BANCO, copia = %copia.display(), "banco: migrando (cópia guardada)");
+            }
+        }
         if v < 1 {
             self.bd
                 .execute_batch(
@@ -289,7 +201,7 @@ impl Biblioteca {
         }
         if v < 2 {
             self.bd
-                .execute_batch(&format!(
+                .execute_batch(
                     "BEGIN;
                      CREATE TABLE marcacoes (
                         id TEXT PRIMARY KEY, obra_id TEXT NOT NULL, edicao_id TEXT NOT NULL, tipo TEXT NOT NULL,
@@ -297,11 +209,20 @@ impl Biblioteca {
                         etiquetas TEXT NOT NULL DEFAULT '[]', ligacoes TEXT NOT NULL DEFAULT '[]',
                         criada_em INTEGER NOT NULL, editada_em INTEGER NOT NULL, apagado_em INTEGER);
                      CREATE INDEX marcacoes_obra ON marcacoes (obra_id);
-                     PRAGMA user_version = {VERSAO_BANCO};
-                     COMMIT;"
-                ))
+                     PRAGMA user_version = 2;
+                     COMMIT;",
+                )
                 .map_err(bd)?;
         }
+        if v < 3 {
+            obras::migrar_v3(&mut self.bd)?;
+        }
+        debug_assert_eq!(
+            self.bd
+                .query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0))
+                .ok(),
+            Some(VERSAO_BANCO)
+        );
         Ok(())
     }
 
@@ -499,20 +420,62 @@ impl Biblioteca {
                     .map_err(bd)?;
                 }
                 None => {
-                    let id = novo_id();
+                    // o mesmo conteúdo já está na biblioteca (outra pasta): é mais uma cópia da mesma edição
+                    let conhecida: Option<String> = tx
+                        .query_row(
+                            "SELECT edicao_id FROM arquivos WHERE impressao = ?1 AND edicao_id IS NOT NULL
+                             ORDER BY existe DESC, visto_em, id LIMIT 1",
+                            params![a.impressao],
+                            |r| r.get(0),
+                        )
+                        .optional()
+                        .map_err(bd)?;
+                    let edicao = match conhecida {
+                        Some(e) => e,
+                        None => {
+                            // arquivo novo: outra edição de uma obra que já existe (mesma chave) ou uma obra nova
+                            let (autor, titulo) = titulo_e_autor(&a.nome);
+                            let (kt, ka) = (chave_do_titulo(&titulo), chave_do_autor(&autor));
+                            let obra = match obras::achar_obra(&tx, &kt, &ka)? {
+                                Some(o) => o,
+                                None => {
+                                    let o = novo_id();
+                                    tx.execute(
+                                        "INSERT INTO obras (id, titulo, autor, matiz, adicionada_em)
+                                         VALUES (?1,?2,?3,?4,?5)",
+                                        params![o, titulo, autor, matiz_do_titulo(&titulo), agora_],
+                                    )
+                                    .map_err(bd)?;
+                                    o
+                                }
+                            };
+                            let e = novo_id();
+                            tx.execute(
+                                "INSERT INTO edicoes (id, obra_id, formato, chave_titulo, chave_autor, criada_em)
+                                 VALUES (?1,?2,?3,?4,?5,?6)",
+                                params![e, obra, a.formato, kt, ka, agora_],
+                            )
+                            .map_err(bd)?;
+                            novos += 1;
+                            e
+                        }
+                    };
                     tx.execute(
-                        "INSERT INTO arquivos (id, pasta, caminho_rel, nome, formato, tamanho, impressao, existe, visto_em)
-                         VALUES (?1,?2,?3,?4,?5,?6,?7,1,?8)",
-                        params![id, a.pasta, a.rel, a.nome, a.formato, a.tamanho, a.impressao, agora_],
+                        "INSERT INTO arquivos (id, pasta, caminho_rel, nome, formato, tamanho, impressao, existe,
+                            visto_em, edicao_id) VALUES (?1,?2,?3,?4,?5,?6,?7,1,?8,?9)",
+                        params![
+                            novo_id(),
+                            a.pasta,
+                            a.rel,
+                            a.nome,
+                            a.formato,
+                            a.tamanho,
+                            a.impressao,
+                            agora_,
+                            edicao
+                        ],
                     )
                     .map_err(bd)?;
-                    let (autor, titulo) = titulo_e_autor(&a.nome);
-                    tx.execute(
-                        "INSERT INTO obras (id, arquivo_id, titulo, autor, matiz, adicionada_em) VALUES (?1,?2,?3,?4,?5,?6)",
-                        params![novo_id(), id, titulo, autor, matiz_do_titulo(&titulo), agora_],
-                    )
-                    .map_err(bd)?;
-                    novos += 1;
                 }
             }
         }
@@ -533,7 +496,7 @@ impl Biblioteca {
         )
     }
 
-    /// Os arquivos que existem (id da edição + caminho), pro protocolo `fierium://`.
+    /// Os arquivos que existem (id do arquivo + caminho), pro protocolo `fierium://`.
     pub fn arquivos_existentes(&self) -> Result<Vec<(String, PathBuf)>, ErroFierium> {
         let mut st = self
             .bd
@@ -555,25 +518,16 @@ impl Biblioteca {
     // ---------- obras ----------
 
     fn todas(&self, so_existentes: bool) -> Result<Vec<ObraLinha>, ErroFierium> {
-        let sql = if so_existentes {
-            format!("{SELECAO} WHERE a.existe = 1")
-        } else {
-            SELECAO.to_string()
-        };
-        let mut st = self.bd.prepare(&sql).map_err(bd)?;
-        let v = st
-            .query_map([], ler_obra)
-            .map_err(bd)?
-            .collect::<Result<_, _>>()
-            .map_err(bd)?;
+        let mut v = self.carregar_obras(None)?;
+        if so_existentes {
+            v.retain(ObraLinha::disponivel);
+        }
         Ok(v)
     }
 
     fn uma(&self, id: &str) -> Result<ObraLinha, ErroFierium> {
-        self.bd
-            .query_row(&format!("{SELECAO} WHERE o.id = ?1"), params![id], ler_obra)
-            .optional()
-            .map_err(bd)?
+        self.carregar_obras(Some(id))?
+            .pop()
             .ok_or_else(|| ErroFierium::NaoEncontrado(format!("obra {id}")))
     }
 
@@ -590,7 +544,7 @@ impl Biblioteca {
                 let alvo = normalizar(&format!("{} {}", o.titulo, o.autor));
                 palavras.iter().all(|p| alvo.contains(p))
                     && estado.is_none_or(|e| o.estado == e)
-                    && formato.is_none_or(|f| o.formato == f)
+                    && formato.is_none_or(|f| o.tem_formato(f))
                     && (!favoritas || o.favorita)
             })
             .collect();
@@ -657,22 +611,24 @@ impl Biblioteca {
     }
 
     pub fn edicao_abrir(&self, edicao_id: &str) -> Result<Value, ErroFierium> {
-        let r: Option<(String, i64)> = self
+        // a edição abre por qualquer cópia dela que esteja no disco
+        let r: Option<(String, String, i64)> = self
             .bd
             .query_row(
-                "SELECT formato, tamanho FROM arquivos WHERE id = ?1 AND existe = 1",
+                "SELECT id, formato, tamanho FROM arquivos WHERE edicao_id = ?1 AND existe = 1
+                 ORDER BY caminho_rel, id LIMIT 1",
                 params![edicao_id],
-                |r| Ok((r.get(0)?, r.get(1)?)),
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
             )
             .optional()
             .map_err(bd)?;
-        let (formato, tamanho) =
+        let (arquivo, formato, tamanho) =
             r.ok_or_else(|| ErroFierium::NaoEncontrado(format!("edição {edicao_id} (o arquivo sumiu?)")))?;
         Ok(json!({
             "tipo": "arquivo",
             "edicaoId": edicao_id,
             "formato": formato,
-            "url": url_do_arquivo(edicao_id),
+            "url": url_do_arquivo(&arquivo),
             "tamanho": tamanho,
         }))
     }
@@ -683,7 +639,7 @@ impl Biblioteca {
         }
         let existe: bool = self
             .bd
-            .query_row("SELECT 1 FROM arquivos WHERE id = ?1", params![edicao_id], |_| Ok(()))
+            .query_row("SELECT 1 FROM edicoes WHERE id = ?1", params![edicao_id], |_| Ok(()))
             .optional()
             .map_err(bd)?
             .is_some();
@@ -702,14 +658,15 @@ impl Biblioteca {
             self.bd
                 .execute(
                     "UPDATE obras SET estado='lida', ultima_leitura=?2, terminada_em=COALESCE(terminada_em, ?2)
-                     WHERE arquivo_id=?1",
+                     WHERE id = (SELECT obra_id FROM edicoes WHERE id = ?1)",
                     params![edicao_id, t],
                 )
                 .map_err(bd)?;
         } else {
             self.bd
                 .execute(
-                    "UPDATE obras SET estado='lendo', ultima_leitura=?2 WHERE arquivo_id=?1",
+                    "UPDATE obras SET estado='lendo', ultima_leitura=?2
+                     WHERE id = (SELECT obra_id FROM edicoes WHERE id = ?1)",
                     params![edicao_id, t],
                 )
                 .map_err(bd)?;

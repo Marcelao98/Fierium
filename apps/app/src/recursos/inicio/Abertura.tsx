@@ -23,7 +23,14 @@ export function Abertura() {
 
   const exemplo = () => {
     void servicos.chamar('obras.listar', {}).then(
-      (l) => setTotal(l.length),
+      (l) => {
+        setTotal(l.length);
+        // biblioteca vazia (o app sem pasta escolhida): não há o que contar, entra direto
+        if (!l.length) {
+          ir({ tela: 'inicio' });
+          void config.mudar((c) => ({ ...c, primeiraVez: false })).catch(() => undefined);
+        }
+      },
       () => undefined,
     );
     setPasso('formando');

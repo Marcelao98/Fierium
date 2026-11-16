@@ -1,9 +1,11 @@
 // Área "obras" (no Rust: fierium-biblioteca + fierium-dados): Início, listar com filtros, obter e atualizar.
 import type { FiltroObras, Limiar, Obra } from '@fierium/contratos';
+import { ErroFierium } from '../cliente';
 import { autorDe, type Base, type Tratadores } from './base';
+import { novoId } from './dados-exemplo';
 import { combina } from './normalizar';
 
-export const ESCREVEM_OBRAS = ['obra.atualizar'] as const;
+export const ESCREVEM_OBRAS = ['obra.atualizar', 'obra.juntar', 'edicao.separar'] as const;
 
 const fracao = (o: Obra) => Math.max(0, ...o.edicoes.map((e) => e.progresso?.fracao ?? 0));
 
@@ -32,7 +34,9 @@ export function filtrarObras(obras: Obra[], f: FiltroObras): Obra[] {
 
 export function comandosObras(
   b: Base,
-): Tratadores<'biblioteca.limiar' | 'obras.listar' | 'obra.obter' | 'obra.atualizar'> {
+): Tratadores<
+  'biblioteca.limiar' | 'obras.listar' | 'obra.obter' | 'obra.atualizar' | 'obra.juntar' | 'edicao.separar'
+> {
   const DIA = 86_400_000;
   return {
     'biblioteca.limiar': (): Limiar => {
@@ -65,6 +69,50 @@ export function comandosObras(
         if (estado === 'lida') o.relacao.terminadaEm = b.agora();
       }
       return o;
+    },
+    'obra.juntar': ({ ids }) => {
+      const unicos = [...new Set(ids)];
+      if (unicos.length < 2) throw new ErroFierium('ARGUMENTO_INVALIDO', 'preciso de duas obras diferentes pra juntar');
+      const [alvo, ...outras] = unicos.map((id) => b.obra(id)) as [Obra, ...Obra[]];
+      for (const o of outras) {
+        for (const e of o.edicoes) alvo.edicoes.push({ ...e, obraId: alvo.id });
+        for (const m of b.estado.marcacoes) if (m.obraId === o.id) m.obraId = alvo.id;
+        for (const c of b.estado.colecoes)
+          if (c.obraIds.includes(o.id)) c.obraIds = [...new Set(c.obraIds.map((x) => (x === o.id ? alvo.id : x)))];
+        alvo.colecaoIds = [...new Set([...alvo.colecaoIds, ...o.colecaoIds])];
+        alvo.relacao.favorita ||= o.relacao.favorita;
+        alvo.relacao.adicionadaEm = Math.min(alvo.relacao.adicionadaEm, o.relacao.adicionadaEm);
+        if ((o.relacao.ultimaLeitura ?? 0) > (alvo.relacao.ultimaLeitura ?? 0)) {
+          alvo.relacao.ultimaLeitura = o.relacao.ultimaLeitura!;
+          alvo.relacao.estado = o.relacao.estado;
+        }
+        b.estado.obras = b.estado.obras.filter((x) => x.id !== o.id);
+      }
+      // a lida por último primeiro (é a que "Continuar" abre)
+      alvo.edicoes.sort((x, y) => (y.progresso?.quando ?? 0) - (x.progresso?.quando ?? 0));
+      return alvo;
+    },
+    'edicao.separar': ({ edicaoId }) => {
+      const { o, e } = b.edicao(edicaoId);
+      if (o.edicoes.length < 2)
+        throw new ErroFierium('ARGUMENTO_INVALIDO', 'esta é a única edição da obra: não há do que separar');
+      o.edicoes = o.edicoes.filter((x) => x.id !== edicaoId);
+      const nova: Obra = {
+        ...structuredClone(o),
+        id: novoId(b.agora()),
+        colecaoIds: [],
+        edicoes: [e],
+        relacao: {
+          estado: e.progresso ? 'lendo' : 'nao-lida',
+          favorita: false,
+          adicionadaEm: b.agora(),
+          ...(e.progresso ? { ultimaLeitura: e.progresso.quando } : {}),
+        },
+      };
+      e.obraId = nova.id;
+      for (const m of b.estado.marcacoes) if (m.edicaoId === edicaoId) m.obraId = nova.id;
+      b.estado.obras.push(nova);
+      return nova;
     },
   };
 }

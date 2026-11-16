@@ -69,3 +69,16 @@ da pessoa: período (dia, semana, mês, ano), o quê (livros, páginas, minutos)
 
 O banco e o formato de exportação têm número de versão. Cada mudança de esquema é uma migração numerada, testada
 com um banco da versão anterior. O formato de exportação é documentado e aberto.
+
+| Versão | O que mudou |
+|---|---|
+| 1 | pastas, arquivos, obras (uma por arquivo), progresso |
+| 2 | marcações |
+| 3 | **obra → edições → arquivos** (`crates/fierium-biblioteca/src/obras.rs`): tabela `edicoes`, `arquivos.edicao_id`, `obras` sem `arquivo_id`, `progresso` preso à edição. O id de cada edição antiga é o id do arquivo dela (progresso e marcações continuam valendo sem reescrever). Mesma impressão = uma edição com vários arquivos; mesma chave (título + primeiro autor normalizados) = uma obra com várias edições. |
+
+Antes de migrar um banco que já tem dados, o núcleo guarda uma cópia inteira ao lado (`fierium.db.v<versão>.bak`).
+
+**Como a varredura decide a obra de um arquivo novo:** (1) mesmo conteúdo de um arquivo conhecido → mais uma cópia da
+mesma edição; (2) mesma chave de uma edição existente → edição nova da mesma obra (se um dos lados não tem autor, vale
+o título, desde que aponte pra uma obra só); (3) senão, obra nova. Ela nunca reagrupa o que já existe: juntar
+(`obra.juntar`) e separar (`edicao.separar`, que marca a edição como `separada`) são escolhas da pessoa e ficam.

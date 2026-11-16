@@ -19,6 +19,28 @@ describe('leitor (estado)', () => {
     expect(st.marcacoes.length).toBeGreaterThan(0);
     expect(st.fracao).toBeCloseTo(0.62);
   });
+  it('obra com duas edições: o leitor só mostra as marcações da edição aberta', async () => {
+    const { s } = servicosDeTeste();
+    const [dc] = await s.chamar('obras.listar', { texto: 'dom casmurro' });
+    const [ira] = await s.chamar('obras.listar', { texto: 'iracema' });
+    const daDc = (await s.chamar('marcacoes.listar', { obraId: dc!.id })).length;
+    await s.chamar('marcacao.criar', {
+      obraId: ira!.id,
+      edicaoId: ira!.edicoes[0]!.id,
+      tipo: 'destaque',
+      ancora: { tipo: 'texto', capitulo: 0, paragrafo: 0, inicio: 0, fim: 4 },
+      trecho: 'Além',
+      cor: 'ideia',
+      etiquetas: [],
+      ligacoes: [],
+    });
+    await s.chamar('obra.juntar', { ids: [dc!.id, ira!.id] });
+    const l = criarLeitor(s);
+    await l.abrir(dc!.id, dc!.edicoes[0]!.id);
+    expect(l.store.getState().marcacoes.length).toBe(daDc);
+    await l.abrir(dc!.id, ira!.edicoes[0]!.id);
+    expect(l.store.getState().marcacoes.map((m) => m.trecho)).toEqual(['Além']);
+  });
   it('o tempo só conta com a janela visível e a pessoa mexendo nos últimos 2 min', async () => {
     const { l, andar, esconder } = await abrirDomCasmurro();
     l.tique();

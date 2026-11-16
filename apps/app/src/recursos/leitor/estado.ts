@@ -30,11 +30,13 @@ export function criarLeitor(s: Servicos, visivel: () => boolean = () => !documen
 
   async function abrir(obraId: string, edicaoId: string) {
     store.setState({ obra: null, fonte: null, marcacoes: [], selecionada: null, fracao: 0 });
-    const [obra, fonte, marcacoes] = await Promise.all([
+    const [obra, fonte, daObra] = await Promise.all([
       s.chamar('obra.obter', { id: obraId }),
       s.chamar('edicao.abrir', { edicaoId }),
       s.chamar('marcacoes.listar', { obraId }),
     ]);
+    // a obra pode ter mais de uma edição (PDF e EPUB): a âncora de uma marcação só vale na edição em que foi feita
+    const marcacoes = daObra.filter((m) => m.edicaoId === edicaoId);
     const f = obra.edicoes.find((e) => e.id === edicaoId)?.progresso?.fracao ?? 0;
     Object.assign(sessao, { edicaoId, segundos: 0, fracaoInicio: f, fracaoMax: f, ultimoMovimento: s.agora() });
     store.setState({ obra, fonte, marcacoes, fracao: f });

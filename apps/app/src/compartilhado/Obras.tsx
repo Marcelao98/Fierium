@@ -8,11 +8,20 @@ import { abrirLeitura, ir } from '../nucleo/navegacao';
 export const autorDe = (o: Obra) => o.criadores[0]?.nome ?? '';
 export const fracaoDe = (o: Obra) => Math.max(0, ...o.edicoes.map((e) => e.progresso?.fracao ?? 0));
 
-export function lerObra(o: Obra, e?: MouseEvent, marcacaoId?: string) {
+/** "PDF · EPUB": as formas em que a obra existe (sem repetir). */
+export const formatosDe = (o: Obra) => [...new Set(o.edicoes.map((e) => e.formato.toUpperCase()))].join(' · ');
+
+/**
+ * Abre a obra no leitor. Sem `edicaoId`, abre a primeira edição (o núcleo já entrega primeiro a lida por último; nunca
+ * aberta, EPUB antes de PDF). Com uma marcação, quem chama passa a edição dela (a âncora só vale naquela edição).
+ */
+export function lerObra(o: Obra, e?: MouseEvent, marcacaoId?: string, edicaoId?: string) {
   const r = (e?.currentTarget as HTMLElement | undefined)?.getBoundingClientRect();
+  const edicao = o.edicoes.find((x) => x.id === edicaoId) ?? o.edicoes[0];
+  if (!edicao) return;
   abrirLeitura({
     obraId: o.id,
-    edicaoId: o.edicoes[0]!.id,
+    edicaoId: edicao.id,
     origem: r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : { x: innerWidth / 2, y: innerHeight / 2 },
     ...(marcacaoId ? { marcacaoId } : {}),
   });

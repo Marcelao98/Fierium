@@ -1,6 +1,6 @@
 # Cartão m3/08-obras-e-series · Reconhecer obra e série; juntar e separar
 
-**Estado:** a fazer
+**Estado:** parte de obras feita no cartão `local/epub-e-obras` (chave, edições, juntar/separar, migração v3); falta a série
 **Branch:** `agente/m3-08-obras-e-series`, saindo de `marco/m3`
 **Depende de:** 01, 03–06 · **Destrava:** 11
 

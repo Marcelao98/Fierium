@@ -10,6 +10,8 @@
 | `biblioteca.limiar` | — → `{ultimo, emAndamento, eco, novidades, esquecidas, totalObras}` (o Início) | — | biblioteca |
 | `obras.listar` | `FiltroObras` (texto sem acento e em qualquer ordem, estado, formato, coleção, área, favoritas, ordem) → `Obra[]` | — | biblioteca |
 | `obra.obter` / `obra.atualizar` | `{id}` / `{id, favorita?, estado?}` → `Obra` | `NAO_ENCONTRADO` | biblioteca |
+| `obra.juntar` | `{ids}` → `Obra` (todas viram a primeira: edições, marcações e relação somadas; a varredura não desfaz) | `ARGUMENTO_INVALIDO`, `NAO_ENCONTRADO` | biblioteca |
+| `edicao.separar` | `{edicaoId}` → `Obra` (a edição vira uma obra própria; a varredura não junta de novo) | `ARGUMENTO_INVALIDO` (única edição), `NAO_ENCONTRADO` | biblioteca |
 | `colecoes.listar` / `colecao.criar` / `colecao.definirObras` | … → `Colecao` | `ARGUMENTO_INVALIDO`, `NAO_ENCONTRADO` | biblioteca |
 | `edicao.abrir` | `{edicaoId}` → `FonteLeitura`: `{tipo:'texto', capitulos}` ou `{tipo:'arquivo', formato, url, tamanho}` (o arquivo vem aos pedaços pelo endereço — M2/M4) | `NAO_ENCONTRADO` | leitura |
 | `progresso.salvar` | `{edicaoId, posicao, fracao 0..1}` → null | `ARGUMENTO_INVALIDO` | leitura |

@@ -20,7 +20,9 @@ pub const NO_RUST: &[&str] = &[
     "obras.listar",
     "obra.obter",
     "obra.atualizar",
+    "obra.juntar",
     "edicao.abrir",
+    "edicao.separar",
     "progresso.salvar",
     "pastas.listar",
     "pastas.adicionar",
@@ -81,6 +83,11 @@ struct Atualizar {
 }
 
 #[derive(Deserialize)]
+struct Juntar {
+    ids: Vec<String>,
+}
+
+#[derive(Deserialize)]
 struct Busca {
     texto: String,
 }
@@ -120,7 +127,9 @@ pub fn chamar(ctx: &Contexto, cmd: &str, a: Value) -> Result<Value, ErroFierium>
             let x: Atualizar = args(a)?;
             b().obra_atualizar(&x.id, x.favorita, x.estado.as_deref())
         }
+        "obra.juntar" => b().obra_juntar(&args::<Juntar>(a)?.ids),
         "edicao.abrir" => b().edicao_abrir(&args::<Edicao>(a)?.edicao_id),
+        "edicao.separar" => b().edicao_separar(&args::<Edicao>(a)?.edicao_id),
         "progresso.salvar" => {
             let x: Progresso = args(a)?;
             b().progresso_salvar(&x.edicao_id, &x.posicao, x.fracao)?;
@@ -218,9 +227,12 @@ mod testes {
         let obras = chamar(&c, "obras.listar", json!({ "texto": "livro" })).unwrap();
         let id = obras[0]["id"].as_str().unwrap();
         let ed = obras[0]["edicoes"][0]["id"].as_str().unwrap();
-        assert!(c.arquivos.caminho(ed).is_some());
+        // o protocolo entrega pelo id do ARQUIVO (a edição pode ter mais de uma cópia)
+        let arq = obras[0]["edicoes"][0]["arquivos"][0]["id"].as_str().unwrap();
+        assert!(c.arquivos.caminho(arq).is_some());
         let f = chamar(&c, "edicao.abrir", json!({ "edicaoId": ed })).unwrap();
         assert_eq!(f["tipo"], "arquivo");
+        assert!(f["url"].as_str().unwrap().ends_with(arq));
         chamar(
             &c,
             "progresso.salvar",
@@ -235,6 +247,6 @@ mod testes {
             "NAO_ENCONTRADO"
         );
         chamar(&c, "pastas.remover", json!({ "caminho": caminho })).unwrap();
-        assert!(c.arquivos.caminho(ed).is_none());
+        assert!(c.arquivos.caminho(arq).is_none());
     }
 }

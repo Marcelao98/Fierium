@@ -83,7 +83,7 @@ export function TelaInicio({ inicio }: { inicio: Inicio }) {
         <section className="eco" aria-label="Uma marcação antiga">
           <span className="f-rotulo">Você marcou {haQuanto(l.eco.marcacao.criadaEm)}</span>
           <blockquote>“{l.eco.marcacao.trecho}”</blockquote>
-          <button onClick={(e) => lerObra(l.eco!.obra, e, l.eco!.marcacao.id)}>
+          <button onClick={(e) => lerObra(l.eco!.obra, e, l.eco!.marcacao.id, l.eco!.marcacao.edicaoId)}>
             {l.eco.obra.titulo} — {autorDe(l.eco.obra)}
           </button>
         </section>
