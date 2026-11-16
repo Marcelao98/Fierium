@@ -25,6 +25,7 @@ pub const NO_RUST: &[&str] = &[
     "pastas.listar",
     "pastas.adicionar",
     "pastas.remover",
+    "pastas.sugestoes",
     "biblioteca.varrer",
 ];
 
@@ -121,6 +122,7 @@ pub fn chamar(ctx: &Contexto, cmd: &str, a: Value) -> Result<Value, ErroFierium>
             ctx.registrar_arquivos()?;
             Ok(r)
         }
+        "pastas.sugestoes" => json(serde_json::json!(sugestoes_de_pastas())),
         "pastas.remover" => {
             let r = b().pastas_remover(&args::<PorCaminho>(a)?.caminho)?;
             ctx.registrar_arquivos()?;
@@ -133,6 +135,20 @@ pub fn chamar(ctx: &Contexto, cmd: &str, a: Value) -> Result<Value, ErroFierium>
         }
         outro => Err(ErroFierium::ComandoDesconhecido(outro.into())),
     }
+}
+
+/// Pastas comuns de livros que existem no computador (só caminhos que são pastas).
+fn sugestoes_de_pastas() -> Vec<String> {
+    let Some(casa) = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")) else {
+        return vec![];
+    };
+    let casa = std::path::PathBuf::from(casa);
+    ["Livros", "Documentos", "Downloads", "Books", "Calibre Library"]
+        .iter()
+        .map(|n| casa.join(n))
+        .filter(|p| p.is_dir())
+        .map(|p| p.to_string_lossy().into_owned())
+        .collect()
 }
 
 #[cfg(test)]

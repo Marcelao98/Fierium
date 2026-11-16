@@ -24,4 +24,25 @@ describe('pastas (estado)', () => {
     expect(p.store.getState().resultado).toBeNull();
     expect(avisos).toHaveLength(1);
   });
+  it('escolher usa o seletor injetado e adiciona cada pasta; sem seletor não faz nada', async () => {
+    const { s } = servicosDeTeste();
+    const sem = criarPastas(s);
+    expect(sem.podeEscolher).toBe(false);
+    await sem.escolher();
+    expect(sem.store.getState().pastas).toEqual([]);
+
+    const { s: s2 } = servicosDeTeste();
+    s2.escolherPastas = async () => ['/home/x/Livros', '/home/x/Books'];
+    const p = criarPastas(s2);
+    expect(p.podeEscolher).toBe(true);
+    await p.escolher();
+    expect(p.store.getState().pastas.map((x) => x.caminho)).toEqual(['/home/x/Livros', '/home/x/Books']);
+  });
+  it('cancelar o seletor (lista vazia) não muda nada', async () => {
+    const { s } = servicosDeTeste();
+    s.escolherPastas = async () => [];
+    const p = criarPastas(s);
+    await p.escolher();
+    expect(p.store.getState().pastas).toEqual([]);
+  });
 });

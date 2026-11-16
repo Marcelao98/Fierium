@@ -14,12 +14,15 @@ export interface Servicos {
   agora: () => number;
   /** mostra um aviso (o padrão é o aviso da tela; os testes trocam) */
   avisar: (texto: string, tipo?: 'info' | 'erro') => void;
+  /** abre o seletor de pastas do sistema (só no app; no navegador é null). Devolve as pastas, ou [] se cancelou */
+  escolherPastas: (() => Promise<string[]>) | null;
 }
 
 export interface OpcoesServicos {
   log?: Log;
   agora?: () => number;
   avisar?: Servicos['avisar'];
+  escolherPastas?: Servicos['escolherPastas'];
 }
 
 export function criarServicos(cliente: Cliente, op: OpcoesServicos = {}): Servicos {
@@ -32,6 +35,7 @@ export function criarServicos(cliente: Cliente, op: OpcoesServicos = {}): Servic
     eventos,
     agora: op.agora ?? Date.now,
     avisar: aviso,
+    escolherPastas: op.escolherPastas ?? null,
     async chamar(cmd, args) {
       try {
         return await rastreado.chamar(cmd, args);

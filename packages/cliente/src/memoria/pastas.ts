@@ -7,7 +7,7 @@ import type { Tratadores } from './base';
 export const ESCREVEM_PASTAS = ['pastas.adicionar', 'pastas.remover', 'biblioteca.varrer'] as const;
 
 export function comandosPastas(): Tratadores<
-  'pastas.listar' | 'pastas.adicionar' | 'pastas.remover' | 'biblioteca.varrer'
+  'pastas.listar' | 'pastas.adicionar' | 'pastas.remover' | 'pastas.sugestoes' | 'biblioteca.varrer'
 > {
   const pastas: PastaBiblioteca[] = [];
   return {
@@ -19,6 +19,7 @@ export function comandosPastas(): Tratadores<
       if (!pastas.some((p) => p.caminho === c)) pastas.push({ caminho: c, existe: true, arquivos: 0 });
       return pastas;
     },
+    'pastas.sugestoes': () => [],
     'pastas.remover': ({ caminho }) => {
       const i = pastas.findIndex((p) => p.caminho === caminho);
       if (i < 0) throw new ErroFierium('NAO_ENCONTRADO', `pasta não está na biblioteca: ${caminho}`);

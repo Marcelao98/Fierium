@@ -35,7 +35,10 @@ async function iniciar(raiz: HTMLElement) {
     // em desenvolvimento o log aparece no console; no app, info/aviso/erro vão pro arquivo de log do núcleo (um por dia)
     saidas: [...(import.meta.env.DEV ? [paraConsole] : []), ...(plataforma.enviarLog ? [paraArquivo] : [])],
   });
-  const app = montar(plataforma.cliente, { log });
+  const app = montar(plataforma.cliente, {
+    log,
+    ...(plataforma.escolherPastas ? { escolherPastas: plataforma.escolherPastas } : {}),
+  });
   log.registrar('info', 'app', `Fierium aberto (${plataforma.nome})`);
 
   // erros que escaparam de tudo também vão pro log (e pro inspetor)
