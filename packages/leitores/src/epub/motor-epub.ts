@@ -3,7 +3,15 @@
 // resolvido aqui, pelos retângulos do trecho (assim não depende dos eventos do SVG).
 import type { ConfigLeitura, CorMarcacao, Marcacao } from '@fierium/contratos';
 import ePub from 'epubjs';
-import { caixaDe, ErroLeitor, type Caixa, type MotorDeLeitura, type OpcoesMotor, type SessaoLeitura } from '../motor';
+import {
+  caixaDe,
+  ErroLeitor,
+  type Caixa,
+  type MotorDeLeitura,
+  type OpcoesMotor,
+  type Selecao,
+  type SessaoLeitura,
+} from '../motor';
 import { estiloDoCorpo, regrasGerais } from './aparencia';
 import { fontFacesDe } from './fontes';
 
@@ -185,6 +193,59 @@ export const motorEpub: MotorDeLeitura = {
           op.eventos.selecao(null);
         }
       });
+      /** a seleção deste capítulo como o motor entrega (âncora + trecho + onde está na tela) */
+      const selecaoDoCapitulo = (): Selecao | null => {
+        const s = d.getSelection();
+        if (!s || s.isCollapsed || !s.rangeCount) return null;
+        const rg = s.getRangeAt(0);
+        const partes = dividirCfi(String(contents.cfiFromRange(rg)));
+        const trecho = rg.toString().replace(/\s+/g, ' ').trim();
+        const quadro = (d.defaultView as Window | null)?.frameElement?.getBoundingClientRect();
+        const r = rg.getClientRects()[0];
+        if (!partes || !trecho || !r) return null;
+        return {
+          ancora: { tipo: 'epub', ...partes },
+          trecho,
+          caixa: caixaDe(new DOMRect(r.left + (quadro?.left ?? 0), r.top + (quadro?.top ?? 0), r.width, r.height)),
+        };
+      };
+      // botão direito: o menu é da casca (o do navegador não abre, nem aqui dentro do iframe)
+      d.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const quadro = (d.defaultView as Window | null)?.frameElement?.getBoundingClientRect();
+        const x = e.clientX + (quadro?.left ?? 0);
+        const y = e.clientY + (quadro?.top ?? 0);
+        const sel = selecaoDoCapitulo();
+        const marca = marcaEm(contents, x, y);
+        const naSelecao =
+          !!sel &&
+          sel.caixa.x <= x &&
+          x <= sel.caixa.x + sel.caixa.largura &&
+          sel.caixa.y <= y &&
+          y <= sel.caixa.y + sel.caixa.altura;
+        op.eventos.menu?.({
+          x,
+          y,
+          selecao: marca && !naSelecao ? null : sel,
+          marcacaoId: marca && !naSelecao ? marca.id : null,
+        });
+      });
+      // a tecla Menu / Shift+F10 e os atalhos da casca (Ctrl+Shift+N, Ctrl+Shift+C) valem aqui dentro também (o foco fica no iframe)
+      d.addEventListener('keydown', (e) => {
+        if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
+          e.preventDefault();
+          const sel = selecaoDoCapitulo();
+          op.eventos.menu?.({
+            x: sel ? sel.caixa.x + sel.caixa.largura / 2 : innerWidth / 2,
+            y: sel ? sel.caixa.y + sel.caixa.altura : innerHeight / 3,
+            selecao: sel,
+            marcacaoId: null,
+          });
+        } else if (e.ctrlKey && e.shiftKey && ['n', 'c'].includes(e.key.toLowerCase())) {
+          e.preventDefault();
+          doc.dispatchEvent(new KeyboardEvent('keydown', { key: e.key, ctrlKey: true, shiftKey: true, bubbles: true }));
+        }
+      });
       d.addEventListener('click', (e) => {
         if (d.getSelection()?.toString()) return;
         if ((e.target as Element | null)?.closest?.('a[href]')) return;
@@ -194,6 +255,16 @@ export const motorEpub: MotorDeLeitura = {
         else op.eventos.toque();
       });
     });
+
+    // botão direito que cai no realce (o SVG fica no documento da casca, por cima do iframe): mesmo menu
+    const aoMenuNaCasca = (e: MouseEvent) => {
+      e.preventDefault();
+      const contents = (rendition.getContents?.() ?? []) as any[];
+      let marca: { id: string; caixa: Caixa } | null = null;
+      for (const c of contents) marca ??= marcaEm(c, e.clientX, e.clientY);
+      op.eventos.menu?.({ x: e.clientX, y: e.clientY, selecao: null, marcacaoId: marca?.id ?? null });
+    };
+    raiz.addEventListener('contextmenu', aoMenuNaCasca);
 
     aplicar();
     const cfiInicioDe = (id: string): string | undefined => {

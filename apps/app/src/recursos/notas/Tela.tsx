@@ -8,20 +8,13 @@ import { CartaoMarcacao, corDe, useCores } from '../../compartilhado/Marcacoes';
 import { lerObra } from '../../compartilhado/Obras';
 import { useFatia } from '../../nucleo/contexto';
 import { ir } from '../../nucleo/navegacao';
+import { formatoLembrado } from '../../compartilhado/citacao';
 import { agrupar, citacao, filtrar, TIPOS, type AbaNotas, type FiltroNotas, type FormatoCitacao } from './citacao';
 import type { Notas } from './estado';
 import { paraMarkdown } from './markdown';
 import './notas.css';
 
 const CHAVE_FORMATO = 'fierium.notas.formato';
-
-function formatoLembrado(): FormatoCitacao {
-  try {
-    return localStorage.getItem(CHAVE_FORMATO) === 'abnt' ? 'abnt' : 'simples';
-  } catch {
-    return 'simples'; // sem armazenamento (janela privada): fica no padrão
-  }
-}
 
 function baixar(nome: string, texto: string) {
   const a = document.createElement('a');

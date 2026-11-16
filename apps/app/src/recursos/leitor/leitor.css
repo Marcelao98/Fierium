@@ -388,3 +388,151 @@
   background: transparent;
   color: inherit;
 }
+
+/* ---------- painel "Notas deste livro" ---------- */
+.painel-notas {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+.painel-notas li {
+  position: relative;
+}
+.painel-notas .painel-marcacao {
+  padding-right: 64px;
+}
+.painel-marcacao-onde {
+  display: block;
+  margin-bottom: 3px;
+  font-family: var(--fonte-ui);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--cor-marca);
+  filter: brightness(0.85);
+}
+.painel-notas-acoes {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 2px;
+}
+.painel-notas-acoes button {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--l-texto-2);
+  cursor: pointer;
+}
+.painel-notas-acoes button:hover,
+.painel-notas-acoes button:focus-visible {
+  background: var(--l-borda);
+  color: var(--l-texto);
+}
+.painel-chip-cor i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: var(--cor-marca);
+}
+
+/* ---------- o menu do botão direito (vidro, borda gravada, ouro do Céu) ---------- */
+.menu-contexto {
+  position: fixed;
+  z-index: 60;
+  min-width: 232px;
+  padding: 6px;
+  border-radius: var(--raio-3);
+  background: color-mix(in srgb, var(--fundo-2) 94%, transparent);
+  border: 1px solid var(--borda);
+  box-shadow:
+    var(--sombra),
+    inset 0 1px 0 var(--luz-suave);
+  backdrop-filter: blur(16px) saturate(1.2);
+  color: var(--texto);
+  font-family: var(--fonte-ui);
+  font-size: 13px;
+  animation: surgir var(--rapido) var(--curva);
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: var(--raio-1);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.menu-item span {
+  flex: 1;
+}
+.menu-item svg {
+  color: var(--luz);
+  flex: none;
+}
+.menu-item kbd {
+  font-family: var(--fonte-ui);
+  font-size: 11px;
+  color: var(--texto-3);
+  letter-spacing: 0.02em;
+}
+.menu-item:hover,
+.menu-item:focus-visible,
+.menu-cores button:hover,
+.menu-cores button:focus-visible {
+  background: var(--superficie-3);
+  outline: none;
+}
+.menu-item:focus-visible,
+.menu-cores button:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--borda-forte);
+}
+.menu-item[data-perigo] {
+  color: var(--perigo);
+}
+.menu-item[data-perigo] svg {
+  color: inherit;
+}
+.menu-sep {
+  height: 1px;
+  margin: 5px 4px;
+  background: var(--borda);
+}
+.menu-cores {
+  display: flex;
+  gap: 4px;
+  padding: 5px 6px;
+}
+.menu-cores button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--raio-1);
+  background: none;
+  cursor: pointer;
+}
+.menu-cores button i {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--cor-marca);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+.menu-cores button[aria-checked='true'] i {
+  box-shadow:
+    0 0 0 2px var(--fundo-2),
+    0 0 0 3.5px var(--luz);
+}

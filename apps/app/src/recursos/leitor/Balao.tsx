@@ -4,7 +4,7 @@ import type { CorMarcacao, Marcacao } from '@fierium/contratos';
 import type { Caixa } from '@fierium/leitores';
 import { Icone } from '@fierium/ui';
 import type { CSSProperties } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 export interface PropsBalao {
   caixa: Caixa;
@@ -15,6 +15,8 @@ export interface PropsBalao {
   aoSalvarNota(nota: string): void;
   aoApagar(): void;
   aoFechar(): void;
+  /** abre já com o cursor no campo da nota (Anotar…, Editar nota) */
+  focarNota?: boolean | undefined;
   /** tamanho da janela (os testes passam) */
   largura?: number;
   altura?: number;
@@ -28,11 +30,16 @@ export function Balao({
   aoSalvarNota,
   aoApagar,
   aoFechar,
+  focarNota,
   largura,
   altura,
 }: PropsBalao) {
   const [nota, setNota] = useState(marcacao?.nota ?? '');
   useEffect(() => setNota(marcacao?.nota ?? ''), [marcacao?.id, marcacao?.nota]);
+  const campo = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (focarNota && marcacao) campo.current?.focus();
+  }, [focarNota, marcacao?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const w = largura ?? innerWidth;
   const x = Math.min(w - 130, Math.max(130, caixa.x + caixa.largura / 2));
   return (
@@ -44,7 +51,11 @@ export function Balao({
       aria-label={marcacao ? 'Marcação' : 'Marcar trecho'}
       onMouseUp={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.key === 'Escape' && aoFechar()}
+      onKeyDown={(e) => {
+        if (e.key !== 'Escape') return;
+        e.stopPropagation(); // senão o Esc também chegaria ao leitor e o fecharia junto
+        aoFechar();
+      }}
     >
       <div className="balao-cores">
         {cores.map((c) => (
@@ -62,6 +73,7 @@ export function Balao({
       {marcacao && (
         <>
           <textarea
+            ref={campo}
             placeholder="Escrever uma nota…"
             value={nota}
             onChange={(e) => setNota(e.target.value)}

@@ -100,7 +100,9 @@ test('PDF: marcação que cruza páginas é uma só; marcador de página pela ba
   await expect(page.locator('.fl-pdf-pagina[data-pagina="2"] .fl-pdf-marca').first()).toBeVisible();
   // uma marcação só
   await expect(contador).toHaveText(new RegExp(`${antes + 1}$`));
-  const ids = await page.locator('.fl-pdf-marca').evaluateAll((els) => [...new Set(els.map((e) => (e as HTMLElement).dataset.id))]);
+  const ids = await page
+    .locator('.fl-pdf-marca')
+    .evaluateAll((els) => [...new Set(els.map((e) => (e as HTMLElement).dataset.id))]);
   expect(ids).toHaveLength(1);
   await page.keyboard.press('Escape'); // fecha o balão
 

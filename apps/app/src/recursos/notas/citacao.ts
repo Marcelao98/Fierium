@@ -1,7 +1,10 @@
 // Funções puras das Notas: filtrar, ordenar pela posição no livro e montar a citação pronta pra copiar.
 import type { Marcacao, Obra } from '@fierium/contratos';
+import { porPosicao, semAcento } from '../../compartilhado/citacao';
 
-export type FormatoCitacao = 'simples' | 'abnt';
+// a citação e a ordem no livro moraram aqui; agora são compartilhadas com o leitor
+export { citacao, ondeCurto, porPosicao, semAcento, type FormatoCitacao } from '../../compartilhado/citacao';
+
 export type AbaNotas = 'todas' | 'citacoes';
 export const TIPOS: { id: Marcacao['tipo']; nome: string }[] = [
   { id: 'destaque', nome: 'Marca-texto' },
@@ -14,11 +17,6 @@ export interface FiltroNotas {
   cor?: string | undefined;
   tipo?: Marcacao['tipo'] | undefined;
   texto?: string | undefined;
-}
-
-/** minúsculas e sem acento, pra comparar texto */
-export function semAcento(s: string): string {
-  return s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
 }
 
 export function filtrar(
@@ -37,21 +35,6 @@ export function filtrar(
   );
 }
 
-function chave(m: Marcacao): [number, number, number, string] {
-  const a = m.ancora;
-  if (a.tipo === 'texto') return [a.capitulo, a.paragrafo, a.inicio, ''];
-  if (a.tipo === 'pdf') return [a.pagina, a.retangulos[0]?.[1] ?? 0, a.retangulos[0]?.[0] ?? 0, ''];
-  return [0, 0, 0, a.cfiInicio];
-}
-
-/** posição no livro: capítulo/parágrafo, página/linha ou o CFI do EPUB */
-export function porPosicao(x: Marcacao, y: Marcacao): number {
-  const a = chave(x);
-  const b = chave(y);
-  for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return (a[i] as number) - (b[i] as number);
-  return a[3].localeCompare(b[3], undefined, { numeric: true }) || x.criadaEm - y.criadaEm;
-}
-
 export interface Grupo {
   obra: Obra | undefined;
   obraId: string;
@@ -65,31 +48,4 @@ export function agrupar(ms: Marcacao[], obras: Map<string, Obra>): Grupo[] {
   return [...por]
     .map(([obraId, lista]) => ({ obraId, obra: obras.get(obraId), marcacoes: lista.sort(porPosicao) }))
     .sort((a, b) => (a.obra?.titulo ?? '').localeCompare(b.obra?.titulo ?? '', 'pt-BR'));
-}
-
-/** "p. 37" (PDF) ou "cap. 4" (texto); vazio quando não há como dizer (EPUB só tem o CFI) */
-export function ondeCurto(m: Marcacao): string {
-  if (m.ancora.tipo === 'pdf') return `p. ${m.ancora.pagina}`;
-  if (m.ancora.tipo === 'texto') return `cap. ${m.ancora.capitulo + 1}`;
-  return '';
-}
-
-function abnt(nome: string): string {
-  const p = nome.trim().split(/\s+/);
-  if (p.length < 2) return nome.trim().toUpperCase();
-  return `${p[p.length - 1]!.toUpperCase()}, ${p.slice(0, -1).join(' ')}`;
-}
-
-/** simples: “trecho” — Autor, *Título*, p. 37 · ABNT: “trecho” (SOBRENOME, Nome. Título. p. 37) */
-export function citacao(m: Marcacao, obra: Obra | undefined, formato: FormatoCitacao): string {
-  const autor = obra?.criadores[0]?.nome ?? '';
-  const titulo = obra?.titulo ?? '';
-  const onde = ondeCurto(m);
-  const trecho = `“${m.trecho}”`;
-  if (formato === 'abnt') {
-    const partes = [autor ? `${abnt(autor)}.` : '', titulo ? `${titulo}.` : '', onde].filter(Boolean);
-    return partes.length ? `${trecho} (${partes.join(' ')})` : trecho;
-  }
-  const fonte = [autor, titulo ? `*${titulo}*` : '', onde].filter(Boolean).join(', ');
-  return fonte ? `${trecho} — ${fonte}` : trecho;
 }

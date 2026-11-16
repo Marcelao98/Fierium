@@ -19,6 +19,9 @@ import './pdf.css';
 import { dentro, dividirPorPagina, enxugar, juntarPartes, type Parte, type Ret } from './marcas';
 import { escalaBase, formatarPosicao, lerPosicao, limitarZoom, paginaEm, type PosicaoPdf } from './posicao';
 
+const dentroTela = (r: DOMRect, e: MouseEvent) =>
+  e.clientX >= r.left - 2 && e.clientX <= r.right + 2 && e.clientY >= r.top - 2 && e.clientY <= r.bottom + 2;
+
 const MARGEM = 2; // páginas desenhadas além das visíveis
 const ESPACO = 12; // px entre páginas
 
@@ -462,13 +465,14 @@ export const motorPdf: MotorDeLeitura = {
 
     // posição → casca (com atraso)
     let temporizadorPosicao: ReturnType<typeof setTimeout> | undefined;
+    const emitirPosicao = () => {
+      const p = posicaoAtual();
+      const fracao = (p.pagina - 1 + p.fracao) / n;
+      op.eventos.posicao(formatarPosicao(p), Math.min(1, Math.max(0, fracao)));
+    };
     const avisarPosicao = () => {
       clearTimeout(temporizadorPosicao);
-      temporizadorPosicao = setTimeout(() => {
-        const p = posicaoAtual();
-        const fracao = (p.pagina - 1 + p.fracao) / n;
-        op.eventos.posicao(formatarPosicao(p), Math.min(1, Math.max(0, fracao)));
-      }, 400);
+      temporizadorPosicao = setTimeout(emitirPosicao, 400);
     };
     const aoRolar = () => {
       if (!observador) atualizarJanela();
@@ -508,8 +512,11 @@ export const motorPdf: MotorDeLeitura = {
     // ponteiro: soltar depois de arrastar = seleção de texto; clique sem arrastar = marcação sob o ponto ou toque
     let inicio: { x: number; y: number } | null = null;
     let comSelecao = false;
-    const aoApertar = (e: PointerEvent) => (inicio = { x: e.clientX, y: e.clientY });
+    const aoApertar = (e: PointerEvent) => {
+      if (e.button === 0) inicio = { x: e.clientX, y: e.clientY };
+    };
     const aoSoltar = (e: PointerEvent) => {
+      if (e.button !== 0) return; // o botão direito abre o menu (abaixo), não é clique nem seleção
       const ini = inicio;
       inicio = null;
       if (!ini) return;
@@ -534,6 +541,27 @@ export const motorPdf: MotorDeLeitura = {
         else op.eventos.toque();
       }, 0);
     };
+    // botão direito: no lugar do menu do navegador, a casca desenha o dela (com a seleção, a marcação ou a página)
+    const aoMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      const sel = lerSelecao();
+      const marca = marcaEm(e.clientX, e.clientY);
+      const pagina = paginas.findIndex((p) => {
+        const b = p.el.getBoundingClientRect();
+        return e.clientY >= b.top && e.clientY <= b.bottom;
+      });
+      // o clique caiu em cima de uma marcação e a seleção está em outro lugar: vale a marcação
+      const naSelecao =
+        !!sel && [...(doc.getSelection()?.getRangeAt(0).getClientRects() ?? [])].some((r) => dentroTela(r, e));
+      op.eventos.menu?.({
+        x: e.clientX,
+        y: e.clientY,
+        selecao: marca && !naSelecao ? null : sel,
+        marcacaoId: marca && !naSelecao ? marca.id : null,
+        pagina: pagina >= 0 ? pagina + 1 : undefined,
+      });
+    };
+    rolagem.addEventListener('contextmenu', aoMenu);
     rolagem.addEventListener('pointerdown', aoApertar);
     doc.addEventListener('pointerup', aoSoltar);
 
@@ -591,6 +619,7 @@ export const motorPdf: MotorDeLeitura = {
     if (op.alvo && 'marcacaoId' in op.alvo) irParaAlvo(op.alvo);
     else if (inicial) rolarPara(inicial);
     atualizarJanela();
+    emitirPosicao(); // a casca precisa saber a página já na abertura (marcador de página, menu), sem esperar rolar
 
     return {
       aplicarAparencia: aplicarTema,
@@ -613,6 +642,7 @@ export const motorPdf: MotorDeLeitura = {
         redim?.disconnect();
         doc.removeEventListener('keydown', aoTeclar);
         doc.removeEventListener('pointerup', aoSoltar);
+        rolagem.removeEventListener('contextmenu', aoMenu);
         for (let i = 0; i < n; i++) liberar(i);
         rolagem.remove();
         void controle.tarefa?.destroy();

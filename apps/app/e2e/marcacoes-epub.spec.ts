@@ -28,15 +28,18 @@ test('EPUB: selecionar, marcar como Dúvida com nota, reabrir, clicar e apagar',
   const antes = Number((await contador.textContent())!.trim());
 
   // seleciona o começo do primeiro parágrafo dentro do iframe (o epub.js avisa com um pequeno atraso)
-  await texto.locator('p').first().evaluate((p) => {
-    const t = p.firstChild!;
-    const r = document.createRange();
-    r.setStart(t, 0);
-    r.setEnd(t, 'Parágrafo 1 do capítulo 1'.length);
-    const s = p.ownerDocument.getSelection()!;
-    s.removeAllRanges();
-    s.addRange(r);
-  });
+  await texto
+    .locator('p')
+    .first()
+    .evaluate((p) => {
+      const t = p.firstChild!;
+      const r = document.createRange();
+      r.setStart(t, 0);
+      r.setEnd(t, 'Parágrafo 1 do capítulo 1'.length);
+      const s = p.ownerDocument.getSelection()!;
+      s.removeAllRanges();
+      s.addRange(r);
+    });
   await page.getByRole('dialog', { name: 'Marcar trecho' }).getByText('Dúvida').click();
   const balao = page.getByRole('dialog', { name: 'Marcação' });
   await balao.getByLabel('Nota da marcação').fill('Que dragão é esse?');
@@ -45,7 +48,7 @@ test('EPUB: selecionar, marcar como Dúvida com nota, reabrir, clicar e apagar',
 
   // o realce (SVG do epub.js) aparece por cima do texto
   // (o epub.js põe o SVG dentro do iframe ou ao lado dele, conforme o modo de fluxo)
-  const marca = page.frameLocator('iframe').first().locator('.fl-realce').or(page.locator('.fl-realce'));
+  const marca = page.locator('.fl-realce');
   await expect(marca.first()).toBeAttached({ timeout: 10_000 });
   await page.screenshot({ path: `${PRINTS}/m1-epub-marcado.png` });
 
@@ -56,7 +59,10 @@ test('EPUB: selecionar, marcar como Dúvida com nota, reabrir, clicar e apagar',
   await expect(marca.first()).toBeAttached({ timeout: 10_000 });
 
   // clicar no trecho marcado abre o balão com a nota
-  await reaberto.texto.locator('p').first().click({ position: { x: 20, y: 8 } });
+  await reaberto.texto
+    .locator('p')
+    .first()
+    .click({ position: { x: 20, y: 8 } });
   const aberto = page.getByRole('dialog', { name: 'Marcação' });
   await expect(aberto.getByLabel('Nota da marcação')).toHaveValue('Que dragão é esse?');
   await page.screenshot({ path: `${PRINTS}/m1-epub-balao.png` });

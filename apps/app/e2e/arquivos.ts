@@ -94,4 +94,3 @@ export function epubDeTeste(): Buffer {
     ['OEBPS/c3.xhtml', cap(3)],
   ]);
 }
-

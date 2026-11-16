@@ -1,6 +1,6 @@
 # Cartão m7/m1 · Marcações no PDF e no EPUB, guardadas no Rust
 
-**Estado:** a fazer
+**Estado:** em revisão
 **Branch:** a mesma do T1 (sequencial)
 **Depende de:** T1 · **Destrava:** M2
 
@@ -49,4 +49,18 @@ fonte, e clicar nela abre o balão de novo. Também marcador de página (só lem
 
 ## Relatório (o executor preenche)
 
-- **Feito:** · **Portões:** · **Prints:** · **Ficou de fora:**
+- **Feito:** marcações no PDF (camada de texto do pdf.js + camada própria de retângulos em %) e no EPUB (`selected` +
+  `annotations.highlight`), âncoras do contrato, `irPara({marcacaoId})`, `limparSelecao`, clique na marcação → balão.
+  **Menu do botão direito** (`MenuContexto.tsx` + `menuItens.ts`, motores avisam por `eventos.menu` novo e opcional em
+  `motor.ts`): com seleção (cores, Anotar…, Salvar como citação, Copiar, Copiar como citação), em cima de marcação
+  (editar nota, trocar cor, copiar, copiar como citação, apagar) e sem seleção (marcar página, Notas deste livro, Tema
+  da página…, copiar nº da página no PDF); setas/Enter/Esc, tecla Menu e Shift+F10, Ctrl+Shift+C, dentro da tela, o menu
+  do WebKit não aparece (nem no iframe do epub.js). **Painel "Notas deste livro"** (`PainelNotas.tsx`, Ctrl+Shift+N):
+  ordem do livro, filtro por cor, busca, ir ao trecho, copiar citação, apagar. A formatação da citação foi pra
+  `compartilhado/citacao.ts` (as Notas reexportam). Consertos achados no caminho: o Esc do balão também fechava o leitor;
+  o PDF só avisava a posição depois de rolar (o botão "Marcar página" não fazia nada antes disso).
+- **Portões:** `pnpm check` e `pnpm e2e --trace off` (19 testes) passam. `pnpm check:rust` não rodado (nada do Rust mudou
+  nesta etapa).
+- **Prints:** `apps/app/e2e/prints/m7-menu-{selecao,marcacao,pagina}-{pdf,epub}.png` e `m7-notas-do-livro-{pdf,epub}.png`.
+- **Ficou de fora:** "Pesquisar no livro" (não existe busca no leitor; o item só aparece quando houver); menu no motor
+  de texto corrido só tem o caso sem marcação; o teste Rust v1→v2 do cartão original não foi conferido aqui.

@@ -18,12 +18,24 @@ export interface Selecao {
   caixa: Caixa;
 }
 
+/** Botão direito (ou a tecla Menu) no conteúdo: onde foi, o que há ali e a página (PDF). A casca desenha o menu. */
+export interface PedidoMenu {
+  /** posição na janela (já descontado o iframe do EPUB) */
+  x: number;
+  y: number;
+  selecao: Selecao | null;
+  marcacaoId: string | null;
+  pagina?: number | undefined;
+}
+
 export interface EventosMotor {
   /** a posição de leitura mudou (formato do motor) e quanto do total já passou (0..1) */
   posicao(posicao: string, fracao: number): void;
   /** a pessoa selecionou um trecho (ou desfez a seleção: null) */
   selecao(s: Selecao | null): void;
   marcacaoClicada(id: string, caixa: Caixa): void;
+  /** botão direito / tecla Menu (o motor já impediu o menu do navegador); opcional: motores sem menu não chamam */
+  menu?(p: PedidoMenu): void;
   /** toque/clique no conteúdo sem selecionar nada (a casca alterna o véu) */
   toque(): void;
   /** algo deu errado dentro do motor (vai pro log e pro aviso) */
