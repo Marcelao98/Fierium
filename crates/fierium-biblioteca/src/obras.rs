@@ -2,7 +2,8 @@
 //! EPUB, outra tradução); cada **arquivo** é uma cópia no disco. Aqui ficam: a chave que reconhece a mesma obra
 //! (título + primeiro autor normalizados), a migração v3 (que junta o que já estava no banco sem perder progresso nem
 //! marcações), a leitura das obras com as edições e o juntar/separar à mão.
-use super::{agora, bd, matiz_do_titulo, normalizar, novo_id, titulo_e_autor, Biblioteca};
+use super::metadados::{Metadados, Pessoa};
+use super::{agora, bd, matiz_do_titulo, normalizar, novo_id, titulo_e_autor, url_da_capa, Biblioteca};
 use fierium_core::ErroFierium;
 use rusqlite::{params, Connection, OptionalExtension};
 use serde_json::{json, Value};
@@ -44,15 +45,20 @@ pub fn chave_do_autor(autor: &str) -> String {
 /// A obra que já tem uma edição com esta chave (edições separadas à mão não contam: a escolha da pessoa vale).
 /// Mesmo título e mesmo autor = mesma obra. Se um dos lados não tem autor, vale o título, desde que aponte pra uma
 /// obra só (dois livros diferentes com o mesmo título não são misturados).
-pub(crate) fn achar_obra(c: &Connection, titulo: &str, autor: &str) -> Result<Option<String>, ErroFierium> {
+pub(crate) fn achar_obra(
+    c: &Connection,
+    titulo: &str,
+    autor: &str,
+    excluir: &str,
+) -> Result<Option<String>, ErroFierium> {
     if titulo.is_empty() {
         return Ok(None);
     }
     let exata: Option<String> = c
         .query_row(
             "SELECT obra_id FROM edicoes WHERE separada = 0 AND chave_titulo = ?1 AND chave_autor = ?2
-             ORDER BY criada_em, id LIMIT 1",
-            params![titulo, autor],
+             AND obra_id != ?3 ORDER BY criada_em, id LIMIT 1",
+            params![titulo, autor, excluir],
             |r| r.get(0),
         )
         .optional()
@@ -61,13 +67,14 @@ pub(crate) fn achar_obra(c: &Connection, titulo: &str, autor: &str) -> Result<Op
         return Ok(exata);
     }
     let sql = if autor.is_empty() {
-        "SELECT DISTINCT obra_id FROM edicoes WHERE separada = 0 AND chave_titulo = ?1"
+        "SELECT DISTINCT obra_id FROM edicoes WHERE separada = 0 AND chave_titulo = ?1 AND obra_id != ?2"
     } else {
-        "SELECT DISTINCT obra_id FROM edicoes WHERE separada = 0 AND chave_titulo = ?1 AND chave_autor = ''"
+        "SELECT DISTINCT obra_id FROM edicoes WHERE separada = 0 AND chave_titulo = ?1 AND chave_autor = ''
+         AND obra_id != ?2"
     };
     let mut st = c.prepare(sql).map_err(bd)?;
     let mut achadas: Vec<String> = st
-        .query_map(params![titulo], |r| r.get(0))
+        .query_map(params![titulo, excluir], |r| r.get(0))
         .map_err(bd)?
         .collect::<Result<_, _>>()
         .map_err(bd)?;
@@ -75,7 +82,7 @@ pub(crate) fn achar_obra(c: &Connection, titulo: &str, autor: &str) -> Result<Op
 }
 
 /// O que é pessoal na obra (pra somar quando duas viram uma).
-struct Relacao {
+pub(crate) struct Relacao {
     estado: String,
     favorita: bool,
     adicionada_em: i64,
@@ -83,7 +90,7 @@ struct Relacao {
     terminada_em: Option<i64>,
 }
 
-fn ler_relacao(c: &Connection, tabela: &str, id: &str) -> Result<Relacao, ErroFierium> {
+pub(crate) fn ler_relacao(c: &Connection, tabela: &str, id: &str) -> Result<Relacao, ErroFierium> {
     c.query_row(
         &format!("SELECT estado, favorita, adicionada_em, ultima_leitura, terminada_em FROM {tabela} WHERE id = ?1"),
         params![id],
@@ -104,7 +111,7 @@ fn ler_relacao(c: &Connection, tabela: &str, id: &str) -> Result<Relacao, ErroFi
 
 /// Soma a relação de uma obra que vai sumir na que fica: favorita se uma era, a data mais antiga de entrada, a
 /// leitura mais recente (e o estado de quem foi lida por último).
-fn absorver_relacao(c: &Connection, alvo: &str, outra: &Relacao) -> Result<(), ErroFierium> {
+pub(crate) fn absorver_relacao(c: &Connection, alvo: &str, outra: &Relacao) -> Result<(), ErroFierium> {
     let a = ler_relacao(c, "obras", alvo)?;
     let outra_mais_recente = outra.ultima_leitura > a.ultima_leitura;
     let estado = if outra_mais_recente || (a.estado == "nao-lida" && a.ultima_leitura == outra.ultima_leitura) {
@@ -214,7 +221,7 @@ fn migrar_v3_dentro(c: &mut Connection) -> Result<(), ErroFierium> {
             Some(e) => (e.clone(), obra_da_edicao[e].clone()),
             None => {
                 let (kt, ka) = (chave_do_titulo(&a.titulo), chave_do_autor(&a.autor));
-                let obra = match achar_obra(&tx, &kt, &ka)? {
+                let obra = match achar_obra(&tx, &kt, &ka, "")? {
                     Some(o) => o,
                     None => {
                         tx.execute(
@@ -285,6 +292,92 @@ fn migrar_v3_dentro(c: &mut Connection) -> Result<(), ErroFierium> {
     tx.commit().map_err(bd)
 }
 
+// ---------- escrita a partir dos metadados ----------
+
+pub(crate) fn primeiro_autor(m: &Metadados) -> String {
+    m.criadores.first().map(|p| p.nome.clone()).unwrap_or_default()
+}
+
+/// As chaves de junção (título, primeiro autor) de um conjunto de metadados.
+pub(crate) fn chaves(m: &Metadados) -> (String, String) {
+    (chave_do_titulo(&m.titulo), chave_do_autor(&primeiro_autor(m)))
+}
+
+pub(crate) fn criadores_json(m: &Metadados) -> Option<String> {
+    (!m.criadores.is_empty()).then(|| serde_json::to_string(&m.criadores).unwrap_or_default())
+}
+
+pub(crate) fn inserir_obra(c: &Connection, id: &str, m: &Metadados, quando: i64) -> Result<(), ErroFierium> {
+    c.execute(
+        "INSERT INTO obras (id, titulo, autor, matiz, adicionada_em, serie, volume, ano, criadores)
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9)",
+        params![
+            id,
+            m.titulo,
+            primeiro_autor(m),
+            matiz_do_titulo(&m.titulo),
+            quando,
+            m.serie.as_ref().map(|s| s.nome.clone()),
+            m.serie.as_ref().map(|s| s.volume),
+            m.ano,
+            criadores_json(m)
+        ],
+    )
+    .map_err(bd)?;
+    Ok(())
+}
+
+pub(crate) fn inserir_edicao(
+    c: &Connection,
+    id: &str,
+    obra: &str,
+    formato: &str,
+    m: &Metadados,
+    capa: Option<&std::path::Path>,
+    quando: i64,
+) -> Result<(), ErroFierium> {
+    let (kt, ka) = chaves(m);
+    c.execute(
+        "INSERT INTO edicoes (id, obra_id, formato, chave_titulo, chave_autor, criada_em, meta, capa, meta_v)
+         VALUES (?1,?2,?3,?4,?5,?6,?7,?8,1)",
+        params![
+            id,
+            obra,
+            formato,
+            kt,
+            ka,
+            quando,
+            serde_json::to_string(m).unwrap_or_default(),
+            capa.map(|p| p.to_string_lossy().into_owned())
+        ],
+    )
+    .map_err(bd)?;
+    Ok(())
+}
+
+/// Uma edição nova numa obra que já existe: só preenche o que a obra não tinha (a obra editada à mão fica como está).
+pub(crate) fn completar_obra(c: &Connection, obra: &str, m: &Metadados) -> Result<(), ErroFierium> {
+    c.execute(
+        "UPDATE obras SET
+            autor = CASE WHEN autor = '' THEN ?2 ELSE autor END,
+            criadores = COALESCE(criadores, ?3),
+            ano = COALESCE(ano, ?4),
+            serie = CASE WHEN serie IS NULL THEN ?5 ELSE serie END,
+            volume = CASE WHEN serie IS NULL THEN ?6 ELSE volume END
+         WHERE id = ?1 AND editada = 0",
+        params![
+            obra,
+            primeiro_autor(m),
+            criadores_json(m),
+            m.ano,
+            m.serie.as_ref().map(|s| s.nome.clone()),
+            m.serie.as_ref().map(|s| s.volume)
+        ],
+    )
+    .map_err(bd)?;
+    Ok(())
+}
+
 // ---------- leitura (obra com as edições e os arquivos) ----------
 
 pub(crate) struct ArquivoLinha {
@@ -300,6 +393,8 @@ pub(crate) struct EdicaoLinha {
     pub formato: String,
     pub arquivos: Vec<ArquivoLinha>,
     pub progresso: Option<(String, f64, i64)>,
+    pub meta: Option<Metadados>,
+    pub tem_capa: bool,
 }
 
 impl EdicaoLinha {
@@ -316,7 +411,7 @@ impl EdicaoLinha {
             "id": self.id,
             "obraId": obra_id,
             "formato": self.formato,
-            "idioma": "",
+            "idioma": self.meta.as_ref().map(|m| m.idioma.clone()).unwrap_or_default(),
             "descricao": "",
             "arquivos": self.arquivos.iter().map(|a| json!({
                 "id": a.id,
@@ -326,6 +421,12 @@ impl EdicaoLinha {
                 "disponivel": a.existe,
             })).collect::<Vec<_>>(),
         });
+        if let Some(p) = self.meta.as_ref().and_then(|m| m.paginas) {
+            e["paginas"] = json!(p);
+        }
+        if self.tem_capa {
+            e["capa"] = json!(url_da_capa(&self.id));
+        }
         if let Some((posicao, fracao, quando)) = &self.progresso {
             e["progresso"] = json!({ "posicao": posicao, "fracao": fracao, "quando": quando });
         }
@@ -343,6 +444,9 @@ pub(crate) struct ObraLinha {
     pub favorita: bool,
     pub ultima_leitura: Option<i64>,
     pub terminada_em: Option<i64>,
+    pub serie: Option<(String, f64)>,
+    pub ano: Option<i64>,
+    pub criadores: Option<Vec<Pessoa>>,
     /// a primeira é a que "Continuar"/"Ler" abre: a lida por último; nunca aberta, EPUB antes de PDF
     pub edicoes: Vec<EdicaoLinha>,
 }
@@ -377,22 +481,37 @@ impl ObraLinha {
         if let Some(t) = self.terminada_em {
             relacao["terminadaEm"] = json!(t);
         }
-        let criadores = if self.autor.is_empty() {
-            json!([])
-        } else {
-            json!([{ "nome": self.autor, "papel": "autor" }])
+        let criadores = match &self.criadores {
+            Some(c) if !c.is_empty() => json!(c),
+            _ if self.autor.is_empty() => json!([]),
+            _ => json!([{ "nome": self.autor, "papel": "autor" }]),
         };
-        json!({
+        let mut assuntos: Vec<String> = Vec::new();
+        for m in self.edicoes.iter().filter_map(|e| e.meta.as_ref()) {
+            for a in &m.assuntos {
+                if !assuntos.contains(a) {
+                    assuntos.push(a.clone());
+                }
+            }
+        }
+        let mut o = json!({
             "id": self.id,
             "titulo": self.titulo,
             "criadores": criadores,
-            "assuntos": [],
+            "assuntos": assuntos,
             "reino": "biblioteca",
             "matiz": self.matiz,
             "colecaoIds": [],
             "edicoes": self.edicoes.iter().map(|e| e.json(&self.id)).collect::<Vec<_>>(),
             "relacao": relacao,
-        })
+        });
+        if let Some((nome, volume)) = &self.serie {
+            o["serie"] = json!({ "nome": nome, "volume": volume });
+        }
+        if let Some(a) = self.ano {
+            o["ano"] = json!(a);
+        }
+        o
     }
 }
 
@@ -473,7 +592,7 @@ impl Biblioteca {
             let mut st = self
                 .bd
                 .prepare(
-                    "SELECT e.obra_id, e.id, e.formato, p.posicao, p.fracao, p.quando
+                    "SELECT e.obra_id, e.id, e.formato, p.posicao, p.fracao, p.quando, e.meta, e.capa
                      FROM edicoes e LEFT JOIN progresso p ON p.edicao_id = e.id ORDER BY e.criada_em, e.id",
                 )
                 .map_err(bd)?;
@@ -488,22 +607,26 @@ impl Biblioteca {
                             Some(p) => Some((p, r.get(4)?, r.get(5)?)),
                             None => None,
                         },
+                        r.get::<_, Option<String>>(6)?,
+                        r.get::<_, Option<String>>(7)?,
                     ))
                 })
                 .map_err(bd)?;
             for l in linhas {
-                let (obra, id, formato, progresso) = l.map_err(bd)?;
+                let (obra, id, formato, progresso, meta, capa) = l.map_err(bd)?;
                 let arqs = arquivos.remove(&id).unwrap_or_default();
                 edicoes.entry(obra).or_default().push(EdicaoLinha {
                     id,
                     formato,
                     arquivos: arqs,
                     progresso,
+                    meta: meta.and_then(|m| serde_json::from_str(&m).ok()),
+                    tem_capa: capa.is_some_and(|c| std::path::Path::new(&c).is_file()),
                 });
             }
         }
-        let sql = "SELECT id, titulo, autor, matiz, adicionada_em, estado, favorita, ultima_leitura, terminada_em
-                   FROM obras";
+        let sql = "SELECT id, titulo, autor, matiz, adicionada_em, estado, favorita, ultima_leitura, terminada_em,
+                   serie, volume, ano, criadores FROM obras";
         let ler = |r: &rusqlite::Row| -> rusqlite::Result<ObraLinha> {
             Ok(ObraLinha {
                 id: r.get(0)?,
@@ -515,6 +638,13 @@ impl Biblioteca {
                 favorita: r.get::<_, i64>(6)? != 0,
                 ultima_leitura: r.get(7)?,
                 terminada_em: r.get(8)?,
+                serie: r
+                    .get::<_, Option<String>>(9)?
+                    .map(|n| (n, r.get::<_, Option<f64>>(10).ok().flatten().unwrap_or(0.0))),
+                ano: r.get(11)?,
+                criadores: r
+                    .get::<_, Option<String>>(12)?
+                    .and_then(|j| serde_json::from_str(&j).ok()),
                 edicoes: Vec::new(),
             })
         };

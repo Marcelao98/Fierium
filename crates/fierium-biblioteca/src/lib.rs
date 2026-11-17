@@ -10,10 +10,13 @@ use std::io::{Read, Seek, SeekFrom};
 use std::path::{Path, PathBuf};
 use std::time::{Instant, SystemTime, UNIX_EPOCH};
 
-const VERSAO_BANCO: i64 = 3;
+const VERSAO_BANCO: i64 = 4;
 
+mod edicao_meta;
 mod marcacoes;
+pub mod metadados;
 mod obras;
+mod sugestoes;
 use obras::ObraLinha;
 pub use obras::{chave_do_autor, chave_do_titulo};
 const LIDA: f64 = 0.98;
@@ -40,6 +43,15 @@ pub fn url_do_arquivo(id: &str) -> String {
         format!("http://fierium.localhost/arquivo/{id}")
     } else {
         format!("fierium://localhost/arquivo/{id}")
+    }
+}
+
+/// Endereço da capa extraída (servida pelo protocolo, só pra edições registradas).
+pub fn url_da_capa(edicao_id: &str) -> String {
+    if cfg!(windows) {
+        format!("http://fierium.localhost/capa/{edicao_id}")
+    } else {
+        format!("fierium://localhost/capa/{edicao_id}")
     }
 }
 
@@ -72,30 +84,11 @@ pub fn normalizar(s: &str) -> String {
 
 /// (autor, título) a partir do nome do arquivo.
 pub fn titulo_e_autor(nome_arquivo: &str) -> (String, String) {
-    let sem_ext = match nome_arquivo.rsplit_once('.') {
-        Some((a, _)) if !a.is_empty() => a,
-        _ => nome_arquivo,
-    };
-    let mut t = sem_ext.replace(['_', '.'], " ");
-    // tira "(1899)"
-    while let Some(i) = t.find('(') {
-        match t[i..].find(')') {
-            Some(f)
-                if {
-                    let d = t[i + 1..i + f].trim();
-                    d.len() == 4 && d.chars().all(|c| c.is_ascii_digit())
-                } =>
-            {
-                t.replace_range(i..=i + f, "");
-            }
-            _ => break,
-        }
-    }
-    let t = t.split_whitespace().collect::<Vec<_>>().join(" ");
-    match t.split_once(" - ") {
-        Some((a, b)) if !a.trim().is_empty() && !b.trim().is_empty() => (a.trim().into(), b.trim().into()),
-        _ => (String::new(), t),
-    }
+    let m = metadados::pelo_nome(nome_arquivo);
+    (
+        m.criadores.first().map(|p| p.nome.clone()).unwrap_or_default(),
+        m.titulo,
+    )
 }
 
 fn matiz_do_titulo(titulo: &str) -> i64 {
@@ -148,10 +141,16 @@ struct Linha {
 
 pub struct Biblioteca {
     bd: Connection,
+    /// onde ficam as capas extraídas (`<impressao>.<ext>`)
+    capas: PathBuf,
 }
 
 impl Biblioteca {
     pub fn abrir(caminho_db: &Path) -> Result<Self, ErroFierium> {
+        Self::abrir_com_capas(caminho_db, metadados::pasta_de_capas())
+    }
+
+    pub fn abrir_com_capas(caminho_db: &Path, capas: PathBuf) -> Result<Self, ErroFierium> {
         if let Some(pai) = caminho_db.parent() {
             std::fs::create_dir_all(pai).map_err(|e| ErroFierium::de_io(pai.display(), e))?;
         }
@@ -159,7 +158,7 @@ impl Biblioteca {
         conexao
             .execute_batch("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;")
             .map_err(bd)?;
-        let mut b = Self { bd: conexao };
+        let mut b = Self { bd: conexao, capas };
         b.migrar(caminho_db)?;
         Ok(b)
     }
@@ -216,6 +215,26 @@ impl Biblioteca {
         }
         if v < 3 {
             obras::migrar_v3(&mut self.bd)?;
+        }
+        if v < 4 {
+            self.bd
+                .execute_batch(
+                    "BEGIN;
+                     ALTER TABLE obras ADD COLUMN serie TEXT;
+                     ALTER TABLE obras ADD COLUMN volume REAL;
+                     ALTER TABLE obras ADD COLUMN ano INTEGER;
+                     ALTER TABLE obras ADD COLUMN editada INTEGER NOT NULL DEFAULT 0;
+                     ALTER TABLE obras ADD COLUMN criadores TEXT;
+                     ALTER TABLE edicoes ADD COLUMN meta TEXT;
+                     ALTER TABLE edicoes ADD COLUMN capa TEXT;
+                     ALTER TABLE edicoes ADD COLUMN meta_v INTEGER NOT NULL DEFAULT 0;
+                     CREATE TABLE sugestoes (
+                        obra_id TEXT NOT NULL, id TEXT NOT NULL, json TEXT NOT NULL, PRIMARY KEY (obra_id, id));
+                     CREATE TABLE cache_rede (consulta TEXT PRIMARY KEY, resposta TEXT NOT NULL, em INTEGER NOT NULL);
+                     PRAGMA user_version = 4;
+                     COMMIT;",
+                )
+                .map_err(bd)?;
         }
         debug_assert_eq!(
             self.bd
@@ -352,6 +371,10 @@ impl Biblioteca {
 
     pub fn varrer(&mut self) -> Result<Value, ErroFierium> {
         let ini = Instant::now();
+        // a migração v4 deixa os metadados de dentro dos arquivos pra ler uma vez, aqui
+        if let Err(e) = self.reprocessar_metadados() {
+            tracing::warn!("metadados: reprocesso falhou: {e}");
+        }
         let achados = self.achar_arquivos()?;
         let conhecidos: Vec<Linha> = {
             let mut st = self
@@ -434,28 +457,25 @@ impl Biblioteca {
                         Some(e) => e,
                         None => {
                             // arquivo novo: outra edição de uma obra que já existe (mesma chave) ou uma obra nova
-                            let (autor, titulo) = titulo_e_autor(&a.nome);
-                            let (kt, ka) = (chave_do_titulo(&titulo), chave_do_autor(&autor));
-                            let obra = match obras::achar_obra(&tx, &kt, &ka)? {
-                                Some(o) => o,
+                            let mut caminho = PathBuf::from(&a.pasta);
+                            caminho.extend(a.rel.split('/'));
+                            let (dentro, capa) = metadados::ler_do_arquivo(&caminho, a.formato, true);
+                            let m = metadados::completar(&dentro, &metadados::pelo_nome(&a.nome));
+                            let capa = capa.and_then(|c| metadados::gravar_capa(&self.capas, &a.impressao, &c));
+                            let (kt, ka) = obras::chaves(&m);
+                            let obra = match obras::achar_obra(&tx, &kt, &ka, "")? {
+                                Some(o) => {
+                                    obras::completar_obra(&tx, &o, &m)?;
+                                    o
+                                }
                                 None => {
                                     let o = novo_id();
-                                    tx.execute(
-                                        "INSERT INTO obras (id, titulo, autor, matiz, adicionada_em)
-                                         VALUES (?1,?2,?3,?4,?5)",
-                                        params![o, titulo, autor, matiz_do_titulo(&titulo), agora_],
-                                    )
-                                    .map_err(bd)?;
+                                    obras::inserir_obra(&tx, &o, &m, agora_)?;
                                     o
                                 }
                             };
                             let e = novo_id();
-                            tx.execute(
-                                "INSERT INTO edicoes (id, obra_id, formato, chave_titulo, chave_autor, criada_em)
-                                 VALUES (?1,?2,?3,?4,?5,?6)",
-                                params![e, obra, a.formato, kt, ka, agora_],
-                            )
-                            .map_err(bd)?;
+                            obras::inserir_edicao(&tx, &e, &obra, a.formato, &m, capa.as_deref(), agora_)?;
                             novos += 1;
                             e
                         }
@@ -807,3 +827,6 @@ mod testes {
         );
     }
 }
+
+#[cfg(test)]
+mod testes_meta;
