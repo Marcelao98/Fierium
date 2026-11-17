@@ -5,7 +5,7 @@ pub const CSV: &str = "Text#,Type,Issued,Title,Language,Authors,Subjects,LoCC,Bo
 1,Text,2000-01-01,Memórias Póstumas de Brás Cubas,pt,\"Machado de Assis, 1839-1908\",\"Brazil -- Fiction; Satire\",PQ,Brazilian Literature\n\
 2,Text,2000-01-01,\"Dom Casmurro\",pt,\"Assis, Machado de, 1839-1908\",Brazil -- Fiction,PQ,\n\
 3,Sound,2000-01-01,Um áudio,en,\"Fulano, Beltrano\",,,\n\
-4,Text,2000-01-01,\"Frankenstein; Or, The Modern Prometheus\",en,\"Shelley, Mary Wollstonecraft, 1797-1851\",Science fiction,PR,\n\
+4,Text,2000-01-01,\"Frankenstein; Or, The Modern Prometheus\",en,\"Shelley, Mary Wollstonecraft, 1797-1851\",Science fiction,PR,Gothic Fiction; Category: Science-Fiction & Fantasy\n\
 5,Text,2000-01-01,\"Duas línguas\nsubtítulo\",fr; en,\"Hugo, Victor, 1802-1885; Smith, John, 1800-1850 [Translator]\",,PQ,\n";
 
 pub fn catalogo_de_teste() -> (tempfile::TempDir, Catalogo) {
@@ -29,10 +29,88 @@ fn csv_so_texto_e_autores_legiveis() {
     assert!(itens[0].assuntos.contains(&"LoCC: PQ".to_string()));
     assert_eq!(
         itens[0].ofertas[0].url,
-        "https://www.gutenberg.org/cache/epub/1/pg1-images-3.epub"
+        "https://gutenberg.pglaf.org/cache/epub/1/pg1-images-3.epub"
     );
     assert!(itens[0].ofertas[0].licenca.contains("Domínio público"));
     assert_eq!(autor_legivel("Anônimo").unwrap().nome, "Anônimo");
+    // os formatos de verdade do CSV: iniciais com o nome por extenso, título de nobreza, "Jr."
+    let nome = |b: &str| autor_legivel(b).unwrap().nome;
+    assert_eq!(nome("Wells, H. G. (Herbert George), 1866-1946"), "H. G. Wells");
+    assert_eq!(
+        nome("Taunay, Alfredo d'Escragnolle Taunay, Visconde de, 1843-1899"),
+        "Alfredo d'Escragnolle Taunay"
+    );
+    assert_eq!(nome("Camões, Luís de, 1524?-1580"), "Luís de Camões");
+    assert_eq!(nome("King, Martin Luther, Jr., 1929-1968"), "Martin Luther King Jr.");
+    // as estantes entram como assunto, sem o "Category:"
+    assert!(itens[0].assuntos.contains(&"Brazilian Literature".to_string()));
+    assert!(itens[2].assuntos.contains(&"Science-Fiction & Fantasy".to_string()));
+}
+
+#[test]
+fn colecoes_por_estante_e_enderecos_alternativos() {
+    use crate::gutenberg::alternativas_do_epub;
+    let (_d, c) = catalogo_de_teste();
+    let r = c.buscar(&json!({ "assunto": "Science-Fiction & Fantasy" })).unwrap();
+    assert_eq!(r["total"], 1);
+    assert_eq!(r["itens"][0]["id"], "gutenberg:4");
+    assert_eq!(
+        c.buscar(&json!({ "assunto": "fiction", "idioma": "pt" })).unwrap()["total"],
+        2
+    );
+    // sem texto, a ordem é a do número no Gutenberg (os clássicos primeiro)
+    let r = c.buscar(&json!({ "idioma": "pt" })).unwrap();
+    assert_eq!(r["itens"][0]["id"], "gutenberg:1");
+    assert_eq!(r["itens"][1]["id"], "gutenberg:2");
+    // a fonte existe antes da primeira atualização (pra dar pra atualizar à mão)
+    let d = tempfile::tempdir().unwrap();
+    let vazio = Catalogo::abrir(&d.path().join("c.db")).unwrap();
+    assert_eq!(vazio.fontes().unwrap()[0]["itens"], 0);
+    let alt = alternativas_do_epub("https://gutenberg.pglaf.org/cache/epub/7/pg7-images-3.epub");
+    assert_eq!(alt.len(), 6);
+    assert_eq!(alt[1], "https://www.gutenberg.org/cache/epub/7/pg7-images-3.epub");
+    assert_eq!(alt[5], "https://www.gutenberg.org/cache/epub/7/pg7.epub");
+    assert_eq!(alternativas_do_epub("https://outro.exemplo/a.epub").len(), 1);
+}
+
+/// Baixador de mentira: o primeiro endereço falha (site em manutenção), o segundo entrega o CSV compactado.
+struct SiteFora;
+impl Baixador for SiteFora {
+    fn baixar(&self, url: &str, destino: &Path) -> Result<u64, ErroFierium> {
+        if url.contains("www.gutenberg.org") {
+            return Err(ErroFierium::Rede("o servidor está em manutenção (erro 503)".into()));
+        }
+        use std::io::Write;
+        let mut gz = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::default());
+        gz.write_all(CSV.as_bytes()).unwrap();
+        let corpo = gz.finish().unwrap();
+        std::fs::write(destino, &corpo).unwrap();
+        Ok(corpo.len() as u64)
+    }
+}
+
+#[test]
+fn catalogo_vem_do_espelho_quando_o_site_cai() {
+    let d = tempfile::tempdir().unwrap();
+    let mut avisos = 0;
+    let itens = Gutenberg::default()
+        .carregar(&SiteFora, d.path(), &mut |_, _| avisos += 1)
+        .unwrap();
+    assert_eq!(itens.len(), 4);
+    assert!(avisos > 0);
+    // todos fora do ar e sem cópia: erro de rede em português, dizendo que tentou os dois
+    struct TudoFora;
+    impl Baixador for TudoFora {
+        fn baixar(&self, _: &str, _: &Path) -> Result<u64, ErroFierium> {
+            Err(ErroFierium::Rede("o servidor está em manutenção (erro 503)".into()))
+        }
+    }
+    let d2 = tempfile::tempdir().unwrap();
+    let e = Gutenberg::default()
+        .carregar(&TudoFora, d2.path(), &mut |_, _| {})
+        .unwrap_err();
+    assert_eq!(e.codigo(), "ERRO_DE_REDE");
+    assert!(e.to_string().contains("nem do site nem do espelho"), "{e}");
 }
 
 #[test]
@@ -128,4 +206,60 @@ fn baixador_http_com_servidor_local() {
     let pedido = t.join().unwrap();
     assert!(pedido.contains("user-agent: fierium/"), "{pedido}");
     assert!(!pedido.contains('@'));
+}
+
+/// Com o catálogo de verdade (não roda nos portões: precisa do arquivo baixado).
+/// `FIERIUM_CSV=/caminho/pg_catalog.csv.gz cargo test --release -p fierium-catalogo de_verdade -- --ignored --nocapture`
+#[test]
+#[ignore = "precisa do pg_catalog.csv(.gz) de verdade em FIERIUM_CSV"]
+fn catalogo_de_verdade() {
+    let origem = std::env::var("FIERIUM_CSV").expect("FIERIUM_CSV");
+    let d = tempfile::tempdir().unwrap();
+    std::fs::copy(&origem, d.path().join("pg_catalog.csv.gz")).unwrap();
+    struct SemRede;
+    impl Baixador for SemRede {
+        fn baixar(&self, _: &str, _: &Path) -> Result<u64, ErroFierium> {
+            panic!("o cache está fresco, não era pra baixar")
+        }
+    }
+    let t = std::time::Instant::now();
+    let itens = Gutenberg::default()
+        .carregar(&SemRede, d.path(), &mut |_, _| {})
+        .unwrap();
+    println!("ler o CSV: {} itens em {:?}", itens.len(), t.elapsed());
+    let t = std::time::Instant::now();
+    let mut c = Catalogo::abrir(&d.path().join("catalogo.db")).unwrap();
+    c.importar(&Gutenberg::default(), &itens).unwrap();
+    println!("importar: {:?}", t.elapsed());
+    assert!(itens.len() > 70_000);
+    for f in [
+        json!({ "texto": "machado de assis" }),
+        json!({ "autor": "Machado de Assis", "idioma": "pt" }),
+        json!({ "idioma": "pt" }),
+        json!({ "assunto": "Fantasy" }),
+        json!({ "assunto": "Philosophy" }),
+        json!({ "assunto": "Poetry", "idioma": "pt" }),
+        json!({ "assunto": "Science - Physics" }),
+        json!({ "assunto": "Best Books Ever Listings" }),
+    ] {
+        let t = std::time::Instant::now();
+        let r = c
+            .buscar(&json!({ "limite": 5, "texto": f["texto"], "autor": f["autor"],
+            "idioma": f["idioma"], "assunto": f["assunto"] }))
+            .unwrap();
+        let nomes: Vec<String> = r["itens"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|i| {
+                format!(
+                    "{} ({})",
+                    i["titulo"].as_str().unwrap(),
+                    i["pessoas"][0]["nome"].as_str().unwrap_or("?")
+                )
+            })
+            .collect();
+        println!("{f} → {} em {:?}: {nomes:?}", r["total"], t.elapsed());
+        assert!(r["total"].as_i64().unwrap() > 0, "{f}");
+    }
 }

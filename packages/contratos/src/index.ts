@@ -240,8 +240,23 @@ export interface FiltroCatalogo {
   idioma?: string;
   tipo?: TipoItem;
   autor?: string;
+  /** assunto ou estante da fonte, como frase ("Poetry", "Science-Fiction & Fantasy"): é como as coleções buscam */
+  assunto?: string;
   limite?: number;
   deslocamento?: number;
+}
+
+/** Como está o catálogo público agora (a tela mostra isso enquanto ele não chegou). */
+export interface EstadoCatalogo {
+  /** `sem-rede`: vazio e com a internet desligada nos Ajustes; `vazio`: ainda não tentou baixar */
+  fase: 'pronto' | 'baixando' | 'importando' | 'erro' | 'sem-rede' | 'vazio';
+  /** quantos itens o catálogo tem (ou quantos já entraram, na fase `importando`) */
+  itens: number;
+  /** bytes já baixados e o total, na fase `baixando` */
+  bytes?: number;
+  total?: number;
+  /** por que a última tentativa falhou */
+  mensagem?: string;
 }
 
 export interface FonteCatalogo {
@@ -401,6 +416,8 @@ export interface Comandos {
   'catalogo.fontes': [Record<string, never>, FonteCatalogo[]];
   /** baixa/atualiza o catálogo de uma fonte (ex. o do Gutenberg) */
   'catalogo.atualizar': [{ fonte: string }, FonteCatalogo];
+  /** o andamento do catálogo (baixando, importando, pronto, erro): barato, dá pra perguntar a cada segundo */
+  'catalogo.estado': [Record<string, never>, EstadoCatalogo];
   /** sugestões de título/autor/série/capa pra uma obra */
   'obra.sugestoes': [{ id: Id }, SugestaoObra[]];
   'obra.aplicarSugestao': [{ id: Id; sugestaoId: string }, Obra];

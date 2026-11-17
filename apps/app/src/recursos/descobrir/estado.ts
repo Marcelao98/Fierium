@@ -2,7 +2,7 @@
 // O que a pessoa já tem aparece colorido (item com obraId); o resto, em cinza, com "Baixar".
 import type { ItemCatalogo, Obra } from '@fierium/contratos';
 import { createStore } from 'zustand/vanilla';
-import { criarBaixador } from '../../compartilhado/catalogo';
+import { criarBaixador, criarVigia } from '../../compartilhado/catalogo';
 import type { Servicos } from '../../nucleo/servicos';
 
 export interface ColecaoPronta {
@@ -11,13 +11,61 @@ export interface ColecaoPronta {
   itens: ItemCatalogo[];
 }
 
-/** As linhas prontas. Cada uma é uma ou mais buscas no catálogo (junta e tira repetidos). */
-export const COLECOES: { id: string; titulo: string; buscas: { texto?: string; idioma?: string }[] }[] = [
-  { id: 'brasileiros', titulo: 'Clássicos brasileiros', buscas: [{ idioma: 'pt' }] },
-  { id: 'fantasia', titulo: 'Fantasia e aventura', buscas: [{ texto: 'fantasia' }, { texto: 'aventura' }] },
-  { id: 'filosofia', titulo: 'Filosofia', buscas: [{ texto: 'filosofia' }] },
-  { id: 'poesia', titulo: 'Poesia', buscas: [{ texto: 'poesia' }, { texto: 'poemas' }] },
-  { id: 'ciencia', titulo: 'Ciência', buscas: [{ texto: 'ciência' }, { texto: 'science' }] },
+type Busca = { assunto?: string; autor?: string; idioma?: string };
+
+/** Quantos livros cabem numa linha pronta. */
+export const POR_LINHA = 24;
+
+// Os assuntos e as estantes do Gutenberg são em inglês ("Poetry", "Science-Fiction & Fantasy"): é por eles que as
+// coleções buscam, não por palavras em português. `tema` põe primeiro o que existe em português e completa com o resto.
+const tema = (...assuntos: string[]): Busca[] => [
+  ...assuntos.map((assunto) => ({ assunto, idioma: 'pt' })),
+  ...assuntos.map((assunto) => ({ assunto })),
+];
+const BRASILEIROS = [
+  'Machado de Assis',
+  'José Alencar',
+  'Aluísio Azevedo',
+  'Lima Barreto',
+  'Euclides da Cunha',
+  'Castro Alves',
+  'Gonçalves Dias',
+  'Olavo Bilac',
+  'Escragnolle Taunay',
+  'Júlia Lopes de Almeida',
+  'Casimiro de Abreu',
+  'Álvares de Azevedo',
+  'Bernardo Guimarães',
+  'Joaquim Manuel de Macedo',
+  'Raul Pompéia',
+  'Simões Lopes Neto',
+  'José de Anchieta',
+  'Joaquim Nabuco',
+  'Coelho Netto',
+  'Adolfo Caminha',
+];
+
+/** As linhas prontas. Cada uma é uma lista de buscas no catálogo, na ordem (junta, tira repetidos, para quando enche). */
+export const COLECOES: { id: string; titulo: string; buscas: Busca[] }[] = [
+  { id: 'brasileiros', titulo: 'Clássicos brasileiros', buscas: BRASILEIROS.map((autor) => ({ autor, idioma: 'pt' })) },
+  { id: 'portugues', titulo: 'Em português', buscas: [{ idioma: 'pt' }] },
+  { id: 'melhores', titulo: 'Os melhores de todos os tempos', buscas: [{ assunto: 'Best Books Ever Listings' }] },
+  { id: 'fantasia', titulo: 'Fantasia e aventura', buscas: tema('Fantasy', 'Adventure') },
+  { id: 'ficcao-cientifica', titulo: 'Ficção científica', buscas: tema('Science Fiction') },
+  { id: 'filosofia', titulo: 'Filosofia', buscas: tema('Philosophy') },
+  { id: 'poesia', titulo: 'Poesia', buscas: tema('Poetry') },
+  {
+    id: 'ciencia',
+    titulo: 'Ciência',
+    buscas: tema('Science - Physics', 'Science - Biology', 'Science - Chemistry', 'Science - Earth', 'Mathematics'),
+  },
+  { id: 'misterio', titulo: 'Mistério e detetives', buscas: tema('Detective Fiction', 'Crime, Thrillers and Mystery') },
+  { id: 'terror', titulo: 'Terror e gótico', buscas: tema('Horror', 'Gothic Fiction') },
+  { id: 'mitologia', titulo: 'Mitos, lendas e contos de fadas', buscas: tema('Mythology', 'Fairy tales') },
+  { id: 'teatro', titulo: 'Teatro', buscas: tema('Plays/Films/Dramas', 'Drama') },
+  { id: 'historia', titulo: 'História', buscas: tema('History - Ancient', 'History - Medieval', 'History') },
+  { id: 'infantil', titulo: 'Infantil e juvenil', buscas: tema('Children & Young Adult Reading') },
+  { id: 'harvard', titulo: 'Clássicos de Harvard', buscas: [{ assunto: 'Harvard Classics' }] },
 ];
 
 export interface EstadoDescobrir {
@@ -45,6 +93,8 @@ export function criarDescobrir(s: Servicos) {
     erroItem: null,
   }));
   const baixador = criarBaixador(s);
+  // o catálogo chegou (primeira abertura, ou "Tentar de novo"): monta as linhas
+  const vigia = criarVigia(s, () => void carregar().catch(() => undefined));
   let pedido = 0;
 
   async function carregarObras() {
@@ -54,18 +104,25 @@ export function criarDescobrir(s: Servicos) {
   async function carregar() {
     store.setState({ carregando: true });
     try {
-      await carregarObras();
+      await Promise.all([carregarObras(), vigia.olhar()]);
+      // sem catálogo não há o que buscar: a tela mostra o andamento (ou o erro) no lugar das linhas
+      if (vigia.store.getState().estado?.fase !== 'pronto') {
+        store.setState({ colecoes: [] });
+        return;
+      }
       const colecoes = await Promise.all(
         COLECOES.map(async (c) => {
           const vistos = new Map<string, ItemCatalogo>();
           for (const b of c.buscas) {
-            const r = await s.chamar('catalogo.buscar', { ...b, limite: 20 });
-            for (const i of r.itens) vistos.set(i.id, i);
+            if (vistos.size >= POR_LINHA) break;
+            const r = await s.chamar('catalogo.buscar', { ...b, limite: POR_LINHA });
+            for (const i of r.itens) if (vistos.size < POR_LINHA) vistos.set(i.id, i);
           }
           return { id: c.id, titulo: c.titulo, itens: [...vistos.values()] };
         }),
       );
-      store.setState({ colecoes });
+      // linha sem nenhum livro não aparece
+      store.setState({ colecoes: colecoes.filter((c) => c.itens.length > 0) });
       const t = store.getState().texto;
       if (t) await buscar(t);
     } finally {
@@ -96,6 +153,6 @@ export function criarDescobrir(s: Servicos) {
     void carregar().catch(() => undefined);
     if (id) void abrirItem(id);
   });
-  return { store, baixador, carregar, buscar, abrirItem };
+  return { store, baixador, vigia, carregar, buscar, abrirItem };
 }
 export type Descobrir = ReturnType<typeof criarDescobrir>;

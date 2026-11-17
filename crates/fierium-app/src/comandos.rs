@@ -43,6 +43,7 @@ pub const NO_RUST: &[&str] = &[
     "catalogo.item",
     "catalogo.fontes",
     "catalogo.atualizar",
+    "catalogo.estado",
     "catalogo.baixar",
     "rede.ler",
     "rede.definir",
@@ -60,6 +61,19 @@ pub struct Contexto {
     /// onde ficam os arquivos baixados de catálogo (cache)
     pub pasta_de_cache: PathBuf,
     atualizando: AtomicBool,
+    /// o andamento da atualização do catálogo, pra tela mostrar (nunca segura o banco)
+    andamento: Mutex<Andamento>,
+}
+
+/// O que a atualização do catálogo está fazendo agora (ou como terminou a última).
+#[derive(Default, Clone)]
+struct Andamento {
+    /// "" (nada rodou ainda), "baixando", "importando" ou "erro"
+    fase: &'static str,
+    bytes: u64,
+    total: Option<u64>,
+    itens: u64,
+    mensagem: Option<String>,
 }
 
 impl Contexto {
@@ -79,6 +93,7 @@ impl Contexto {
             pasta_de_livros: pasta_de_livros_padrao(),
             pasta_de_cache: std::env::temp_dir().join("fierium-cache"),
             atualizando: AtomicBool::new(false),
+            andamento: Mutex::new(Andamento::default()),
         };
         if let Err(e) = c.registrar_arquivos() {
             tracing::warn!("não registrei os arquivos da biblioteca: {e}");
@@ -222,6 +237,7 @@ pub fn chamar(ctx: &Contexto, cmd: &str, a: Value) -> Result<Value, ErroFierium>
         }
         "catalogo.fontes" => ctx.catalogo.lock().expect("catálogo").fontes(),
         "catalogo.atualizar" => catalogo_atualizar(ctx, &args::<PorFonte>(a)?.fonte),
+        "catalogo.estado" => catalogo_estado(ctx),
         "catalogo.baixar" => catalogo_baixar(ctx, &args::<Baixar>(a)?),
         "rede.ler" => {
             json(serde_json::json!({ "permitida": ctx.catalogo.lock().expect("catálogo").rede_permitida()? }))
@@ -313,12 +329,76 @@ fn catalogo_atualizar(ctx: &Contexto, fonte: &str) -> Result<Value, ErroFierium>
             "o catálogo já está sendo atualizado, espere terminar",
         ));
     }
-    let r = (|| {
-        let itens = f.carregar(ctx.baixador.as_ref(), &ctx.pasta_de_cache)?;
-        ctx.catalogo.lock().expect("catálogo").importar(f.as_ref(), &itens)
+    let marcar = |m: &dyn Fn(&mut Andamento)| m(&mut ctx.andamento.lock().expect("andamento"));
+    marcar(&|a| {
+        *a = Andamento {
+            fase: "baixando",
+            ..Andamento::default()
+        }
+    });
+    let comeco = std::time::Instant::now();
+    let r: Result<Value, ErroFierium> = (|| {
+        let itens = f.carregar(ctx.baixador.as_ref(), &ctx.pasta_de_cache, &mut |bytes, total| {
+            marcar(&|a| (a.bytes, a.total) = (bytes, total));
+        })?;
+        let baixou = comeco.elapsed();
+        marcar(&|a| (a.fase, a.itens) = ("importando", 0));
+        let r = ctx
+            .catalogo
+            .lock()
+            .expect("catálogo")
+            .importar_avisando(f.as_ref(), &itens, &mut |n| marcar(&|a| a.itens = n as u64))?;
+        tracing::info!(
+            fonte,
+            itens = itens.len(),
+            baixar_ms = baixou.as_millis() as u64,
+            total_ms = comeco.elapsed().as_millis() as u64,
+            "catálogo atualizado"
+        );
+        Ok(r)
     })();
+    match &r {
+        Ok(_) => marcar(&|a| *a = Andamento::default()),
+        Err(e) => marcar(&|a| {
+            *a = Andamento {
+                fase: "erro",
+                mensagem: Some(e.to_string()),
+                ..Andamento::default()
+            }
+        }),
+    }
     ctx.atualizando.store(false, Ordering::SeqCst);
     r
+}
+
+/// Como está o catálogo: `pronto` (tem livros), `baixando`, `importando`, `erro` (com a mensagem), `sem-rede`
+/// (vazio e com a internet desligada nos Ajustes) ou `vazio`. Durante a atualização não toca no banco.
+fn catalogo_estado(ctx: &Contexto) -> Result<Value, ErroFierium> {
+    let a = ctx.andamento.lock().expect("andamento").clone();
+    if a.fase == "baixando" || a.fase == "importando" {
+        let mut o = serde_json::json!({ "fase": a.fase, "itens": a.itens, "bytes": a.bytes });
+        if let Some(t) = a.total {
+            o["total"] = serde_json::json!(t);
+        }
+        return Ok(o);
+    }
+    let c = ctx.catalogo.lock().expect("catálogo");
+    let itens = c.total_de_itens()?;
+    let mut o = serde_json::json!({ "itens": itens });
+    o["fase"] = serde_json::json!(if itens > 0 {
+        "pronto"
+    } else if !c.rede_permitida()? {
+        "sem-rede"
+    } else if a.fase == "erro" {
+        "erro"
+    } else {
+        "vazio"
+    });
+    // o erro da última tentativa aparece mesmo com o catálogo antigo no lugar (a tela decide se mostra)
+    if let Some(m) = a.mensagem {
+        o["mensagem"] = serde_json::json!(m);
+    }
+    Ok(o)
 }
 
 /// Na primeira abertura com rede ligada e catálogo vazio: atualiza o Gutenberg sozinho (em segundo plano).
@@ -364,8 +444,28 @@ fn catalogo_baixar(ctx: &Contexto, x: &Baixar) -> Result<Value, ErroFierium> {
     let nome = fierium_catalogo::nome_do_arquivo(autor, item["titulo"].as_str().unwrap_or(""), formato);
     let destino = ctx.pasta_de_livros.join(nome);
     if !destino.exists() {
-        // download sem segurar nenhum banco
-        ctx.baixador.baixar(url, &destino)?;
+        // download sem segurar nenhum banco; se um servidor falha, tenta o próximo (espelho, formato mais antigo)
+        let mut falha = None;
+        for u in fierium_catalogo::gutenberg::alternativas_do_epub(url) {
+            match ctx
+                .baixador
+                .baixar(&u, &destino)
+                .and_then(|_| conferir_baixado(&destino, formato))
+            {
+                Ok(()) => {
+                    tracing::info!(url = u, "livro baixado");
+                    falha = None;
+                    break;
+                }
+                Err(e) => {
+                    tracing::warn!(url = u, "download do livro: {e}");
+                    falha.get_or_insert(e);
+                }
+            }
+        }
+        if let Some(e) = falha {
+            return Err(e);
+        }
     }
     std::fs::create_dir_all(&ctx.pasta_de_livros).map_err(|e| ErroFierium::de_io(ctx.pasta_de_livros.display(), e))?;
     {
@@ -382,6 +482,28 @@ fn catalogo_baixar(ctx: &Contexto, x: &Baixar) -> Result<Value, ErroFierium> {
         ))
     })?;
     Ok(serde_json::json!({ "obraId": obra, "edicaoId": edicao }))
+}
+
+/// Um EPUB é um zip: se o servidor mandou outra coisa (uma página de "em manutenção"), o arquivo não fica.
+fn conferir_baixado(destino: &Path, formato: &str) -> Result<(), ErroFierium> {
+    if formato != "epub" {
+        return Ok(());
+    }
+    use std::io::Read;
+    let mut magica = [0u8; 2];
+    let ok = std::fs::File::open(destino)
+        .and_then(|mut f| f.read_exact(&mut magica))
+        .is_ok()
+        && &magica == b"PK";
+    if ok {
+        return Ok(());
+    }
+    if let Err(e) = std::fs::remove_file(destino) {
+        tracing::warn!("não apaguei o download estragado: {e}");
+    }
+    Err(ErroFierium::Rede(
+        "o servidor não mandou um EPUB de verdade (pode estar em manutenção); tente de novo mais tarde".into(),
+    ))
 }
 
 /// Pastas comuns de livros que existem no computador (só caminhos que são pastas).
@@ -480,7 +602,7 @@ mod testes {
     struct Falso;
     impl Baixador for Falso {
         fn baixar(&self, url: &str, destino: &Path) -> Result<u64, ErroFierium> {
-            let corpo: &[u8] = if url.ends_with("pg_catalog.csv") {
+            let corpo: &[u8] = if url.contains("pg_catalog.csv") {
                 CSV.as_bytes()
             } else {
                 b"PK-epub-falso"
@@ -547,6 +669,45 @@ mod testes {
     }
 
     #[test]
+    fn estado_do_catalogo_vazio_erro_e_pronto() {
+        let (_d, mut c) = contexto_falso();
+        assert_eq!(chamar(&c, "catalogo.estado", json!({})).unwrap()["fase"], "vazio");
+        // a fonte aparece antes da primeira atualização (o botão "Atualizar agora" dos Ajustes depende disso)
+        assert_eq!(chamar(&c, "catalogo.fontes", json!({})).unwrap()[0]["itens"], 0);
+        struct Fora;
+        impl Baixador for Fora {
+            fn baixar(&self, _: &str, _: &Path) -> Result<u64, ErroFierium> {
+                Err(ErroFierium::Rede("o servidor está em manutenção (erro 503)".into()))
+            }
+        }
+        c.baixador = Box::new(Fora);
+        chamar(&c, "catalogo.atualizar", json!({ "fonte": "gutenberg" })).unwrap_err();
+        let e = chamar(&c, "catalogo.estado", json!({})).unwrap();
+        assert_eq!(e["fase"], "erro");
+        assert!(e["mensagem"].as_str().unwrap().contains("503"), "{e}");
+        // o EPUB que não é zip (página de manutenção) não fica no disco
+        c.baixador = Box::new(Falso);
+        chamar(&c, "catalogo.atualizar", json!({ "fonte": "gutenberg" })).unwrap();
+        let e = chamar(&c, "catalogo.estado", json!({})).unwrap();
+        assert_eq!((e["fase"].as_str(), e["itens"].as_i64()), (Some("pronto"), Some(3)));
+        assert!(e.get("mensagem").is_none());
+        struct Manutencao;
+        impl Baixador for Manutencao {
+            fn baixar(&self, _: &str, destino: &Path) -> Result<u64, ErroFierium> {
+                std::fs::create_dir_all(destino.parent().unwrap()).unwrap();
+                std::fs::write(destino, b"<html>Temporarily Down</html>").unwrap();
+                Ok(29)
+            }
+        }
+        c.baixador = Box::new(Manutencao);
+        let e = chamar(&c, "catalogo.baixar", json!({ "id": "gutenberg:1" })).unwrap_err();
+        assert_eq!(e.codigo(), "ERRO_DE_REDE");
+        assert_eq!(std::fs::read_dir(&c.pasta_de_livros).unwrap().count(), 0);
+        chamar(&c, "rede.definir", json!({ "permitida": false })).unwrap();
+        assert_eq!(chamar(&c, "catalogo.estado", json!({})).unwrap()["fase"], "pronto");
+    }
+
+    #[test]
     fn rede_desligada_da_sem_rede() {
         let (_d, c) = contexto_falso();
         assert_eq!(chamar(&c, "rede.ler", json!({})).unwrap()["permitida"], true);
@@ -590,5 +751,43 @@ mod testes {
                 .codigo(),
             "NAO_ENCONTRADO"
         );
+    }
+
+    /// De ponta a ponta com a internet de verdade (não roda nos portões):
+    /// `cargo test --release -p fierium-app na_rede_de_verdade -- --ignored --nocapture`
+    #[test]
+    #[ignore = "usa a internet de verdade (Project Gutenberg)"]
+    fn na_rede_de_verdade() {
+        let d = tempfile::tempdir().unwrap();
+        let mut c = Contexto::abrir(d.path()).unwrap();
+        c.pasta_de_livros = d.path().join("livros");
+        let t = std::time::Instant::now();
+        let f = chamar(&c, "catalogo.atualizar", json!({ "fonte": "gutenberg" })).unwrap();
+        println!("catálogo: {} itens em {:?}", f["itens"], t.elapsed());
+        assert!(f["itens"].as_i64().unwrap() > 70_000);
+        for (busca, idioma) in [
+            (json!({ "autor": "Machado de Assis", "texto": "Dom Casmurro" }), "pt"),
+            (json!({ "assunto": "Fantasy", "limite": 1 }), "en"),
+            (json!({ "assunto": "Poetry", "idioma": "pt", "limite": 1 }), "pt"),
+        ] {
+            let r = chamar(&c, "catalogo.buscar", busca.clone()).unwrap();
+            let item = &r["itens"][0];
+            assert_eq!(item["idioma"], idioma, "{busca}");
+            let t = std::time::Instant::now();
+            let b = chamar(&c, "catalogo.baixar", json!({ "id": item["id"] })).unwrap();
+            let obra = chamar(&c, "obra.obter", json!({ "id": b["obraId"] })).unwrap();
+            println!("{} → obra \"{}\" em {:?}", item["id"], obra["titulo"], t.elapsed());
+            let de_novo = chamar(&c, "catalogo.item", json!({ "id": item["id"] })).unwrap();
+            assert_eq!(de_novo["obraId"], b["obraId"], "baixado, o item fica colorido");
+            chamar(&c, "edicao.abrir", json!({ "edicaoId": b["edicaoId"] })).unwrap();
+        }
+        for a in std::fs::read_dir(&c.pasta_de_livros).unwrap() {
+            let a = a.unwrap();
+            println!(
+                "  {} ({} bytes)",
+                a.file_name().to_string_lossy(),
+                a.metadata().unwrap().len()
+            );
+        }
     }
 }

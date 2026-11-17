@@ -84,7 +84,13 @@ pub trait Fonte {
     fn id(&self) -> &'static str;
     fn nome(&self) -> &'static str;
     /// Baixa o catálogo da fonte (com cache em `cache`) e devolve os itens. Não mexe no banco.
-    fn carregar(&self, baixador: &dyn Baixador, cache: &Path) -> Result<Vec<ItemNovo>, ErroFierium>;
+    /// `aviso` recebe o andamento do download: (bytes, total quando o servidor diz).
+    fn carregar(
+        &self,
+        baixador: &dyn Baixador,
+        cache: &Path,
+        aviso: &mut dyn FnMut(u64, Option<u64>),
+    ) -> Result<Vec<ItemNovo>, ErroFierium>;
 }
 
 pub struct Catalogo {
@@ -142,6 +148,13 @@ impl Catalogo {
                 .map_err(bd)?;
         }
         debug_assert_eq!(VERSAO_BANCO, 1);
+        // as fontes que o Fierium conhece existem desde o começo (com 0 itens), pra dar pra atualizar à mão nos Ajustes
+        self.bd
+            .execute(
+                "INSERT OR IGNORE INTO fontes (id, nome, ligada) VALUES ('gutenberg', 'Project Gutenberg', 1)",
+                [],
+            )
+            .map_err(bd)?;
         Ok(())
     }
 
@@ -183,6 +196,16 @@ impl Catalogo {
 
     /// Troca tudo o que veio de `fonte` pelos `itens`, numa transação só (se algo falhar, o catálogo antigo fica).
     pub fn importar(&mut self, fonte: &dyn Fonte, itens: &[ItemNovo]) -> Result<Value, ErroFierium> {
+        self.importar_avisando(fonte, itens, &mut |_| {})
+    }
+
+    /// O mesmo, avisando quantos itens já entraram (a cada mil).
+    pub fn importar_avisando(
+        &mut self,
+        fonte: &dyn Fonte,
+        itens: &[ItemNovo],
+        aviso: &mut dyn FnMut(usize),
+    ) -> Result<Value, ErroFierium> {
         let fid = fonte.id();
         let tx = self.bd.transaction().map_err(bd)?;
         for t in ["pessoas", "assuntos", "identificadores", "ofertas"] {
@@ -221,7 +244,10 @@ impl Catalogo {
             let mut i_bus = tx
                 .prepare("INSERT INTO busca (item, titulo, pessoas, assuntos) VALUES (?1,?2,?3,?4)")
                 .map_err(bd)?;
-            for it in itens {
+            for (feitos, it) in itens.iter().enumerate() {
+                if feitos % 1000 == 0 {
+                    aviso(feitos);
+                }
                 let id = format!("{fid}:{}", it.id);
                 i_item
                     .execute(params![
@@ -393,10 +419,27 @@ impl Catalogo {
         if !a.is_empty() {
             casa.push(a);
         }
+        // assunto ou estante, como frase ("Science-Fiction & Fantasy" casa com a estante de mesmo nome)
+        let frase: Vec<&str> = filtro["assunto"]
+            .as_str()
+            .unwrap_or("")
+            .split(|c: char| !c.is_alphanumeric())
+            .filter(|p| !p.is_empty())
+            .collect();
+        if !frase.is_empty() {
+            casa.push(format!("assuntos : \"{}\"", frase.join(" ")));
+        }
         let mut onde: Vec<String> = Vec::new();
         let mut args: Vec<String> = Vec::new();
+        // sem texto digitado (coleções, "tudo em português"): na ordem em que entraram na fonte. No Gutenberg os
+        // números baixos são os clássicos mais conhecidos, então a linha começa pelo que a pessoa reconhece.
+        const POR_NUMERO: &str = "CAST(substr(i.id, instr(i.id, ':') + 1) AS INTEGER), i.titulo COLLATE NOCASE";
         let (from, ordem) = if casa.is_empty() {
-            ("itens i".to_string(), "i.titulo COLLATE NOCASE")
+            ("itens i".to_string(), POR_NUMERO)
+        } else if texto.trim().is_empty() {
+            args.push(casa.join(" AND "));
+            onde.push("busca MATCH ?1".into());
+            ("busca JOIN itens i ON i.id = busca.item".to_string(), POR_NUMERO)
         } else {
             args.push(casa.join(" AND "));
             onde.push("busca MATCH ?1".into());

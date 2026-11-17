@@ -1,10 +1,11 @@
 // Peças do catálogo: o cartão cinza (o que existe nos catálogos abertos e a pessoa ainda não tem). O cartão colorido
 // continua sendo o CartaoObra.
 import type { ItemCatalogo } from '@fierium/contratos';
+import { useFatia } from '../nucleo/contexto';
 import { Icone, Selo } from '@fierium/ui';
 import { abrirLeitura, ir } from '../nucleo/navegacao';
 import './catalogo.css';
-import { autorDoItem, licencaDoItem, type FaseBaixa } from './catalogo';
+import { autorDoItem, fraseDoCatalogo, licencaDoItem, type FaseBaixa, type Vigia } from './catalogo';
 
 const matizDe = (id: string) => [...id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
 
@@ -18,6 +19,35 @@ export function CapaItem({ item, compacto = false }: { item: ItemCatalogo; compa
       detalhe={item.serie ? `vol. ${item.serie.volume}` : undefined}
       compacto={compacto}
     />
+  );
+}
+
+/** O aviso enquanto o catálogo não chegou: andamento, ou o motivo da falha com "Tentar de novo". Pronto, some. */
+export function AvisoDoCatalogo({ vigia }: { vigia: Vigia }) {
+  const estado = useFatia(vigia.store, (s) => s.estado);
+  if (!estado || estado.fase === 'pronto') return null;
+  const andando = estado.fase === 'baixando' || estado.fase === 'importando';
+  return (
+    <div className="aviso-catalogo" data-fase={estado.fase} role={estado.fase === 'erro' ? 'alert' : 'status'}>
+      <p>{fraseDoCatalogo(estado)}</p>
+      {andando && (
+        <progress
+          aria-label="Andamento do catálogo"
+          {...(estado.fase === 'baixando' && estado.total ? { value: estado.bytes ?? 0, max: estado.total } : {})}
+        />
+      )}
+      {andando && <small>Só na primeira vez. Dá pra usar a biblioteca enquanto isso.</small>}
+      {(estado.fase === 'erro' || estado.fase === 'vazio') && (
+        <button className="f-botao" data-tamanho="p" onClick={() => vigia.tentarDeNovo()}>
+          {estado.fase === 'erro' ? 'Tentar de novo' : 'Baixar agora'}
+        </button>
+      )}
+      {estado.fase === 'sem-rede' && (
+        <button className="f-botao" data-tamanho="p" onClick={() => ir({ tela: 'ajustes' })}>
+          Abrir os Ajustes
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -46,7 +76,8 @@ export function CartaoCinza({
       >
         <span className="cartao-cinza-capa" aria-hidden="true">
           <CapaItem item={item} />
-          <span className="selo-licenca">{licencaDoItem(item)}</span>
+          {/* no cartão só o essencial; a licença inteira fica na ficha */}
+          <span className="selo-licenca">{licencaDoItem(item).split(/ [(—]/)[0]}</span>
         </span>
         <span className="cartao-obra-titulo">{item.titulo}</span>
       </button>

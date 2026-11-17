@@ -1026,6 +1026,7 @@ version = "0.2.0"
 dependencies = [
  "csv",
  "fierium-core",
+ "flate2",
  "rusqlite",
  "serde_json",
  "tempfile",

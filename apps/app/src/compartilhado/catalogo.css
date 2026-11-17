@@ -137,3 +137,27 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* o catálogo ainda não chegou: andamento ou o motivo, nunca uma tela vazia */
+.aviso-catalogo {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+  max-width: 60ch;
+  margin: 24px 0;
+  padding: 16px 20px;
+  border: 1px solid var(--borda, rgb(128 128 128 / 0.3));
+  border-radius: 12px;
+}
+.aviso-catalogo p {
+  margin: 0;
+}
+.aviso-catalogo progress {
+  width: 100%;
+}
+.aviso-catalogo small {
+  color: var(--texto-3);
+}
+.aviso-catalogo[data-fase='erro'] {
+  border-color: var(--perigo);
+}

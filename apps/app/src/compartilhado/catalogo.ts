@@ -1,6 +1,6 @@
 // O catálogo público dentro da biblioteca (D30): o baixador (um por funcionalidade, cada um com o seu estado) e
 // pequenas funções de apoio. Sem React aqui; as peças visuais estão em Catalogo.tsx.
-import type { ItemCatalogo, Obra } from '@fierium/contratos';
+import type { EstadoCatalogo, ItemCatalogo, Obra } from '@fierium/contratos';
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type { Servicos } from '../nucleo/servicos';
 
@@ -39,6 +39,76 @@ export function criarBaixador(s: Servicos): Baixador {
       }
     },
   };
+}
+
+/** Vigia o catálogo enquanto ele baixa: a tela nunca fica vazia sem dizer por quê. */
+export interface Vigia {
+  store: StoreApi<{ estado: EstadoCatalogo | null }>;
+  /** pergunta ao núcleo como o catálogo está; enquanto baixa, pergunta de novo sozinho */
+  olhar(): Promise<void>;
+  /** manda baixar o catálogo do Gutenberg (de novo) */
+  tentarDeNovo(): void;
+  parar(): void;
+}
+
+const ANDANDO = ['baixando', 'importando'];
+
+/** `aoChegar` roda quando o catálogo fica pronto depois de ter sido visto sem estar (pra tela buscar de novo). */
+export function criarVigia(s: Servicos, aoChegar: () => void, espera = 1000): Vigia {
+  const store = createStore<{ estado: EstadoCatalogo | null }>(() => ({ estado: null }));
+  let relogio: ReturnType<typeof setTimeout> | undefined;
+  const depois = () => {
+    clearTimeout(relogio);
+    relogio = setTimeout(() => void olhar(), espera);
+  };
+  async function olhar() {
+    const antes = store.getState().estado;
+    let estado: EstadoCatalogo;
+    try {
+      estado = await s.chamar('catalogo.estado', {});
+    } catch (e) {
+      // o aviso já saiu; a tela mostra o motivo e o botão de tentar de novo
+      estado = { fase: 'erro', itens: 0, mensagem: mensagemDeBaixa(e) };
+    }
+    store.setState({ estado });
+    if (ANDANDO.includes(estado.fase)) depois();
+    else if (estado.fase === 'pronto' && antes && antes.fase !== 'pronto') aoChegar();
+  }
+  return {
+    store,
+    olhar,
+    tentarDeNovo() {
+      store.setState({ estado: { fase: 'baixando', itens: 0 } });
+      // a resposta só vem no fim (minutos); o andamento vem do olhar. Se falhar, o olhar mostra o motivo.
+      void s
+        .chamar('catalogo.atualizar', { fonte: 'gutenberg' })
+        .catch(() => undefined)
+        .finally(() => void olhar());
+      depois();
+    },
+    parar: () => clearTimeout(relogio),
+  };
+}
+
+/** "Baixando o catálogo do Gutenberg… 12.000 livros": o que dizer em cada fase (nada quando está pronto). */
+export function fraseDoCatalogo(e: EstadoCatalogo): string {
+  const mb = (b: number) => (b / 1_048_576).toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+  switch (e.fase) {
+    case 'pronto':
+      return '';
+    case 'baixando':
+      return e.bytes
+        ? `Baixando o catálogo do Gutenberg… ${mb(e.bytes)}${e.total ? ` de ${mb(e.total)}` : ''} MB`
+        : 'Baixando o catálogo do Gutenberg…';
+    case 'importando':
+      return `Baixando o catálogo do Gutenberg… ${e.itens.toLocaleString('pt-BR')} livros`;
+    case 'sem-rede':
+      return 'A internet está desligada, então o catálogo do Gutenberg não foi baixado. Pra ligar: Ajustes → Internet.';
+    case 'erro':
+      return `O catálogo do Gutenberg não baixou. ${e.mensagem ?? ''}`.trim();
+    case 'vazio':
+      return 'O catálogo do Gutenberg ainda não foi baixado.';
+  }
 }
 
 /** "Machado de Assis" == "machado de assis " (sem acento, sem caixa). */

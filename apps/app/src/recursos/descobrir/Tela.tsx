@@ -2,7 +2,7 @@
 import type { ItemCatalogo } from '@fierium/contratos';
 import { Icone } from '@fierium/ui';
 import { useEffect, useState } from 'react';
-import { CapaItem, CartaoCinza, lerBaixado } from '../../compartilhado/Catalogo';
+import { AvisoDoCatalogo, CapaItem, CartaoCinza, lerBaixado } from '../../compartilhado/Catalogo';
 import { autorDoItem, licencaDoItem } from '../../compartilhado/catalogo';
 import { CartaoObra, Prateleira } from '../../compartilhado/Obras';
 import { useFatia } from '../../nucleo/contexto';
@@ -21,6 +21,7 @@ function Item({ item, d }: { item: ItemCatalogo; d: Descobrir }) {
 
 export function TelaDescobrir({ descobrir: d }: { descobrir: Descobrir }) {
   const { texto, resultados, total, colecoes, carregando } = useFatia(d.store, (s) => s);
+  const fase = useFatia(d.vigia.store, (s) => s.estado?.fase);
   const [campo, setCampo] = useState(texto);
   useEffect(() => {
     void d.carregar().catch(() => undefined);
@@ -47,7 +48,8 @@ export function TelaDescobrir({ descobrir: d }: { descobrir: Descobrir }) {
           onChange={(e) => setCampo(e.target.value)}
         />
       </div>
-      {resultados ? (
+      <AvisoDoCatalogo vigia={d.vigia} />
+      {fase && fase !== 'pronto' ? null : resultados ? (
         <section aria-label="Resultados da busca">
           <p className="contagem" style={{ marginLeft: 0, marginBottom: 12 }} aria-live="polite">
             {total} {total === 1 ? 'resultado' : 'resultados'}
@@ -66,17 +68,16 @@ export function TelaDescobrir({ descobrir: d }: { descobrir: Descobrir }) {
           )}
         </section>
       ) : (
-        colecoes.map((c) => (
-          <Prateleira key={c.id} titulo={c.titulo}>
-            {c.itens.length ? (
-              c.itens.map((i) => <Item key={i.id} item={i} d={d} />)
-            ) : (
-              <p style={{ color: 'var(--texto-3)', gridColumn: '1 / -1', width: 'max-content' }}>
-                {carregando ? 'Procurando…' : 'Nada por aqui ainda neste catálogo.'}
-              </p>
-            )}
-          </Prateleira>
-        ))
+        <>
+          {!colecoes.length && <p className="carregando">{carregando ? 'Montando as coleções…' : ''}</p>}
+          {colecoes.map((c) => (
+            <Prateleira key={c.id} titulo={c.titulo}>
+              {c.itens.map((i) => (
+                <Item key={i.id} item={i} d={d} />
+              ))}
+            </Prateleira>
+          ))}
+        </>
       )}
     </>
   );

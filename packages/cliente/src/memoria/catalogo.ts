@@ -16,22 +16,28 @@ const oferta = (n: number) => [
     licenca: 'Domínio público',
   },
 ];
-const ITENS: ItemCatalogo[] = [
-  ['Quincas Borba', 'Machado de Assis', 1891, 55682],
-  ['Memórias Póstumas de Brás Cubas', 'Machado de Assis', 1881, 54829],
-  ['O Alienista', 'Machado de Assis', 1882, 57001],
-  ['Iracema', 'José de Alencar', 1865, 44282],
-  ['O Cortiço', 'Aluísio Azevedo', 1890, 34480],
-  ['Frankenstein', 'Mary Shelley', 1818, 84],
-].map(([titulo, nome, ano, n]) => ({
+// os assuntos imitam os do Gutenberg (em inglês): as coleções do Descobrir buscam por eles
+const ITENS: ItemCatalogo[] = (
+  [
+    ['Quincas Borba', 'Machado de Assis', 1891, 55682, 'pt', 'Novels'],
+    ['Memórias Póstumas de Brás Cubas', 'Machado de Assis', 1881, 54829, 'pt', 'Novels'],
+    ['O Alienista', 'Machado de Assis', 1882, 57001, 'pt', 'Short Stories'],
+    ['Iracema', 'José de Alencar', 1865, 44282, 'pt', 'Novels'],
+    ['O Cortiço', 'Aluísio Azevedo', 1890, 34480, 'pt', 'Novels'],
+    ['Frankenstein', 'Mary Shelley', 1818, 84, 'en', 'Science-Fiction & Fantasy'],
+    ['Os Lusíadas', 'Luís de Camões', 1572, 3333, 'pt', 'Poetry'],
+    ['Discourse on the Method', 'René Descartes', 1637, 59, 'en', 'Philosophy & Ethics'],
+    ['On the Origin of Species', 'Charles Darwin', 1859, 1228, 'en', 'Science - Biology'],
+  ] as const
+).map(([titulo, nome, ano, n, idioma, assunto]) => ({
   id: `gutenberg:${n}`,
   tipo: 'livro',
-  titulo: titulo as string,
-  pessoas: autor(nome as string),
-  idioma: titulo === 'Frankenstein' ? 'en' : 'pt',
-  ano: ano as number,
-  assuntos: ['Ficção'],
-  ofertas: oferta(n as number),
+  titulo,
+  pessoas: autor(nome),
+  idioma,
+  ano,
+  assuntos: [assunto],
+  ofertas: oferta(n),
 }));
 
 export function comandosCatalogo(): Tratadores<
@@ -40,6 +46,7 @@ export function comandosCatalogo(): Tratadores<
   | 'catalogo.baixar'
   | 'catalogo.fontes'
   | 'catalogo.atualizar'
+  | 'catalogo.estado'
   | 'obra.sugestoes'
   | 'obra.aplicarSugestao'
   | 'obra.editar'
@@ -53,7 +60,7 @@ export function comandosCatalogo(): Tratadores<
     return i;
   };
   return {
-    'catalogo.buscar': ({ texto, idioma, autor: a, limite = 50, deslocamento = 0 }) => {
+    'catalogo.buscar': ({ texto, idioma, autor: a, assunto, limite = 50, deslocamento = 0 }) => {
       const palavras = normalizar(texto ?? '')
         .split(/\s+/)
         .filter(Boolean);
@@ -62,6 +69,7 @@ export function comandosCatalogo(): Tratadores<
         return (
           palavras.every((p) => alvo.includes(p)) &&
           (!idioma || i.idioma === idioma) &&
+          (!assunto || i.assuntos.some((x) => normalizar(x).includes(normalizar(assunto)))) &&
           (!a || normalizar(i.pessoas.map((p) => p.nome).join(' ')).includes(normalizar(a)))
         );
       });
@@ -74,6 +82,7 @@ export function comandosCatalogo(): Tratadores<
     },
     'catalogo.fontes': () => [{ id: 'gutenberg', nome: 'Project Gutenberg', ligada: true, itens: ITENS.length }],
     'catalogo.atualizar': () => ({ id: 'gutenberg', nome: 'Project Gutenberg', ligada: true, itens: ITENS.length }),
+    'catalogo.estado': () => ({ fase: 'pronto', itens: ITENS.length }),
     'obra.sugestoes': () => [],
     'obra.aplicarSugestao': ({ id }) => {
       throw new ErroFierium('NAO_ENCONTRADO', `sem sugestões pra ${id} no exemplo`);

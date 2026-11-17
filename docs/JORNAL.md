@@ -13,6 +13,36 @@ Uma entrada por sessão de trabalho, **a mais nova em cima**. Modelo:
 **Onde parou:** estado exato e o próximo passo (e se está esperando o Marcelo).
 ```
 
+## 2026-11-16 · Descobrir de ponta a ponta · catálogo do Gutenberg de verdade
+
+**Pedido:** o Descobrir funcionando no app instalado: catálogo baixa sozinho com andamento, coleções cheias, cinza na
+biblioteca, página do autor, "Baixar e ler".
+**Causas (por que não funcionava):** (1) o catálogo nunca chegou: o site do Gutenberg respondeu 503 (manutenção) na
+primeira abertura e não havia segunda tentativa nem outro servidor; o erro só ia pro log. (2) Sem catálogo não havia
+como tentar de novo: `catalogo.fontes` vinha vazio, então os Ajustes não mostravam o botão "Atualizar agora". (3) As
+coleções buscavam palavras em português ("fantasia") e o conector ignorava a coluna `Bookshelves`: mesmo com catálogo
+as linhas viriam vazias. (4) O CSV sem compactar tem 21 MB; numa rede a 25 kB/s leva 14 min e estourava os 10 min de
+limite.
+**Feito:** catálogo compactado (`pg_catalog.csv.gz`, 5,3 MB) do site e, se falhar, do espelho oficial
+(`gutenberg.pglaf.org`); EPUB pelo espelho primeiro (D31), com formatos alternativos e conferência de que veio um zip.
+`catalogo.estado` (baixando com bytes, importando com contagem, erro com motivo, sem-rede, vazio) e o aviso
+"Baixando o catálogo do Gutenberg… N livros" com "Tentar de novo" no Descobrir e na Biblioteca. Estantes entram como
+assunto; filtro `assunto` na busca; sem texto, a ordem é o número no Gutenberg (os clássicos primeiro). 15 coleções
+pelas estantes reais, com o que há em português na frente. Nomes de autor do CSV de verdade ("H. G. (Herbert George)",
+"Visconde de"). Selo de licença curto no cartão.
+**Medido / conferido:** CSV real: 79.769 linhas, 9 colunas (`Text#,Type,Issued,Title,Language,Authors,Subjects,LoCC,
+Bookshelves`), 78.518 livros (o resto é áudio e afins), 10.887 títulos com quebra de linha, 652 em português. Ler o CSV
+0,5 s; importar 5,7 s; baixar 126–218 s nesta rede (25–45 kB/s); do zero ao pronto no app, 139 s. Política de robôs
+lida (cópia de 2026-11-01 no Internet Archive, o site estava fora). User-Agent aceito pelo espelho; redirecionamento
+não foi preciso. Teste com a rede (`na_rede_de_verdade`, ignorado nos portões): Dom Casmurro, Alice e Os Lusíadas
+baixam em ~7 s cada, entram na biblioteca e o item fica colorido. No executável de release numa tela virtual: andamento
+na tela, 15 linhas com 24 livros cada, "machado de assis" na Biblioteca com 17 cinzas e botão Baixar, Dom Casmurro
+baixou e abriu no leitor. `pnpm check` (46 na interface), `pnpm check:rust`, `pnpm e2e --trace off` (21/21).
+**Deu errado / aprendido:** o roteiro injetado parou antes de conferir, na janela, a página do autor e o "volta no
+lugar" dos três livros: a máquina ficou sem memória e a rodada foi interrompida. Isso fica pro teste do Marcelo. O e2e
+falha por tempo se roda junto com um `cargo build --release`.
+**Onde parou:** branch `local/descobrir` enviada, sem PR; executável instalado. Esperando o Marcelo testar.
+
 ## 2026-11-16 · Cartão local/epub-e-obras · EPUB no app de verdade e obra ≠ arquivo
 
 **Pedido:** na biblioteca, PDFs e EPUBs juntos e todos funcionando no app instalado (ler, mudar página/capítulo,

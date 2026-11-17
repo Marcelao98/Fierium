@@ -2,7 +2,7 @@
 // Biblioteca mantém onde estava). Só a resposta da última busca vale (digitar rápido não embaralha a lista).
 import type { FiltroObras, ItemCatalogo, Obra } from '@fierium/contratos';
 import { createStore } from 'zustand/vanilla';
-import { aindaNaoTem, criarBaixador } from '../../compartilhado/catalogo';
+import { aindaNaoTem, criarBaixador, criarVigia } from '../../compartilhado/catalogo';
 import type { Servicos } from '../../nucleo/servicos';
 
 export interface EstadoBiblioteca {
@@ -39,6 +39,8 @@ export function criarBiblioteca(s: Servicos) {
     mostrarCatalogo: lerMostrar(),
   }));
   const baixador = criarBaixador(s);
+  // o catálogo chegou enquanto a pessoa olhava: busca o cinza de novo
+  const vigia = criarVigia(s, () => void filtrar().catch(() => undefined));
   let pedido = 0;
 
   /** O cinza só vale pra busca por texto (ou com o interruptor ligado) e sem filtros que só fazem sentido pro que a pessoa tem. */
@@ -46,6 +48,7 @@ export function criarBiblioteca(s: Servicos) {
     const so = f.estado || f.favoritas || f.formato || f.colecaoId || f.reino;
     if (so || (!f.texto && !store.getState().mostrarCatalogo)) return [];
     try {
+      await vigia.olhar(); // se ainda está baixando, a tela mostra o andamento no lugar do cinza
       const r = await s.chamar('catalogo.buscar', { ...(f.texto ? { texto: f.texto } : {}), limite: 48 });
       return aindaNaoTem(r.itens);
     } catch {
@@ -89,6 +92,7 @@ export function criarBiblioteca(s: Servicos) {
   return {
     store,
     baixador,
+    vigia,
     mostrarCatalogo,
     carregar,
     filtrar,

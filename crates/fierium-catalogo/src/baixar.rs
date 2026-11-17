@@ -1,7 +1,7 @@
 //! Baixar arquivos com educação: User-Agent que diz quem somos (sem e-mail), tempo-limite, gravação em `.part` e só
 //! depois o nome final. A `Baixador` é um trait pra os testes não usarem a rede.
 use fierium_core::ErroFierium;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::path::Path;
 use std::time::Duration;
 
@@ -14,6 +14,18 @@ pub const USER_AGENT: &str = concat!(
 pub trait Baixador: Send + Sync {
     /// Baixa `url` pra `destino` (cria ou troca o arquivo). Devolve quantos bytes gravou.
     fn baixar(&self, url: &str, destino: &Path) -> Result<u64, ErroFierium>;
+
+    /// O mesmo, avisando o andamento: (bytes já gravados, tamanho total quando o servidor diz).
+    fn baixar_avisando(
+        &self,
+        url: &str,
+        destino: &Path,
+        aviso: &mut dyn FnMut(u64, Option<u64>),
+    ) -> Result<u64, ErroFierium> {
+        let n = self.baixar(url, destino)?;
+        aviso(n, Some(n));
+        Ok(n)
+    }
 }
 
 pub struct BaixadorHttp {
@@ -24,17 +36,43 @@ impl Default for BaixadorHttp {
     fn default() -> Self {
         let cfg = ureq::Agent::config_builder()
             .user_agent(USER_AGENT)
-            .timeout_global(Some(Duration::from_secs(600)))
+            // rede lenta existe: o catálogo (5 MB) a 20 kB/s leva uns 5 minutos
+            .timeout_global(Some(Duration::from_secs(1800)))
             .timeout_connect(Some(Duration::from_secs(20)))
             .build();
         Self { agente: cfg.into() }
     }
 }
 
+/// O erro do ureq em português ("o servidor respondeu 503" em vez de "http status: 503").
+fn motivo(e: &ureq::Error) -> String {
+    match e {
+        ureq::Error::StatusCode(503) => "o servidor está em manutenção (erro 503)".into(),
+        ureq::Error::StatusCode(404) => "o arquivo não existe no servidor (erro 404)".into(),
+        ureq::Error::StatusCode(n) => format!("o servidor respondeu com o erro {n}"),
+        ureq::Error::Timeout(_) => "o servidor demorou demais pra responder".into(),
+        outro => outro.to_string(),
+    }
+}
+
 impl Baixador for BaixadorHttp {
     fn baixar(&self, url: &str, destino: &Path) -> Result<u64, ErroFierium> {
+        self.baixar_avisando(url, destino, &mut |_, _| {})
+    }
+
+    fn baixar_avisando(
+        &self,
+        url: &str,
+        destino: &Path,
+        aviso: &mut dyn FnMut(u64, Option<u64>),
+    ) -> Result<u64, ErroFierium> {
         let rede = |e: String| ErroFierium::Rede(format!("não consegui baixar {url}: {e}"));
-        let mut resp = self.agente.get(url).call().map_err(|e| rede(e.to_string()))?;
+        let mut resp = self.agente.get(url).call().map_err(|e| rede(motivo(&e)))?;
+        let total = resp
+            .headers()
+            .get("content-length")
+            .and_then(|v| v.to_str().ok())
+            .and_then(|v| v.parse::<u64>().ok());
         if let Some(pai) = destino.parent() {
             std::fs::create_dir_all(pai).map_err(|e| ErroFierium::de_io(pai.display(), e))?;
         }
@@ -42,7 +80,24 @@ impl Baixador for BaixadorHttp {
         let mut f = std::fs::File::create(&parcial).map_err(|e| ErroFierium::de_io(parcial.display(), e))?;
         let r = (|| -> Result<u64, ErroFierium> {
             let mut leitor = resp.body_mut().with_config().limit(4 * 1024 * 1024 * 1024).reader();
-            let n = std::io::copy(&mut leitor, &mut f).map_err(|e| rede(e.to_string()))?;
+            let mut pedaco = vec![0u8; 64 * 1024];
+            let mut n = 0u64;
+            loop {
+                let lido = leitor.read(&mut pedaco).map_err(|e| rede(e.to_string()))?;
+                if lido == 0 {
+                    break;
+                }
+                f.write_all(&pedaco[..lido])
+                    .map_err(|e| ErroFierium::de_io(parcial.display(), e))?;
+                n += lido as u64;
+                aviso(n, total);
+            }
+            if total.is_some_and(|t| n < t) {
+                return Err(rede(format!(
+                    "a conexão caiu no meio ({n} de {} bytes)",
+                    total.unwrap_or(0)
+                )));
+            }
             f.flush().map_err(|e| ErroFierium::de_io(parcial.display(), e))?;
             Ok(n)
         })();

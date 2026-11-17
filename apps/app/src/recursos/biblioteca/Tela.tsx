@@ -2,7 +2,7 @@
 import type { EstadoLeitura, Formato, Ordem } from '@fierium/contratos';
 import { Icone } from '@fierium/ui';
 import { useEffect, useMemo, useState } from 'react';
-import { CartaoCinza, lerBaixado } from '../../compartilhado/Catalogo';
+import { AvisoDoCatalogo, CartaoCinza, lerBaixado } from '../../compartilhado/Catalogo';
 import { autorDe, Capa, CartaoObra, formatosDe, fracaoDe } from '../../compartilhado/Obras';
 import { useFatia } from '../../nucleo/contexto';
 import { ir } from '../../nucleo/navegacao';
@@ -197,6 +197,7 @@ export function TelaBiblioteca({ biblioteca, lente }: { biblioteca: Biblioteca; 
               ))}
             </div>
           )}
+          {(filtro.texto || mostrarCatalogo) && <AvisoDoCatalogo vigia={biblioteca.vigia} />}
           {paraBaixar.length > 0 && (
             <section className="secao-baixar" aria-label="Pra baixar">
               <h2>Pra baixar</h2>
