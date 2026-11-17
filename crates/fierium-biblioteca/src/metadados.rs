@@ -633,10 +633,8 @@ pub fn ler_epub(caminho: &Path, com_capa: bool) -> Result<(Metadados, Option<Cap
                     }
                 }
             }
-            Some("group-position") => {
-                if colecao.as_ref().and_then(|c| c.0.as_deref()) == Some(alvo) {
-                    serie_idx = serie_idx.or(t.texto.trim().parse().ok());
-                }
+            Some("group-position") if colecao.as_ref().and_then(|c| c.0.as_deref()) == Some(alvo) => {
+                serie_idx = serie_idx.or(t.texto.trim().parse().ok());
             }
             _ => {}
         }
