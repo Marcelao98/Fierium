@@ -79,6 +79,20 @@ pacotes Linux, pois dependem de instalar GTK/WebKit/Xvfb no Fedora. Branch envia
 
 ---
 
+## 2026-11-17 · M3c · catálogo público em cinza, metadados de dentro do arquivo e capas
+
+**Feito (executores, revisados e juntos):** `crates/fierium-catalogo` (catalogo.db separado, FTS sem acento, conector
+Gutenberg com trait `Fonte`, baixar pra `~/Documentos/Livros/Fierium`, interruptor de rede); metadados de dentro do
+EPUB/PDF, leitor de nome melhor (caso Discworld), capas de EPUB, reprocesso dos arquivos já na biblioteca (migração
+v4), `obra.editar/sugestoes/aplicarSugestao` com Open Library; interface: cinza na Biblioteca, página do autor, ficha,
+Descobrir, Corrigir dados, Internet e Catálogos nos Ajustes. Liguei o interruptor de rede nas sugestões.
+**Medido / conferido:** `pnpm check`, `pnpm check:rust`, e2e 21/21, fumaça do executável.
+**Deu errado / aprendido:** os executores bateram duas vezes no limite de uso (5 h) e continuaram depois do reset;
+o trabalho ficou salvo nos worktrees. A rede deste contêiner bloqueia o gutenberg.org: o catálogo real não foi baixado
+aqui. A mudança de assinatura de `achar_obra` (B) quebrou o uso do catálogo (A) só ao juntar: rodar os portões
+integrados sempre.
+**Onde parou:** ⏸ o Marcelo testa: catálogo do Gutenberg baixando na 1ª abertura, "machado de assis" em cinza, Baixar.
+
 ## 2026-11-16 · M7 adiantado · temas, anotações, citações, menu, pasta fácil e instalador
 
 **Feito (executores Sonnet, revisados e juntos):** temas da página (Pintor do KOFlibrary, 102 temas, cor livre,
