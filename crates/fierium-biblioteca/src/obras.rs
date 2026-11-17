@@ -526,7 +526,7 @@ fn ordem_do_formato(f: &str) -> u8 {
 impl Biblioteca {
     /// A obra que a pessoa já tem com este título e autor (mesma regra da varredura). Usado pelo catálogo público.
     pub fn obra_por_chave(&self, titulo: &str, autor: &str) -> Result<Option<String>, ErroFierium> {
-        achar_obra(&self.bd, &chave_do_titulo(titulo), &chave_do_autor(autor))
+        achar_obra(&self.bd, &chave_do_titulo(titulo), &chave_do_autor(autor), "")
     }
 
     /// (obra, edição) do arquivo que está neste caminho, se a biblioteca já o conhece.

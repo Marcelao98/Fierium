@@ -171,7 +171,8 @@ pub fn chamar(ctx: &Contexto, cmd: &str, a: Value) -> Result<Value, ErroFierium>
             Ok(r)
         }
         "obra.sugestoes" => {
-            let permitida = true; // TODO(rede.ler): trocar pelo interruptor de rede dos Ajustes
+            // o interruptor de rede dos Ajustes (D30): desligado, nada sai do computador
+            let permitida = ctx.catalogo.lock().expect("catálogo").rede_permitida()?;
             b().obra_sugestoes(&args::<PorId>(a)?.id, permitida)
         }
         "obra.aplicarSugestao" => {
