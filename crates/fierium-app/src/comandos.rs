@@ -21,6 +21,9 @@ pub const NO_RUST: &[&str] = &[
     "obra.obter",
     "obra.atualizar",
     "obra.juntar",
+    "obra.editar",
+    "obra.sugestoes",
+    "obra.aplicarSugestao",
     "edicao.abrir",
     "edicao.separar",
     "progresso.salvar",
@@ -61,6 +64,8 @@ impl Contexto {
     fn registrar_arquivos(&self) -> Result<(), ErroFierium> {
         let lista = self.biblioteca.lock().expect("biblioteca").arquivos_existentes()?;
         self.arquivos.substituir(lista);
+        let capas = self.biblioteca.lock().expect("biblioteca").capas_existentes()?;
+        self.arquivos.substituir_capas(capas);
         Ok(())
     }
 }
@@ -80,6 +85,13 @@ struct Atualizar {
     id: String,
     favorita: Option<bool>,
     estado: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct AplicarSugestao {
+    id: String,
+    #[serde(rename = "sugestaoId")]
+    sugestao_id: String,
 }
 
 #[derive(Deserialize)]
@@ -127,6 +139,21 @@ pub fn chamar(ctx: &Contexto, cmd: &str, a: Value) -> Result<Value, ErroFierium>
             let x: Atualizar = args(a)?;
             b().obra_atualizar(&x.id, x.favorita, x.estado.as_deref())
         }
+        // ---- metadados e sugestões de obra ----
+        "obra.editar" => {
+            let r = b().obra_editar(&a)?;
+            ctx.registrar_arquivos()?;
+            Ok(r)
+        }
+        "obra.sugestoes" => {
+            let permitida = true; // TODO(rede.ler): trocar pelo interruptor de rede dos Ajustes
+            b().obra_sugestoes(&args::<PorId>(a)?.id, permitida)
+        }
+        "obra.aplicarSugestao" => {
+            let x: AplicarSugestao = args(a)?;
+            b().obra_aplicar_sugestao(&x.id, &x.sugestao_id)
+        }
+        // ---- fim: metadados ----
         "obra.juntar" => b().obra_juntar(&args::<Juntar>(a)?.ids),
         "edicao.abrir" => b().edicao_abrir(&args::<Edicao>(a)?.edicao_id),
         "edicao.separar" => b().edicao_separar(&args::<Edicao>(a)?.edicao_id),

@@ -10,12 +10,22 @@ use std::sync::RwLock;
 #[derive(Default)]
 pub struct Arquivos {
     mapa: RwLock<HashMap<String, PathBuf>>,
+    /// capas extraídas, por id de edição
+    capas: RwLock<HashMap<String, PathBuf>>,
 }
 
 impl Arquivos {
     /// Troca tudo o que está registrado pelos arquivos que a biblioteca diz que existem.
     pub fn substituir(&self, arquivos: Vec<(String, PathBuf)>) {
         *self.mapa.write().expect("registro de arquivos") = arquivos.into_iter().collect();
+    }
+
+    pub fn substituir_capas(&self, capas: Vec<(String, PathBuf)>) {
+        *self.capas.write().expect("registro de capas") = capas.into_iter().collect();
+    }
+
+    pub fn caminho_da_capa(&self, id: &str) -> Option<PathBuf> {
+        self.capas.read().expect("registro de capas").get(id).cloned()
     }
 
     pub fn caminho(&self, id: &str) -> Option<PathBuf> {
@@ -67,13 +77,20 @@ fn tipo(caminho: &std::path::Path) -> &'static str {
         Some("png") => "image/png",
         Some("jpg" | "jpeg") => "image/jpeg",
         Some("webp") => "image/webp",
+        Some("gif") => "image/gif",
         _ => "application/octet-stream",
     }
 }
 
 /// `caminho_url` = a parte do endereço depois do esquema (ex.: "/arquivo/abc").
 pub fn responder(arquivos: &Arquivos, caminho_url: &str, range: Option<&str>) -> Resposta {
-    let Some(id) = caminho_url.trim_start_matches('/').strip_prefix("arquivo/") else {
+    let url = caminho_url.trim_start_matches('/');
+    let (id, e_capa) = match (url.strip_prefix("arquivo/"), url.strip_prefix("capa/")) {
+        (Some(id), _) => (Some(id), false),
+        (_, Some(id)) => (Some(id), true),
+        _ => (None, false),
+    };
+    let Some(id) = id else {
         return erro(
             404,
             ErroContrato {
@@ -82,7 +99,12 @@ pub fn responder(arquivos: &Arquivos, caminho_url: &str, range: Option<&str>) ->
             },
         );
     };
-    let Some(caminho) = arquivos.caminho(id) else {
+    let achado = if e_capa {
+        arquivos.caminho_da_capa(id)
+    } else {
+        arquivos.caminho(id)
+    };
+    let Some(caminho) = achado else {
         return erro(
             404,
             ErroContrato {
@@ -141,6 +163,15 @@ mod testes {
         // nada de caminho solto: só pelo id registrado
         assert_eq!(responder(&a, "/arquivo/..%2F..%2Fetc%2Fpasswd", None).status, 404);
         assert_eq!(responder(&a, "/outra/x1", None).status, 404);
+        // capa: só as registradas, e arquivo não vale como capa (nem o contrário)
+        let mut c = tempfile::Builder::new().suffix(".png").tempfile().unwrap();
+        c.write_all(b"png-falso").unwrap();
+        a.substituir_capas(vec![("ed1".into(), c.path().into())]);
+        let r = responder(&a, "/capa/ed1", None);
+        assert_eq!((r.status, r.corpo.as_slice()), (200, &b"png-falso"[..]));
+        assert!(r.cabecalhos.contains(&("Content-Type", "image/png".into())));
+        assert_eq!(responder(&a, "/capa/x1", None).status, 404);
+        assert_eq!(responder(&a, "/arquivo/ed1", None).status, 404);
     }
 
     #[test]
