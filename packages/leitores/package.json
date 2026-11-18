@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@fierium/contratos": "workspace:*",
+    "dompurify": "3.2.6",
     "epubjs": "0.3.93",
     "pdfjs-dist": "4.10.38"
   },
