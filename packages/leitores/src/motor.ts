@@ -52,7 +52,63 @@ export interface OpcoesMotor {
   eventos: EventosMotor;
 }
 
+/** O que a sessão sabe fazer além do básico. Os modos de leitura (modos/) só usam peças declaradas aqui. */
+export interface Capacidades {
+  /** `paginar` e `paginaAtual` (virar página/capítulo) */
+  paginar: boolean;
+  /** `linhas` (as linhas de texto visíveis com a posição na tela) */
+  linhas: boolean;
+  /** `rolarPor` e `rolagem` (rolar por código e saber onde está) */
+  rolar: boolean;
+  /** `destacarTrecho` (faixa passageira, que não é marcação) */
+  destacar: boolean;
+}
+
+/** Uma linha de texto visível: `id` estável na ordem de leitura (compare só por igualdade), texto e onde está na tela. */
+export interface Linha {
+  id: string;
+  texto: string;
+  caixa: Caixa;
+}
+
+/** O destaque passageiro dos modos guiado/ouvir: uma faixa em coordenadas da tela (a mesma de `Linha.caixa`). */
+export interface Faixa {
+  caixa: Caixa;
+}
+
+export interface Rolagem {
+  /** quanto já rolou (px) */
+  atual: number;
+  /** o máximo que dá pra rolar (px); 0 = cabe tudo na tela */
+  total: number;
+}
+
+export interface PaginaAtual {
+  /** 1..total */
+  atual: number;
+  total: number;
+}
+
 export interface SessaoLeitura {
+  /** quais peças comuns esta sessão tem; ausente = nenhuma (ex.: o motor de texto) */
+  capacidades?: Capacidades;
+  /** (linhas) as linhas visíveis agora, de cima pra baixo, com o texto e a posição na tela. Barato: só o que se vê. */
+  linhas?(): Linha[];
+  /** (rolar) rola o conteúdo `px` pixels (negativo = pra cima). Uma atribuição de scrollTop: serve a cada quadro. */
+  rolarPor?(px: number): void;
+  /** (rolar) onde a rolagem está e quanto ainda cabe rolar */
+  rolagem?(): Rolagem;
+  /** (paginar) vira uma página (PDF) ou um capítulo (EPUB): +1 adiante, -1 atrás */
+  paginar?(direcao: 1 | -1): void;
+  /** (paginar) a página/capítulo atual e o total */
+  paginaAtual?(): PaginaAtual;
+  /** (destacar) mostra uma faixa passageira (acompanha a rolagem); null apaga. Nunca vira marcação nem é gravada. */
+  destacarTrecho?(faixa: Faixa | null): void;
+  /**
+   * (rolar) avisa quando a PESSOA mexe no conteúdo (roda, toque, clique, tecla), nunca quando o código rola.
+   * Devolve a função que desfaz o ouvinte. Os modos usam isto pra pausar.
+   */
+  aoInteragir?(ouvinte: () => void): () => void;
   aplicarAparencia(a: ConfigLeitura): void;
   mostrarMarcacoes(marcacoes: Marcacao[], cores: CorMarcacao[], selecionada?: string | null): void;
   irPara(alvo: { posicao: string } | { marcacaoId: string }): void;
