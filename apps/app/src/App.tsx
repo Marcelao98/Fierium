@@ -5,8 +5,11 @@ import { Atmosfera } from './casca/Atmosfera';
 import { Avisos } from './casca/Avisos';
 import { AvisoAtualizacao } from './casca/AvisoAtualizacao';
 import { Busca } from './casca/Busca';
+import { CartaoCitacao } from './casca/CartaoCitacao';
 import { Inspetor } from './casca/Inspetor';
+import { MenuDaTela } from './casca/MenuDaTela';
 import { BarraInferior, Lateral } from './casca/Navegacao';
+import { PainelSugestao } from './casca/Sugestao';
 import { useConfig } from './nucleo/contexto';
 import { useNavegacao } from './nucleo/navegacao';
 import type { Recursos } from './montar';
@@ -34,7 +37,7 @@ export function App({ recursos, estatisticasDisponiveis }: { recursos: Recursos;
     if (rota.tela !== 'colecao') document.documentElement.style.setProperty('--matiz', '255');
   }, [rota]);
 
-  if (primeiraVez) return <Abertura />;
+  if (primeiraVez) return <Abertura abertura={recursos.abertura} />;
   return (
     <div className="app">
       <Atmosfera ativa={!leitura} />
@@ -70,6 +73,9 @@ export function App({ recursos, estatisticasDisponiveis }: { recursos: Recursos;
       <BarraInferior />
       {leitura && <Leitor leitor={recursos.leitor} leitura={leitura} />}
       <Busca />
+      <MenuDaTela ativo={!leitura && (rota.tela === 'inicio' || rota.tela === 'biblioteca')} />
+      <PainelSugestao />
+      <CartaoCitacao />
       <Inspetor />
       <AvisoAtualizacao />
       <Avisos />

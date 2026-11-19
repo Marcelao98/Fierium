@@ -4,7 +4,8 @@
 // na cor do texto (nunca na cor da série).
 import type { Meta, Periodo, TipoMeta } from '@fierium/contratos';
 import { Icone } from '@fierium/ui';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { Carregando, ErroDaTela, useCarregar } from '../../compartilhado/Estados';
 import { useFatia } from '../../nucleo/contexto';
 import type { Estatisticas } from './estado';
 import { Calendario, tempo, Ultimos30 } from './Graficos';
@@ -18,10 +19,9 @@ export function TelaEstatisticas({ estatisticas }: { estatisticas: Estatisticas 
   const [periodo, setPeriodo] = useState<Periodo>('semana');
   const [tipo, setTipo] = useState<TipoMeta>('paginas');
   const [alvo, setAlvo] = useState('100');
-  useEffect(() => {
-    void estatisticas.carregar().catch(() => undefined);
-  }, [estatisticas]);
-  if (!r) return <p className="carregando">Somando…</p>;
+  const { erro, tentar } = useCarregar(() => estatisticas.carregar(), [estatisticas]);
+  if (erro) return <ErroDaTela erro={erro} onde="Estatísticas" aoTentar={tentar} />;
+  if (!r) return <Carregando texto="Somando…" />;
   const maxArea = Math.max(1, ...r.porReino.map((x) => x.segundos));
   const metas: Meta[] = r.metas.map((m) => m.meta);
   return (

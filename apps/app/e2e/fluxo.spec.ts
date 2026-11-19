@@ -9,6 +9,7 @@ async function entrar(page: Page, largura = 1280) {
   page.on('console', (m) => m.type() === 'error' && erros.push(m.text()));
   await page.setViewportSize({ width: largura, height: largura > 800 ? 800 : 860 });
   await page.goto('/?novo=1');
+  await page.getByRole('button', { name: 'Começar' }).click();
   await page.getByRole('button', { name: 'Usar a biblioteca de exemplo' }).click();
   await expect(page.getByText('Continuar lendo')).toBeVisible({ timeout: 10_000 });
   return erros;
@@ -20,6 +21,7 @@ test('abertura → início → ler → marcar com nota → Notas → recarregar 
   await page.goto('/?novo=1');
   await expect(page.getByRole('heading', { name: 'Fierium' })).toBeVisible();
   await page.screenshot({ path: `${PRINTS}/1-abertura.png` });
+  await page.getByRole('button', { name: 'Começar' }).click();
   await page.getByRole('button', { name: 'Usar a biblioteca de exemplo' }).click();
   await expect(page.getByRole('heading', { name: 'Dom Casmurro' })).toBeVisible({ timeout: 10_000 });
   await page.screenshot({ path: `${PRINTS}/2-inicio.png` });

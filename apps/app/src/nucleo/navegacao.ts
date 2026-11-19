@@ -32,6 +32,8 @@ interface Navegacao {
   leitura: Leitura | null;
   invocarAberto: boolean;
   inspetorAberto: boolean;
+  sugestaoAberta: boolean;
+  cartao: DadosCartao | null;
 }
 
 export const useNavegacao = create<Navegacao>(() => ({
@@ -39,6 +41,8 @@ export const useNavegacao = create<Navegacao>(() => ({
   leitura: null,
   invocarAberto: false,
   inspetorAberto: false,
+  sugestaoAberta: false,
+  cartao: null,
 }));
 
 export function paraEndereco(r: Rota): string {
@@ -103,6 +107,23 @@ export function fecharLeitura() {
 
 export function invocar(aberto = true) {
   useNavegacao.setState({ invocarAberto: aberto });
+}
+
+/** O painel "Mandar sugestão ou problema". */
+export function sugestao(aberta = true) {
+  useNavegacao.setState({ sugestaoAberta: aberta });
+}
+
+/** O que o cartão de citação precisa pra desenhar (e de onde vem a cor da página). */
+export interface DadosCartao {
+  trecho: string;
+  autor: string;
+  livro: string;
+}
+
+/** Abre a prévia do cartão de citação ("Compartilhar como imagem"). */
+export function abrirCartao(d: DadosCartao | null) {
+  useNavegacao.setState({ cartao: d });
 }
 
 /** O inspetor de depuração (Ctrl+Shift+D). */

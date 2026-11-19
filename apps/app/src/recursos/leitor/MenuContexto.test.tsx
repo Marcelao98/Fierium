@@ -13,6 +13,7 @@ const acoes = (): AcoesMenu => ({
   salvarCitacao: vi.fn(),
   copiar: vi.fn(),
   copiarCitacao: vi.fn(),
+  compartilhar: vi.fn(),
   editarNota: vi.fn(),
   trocarCor: vi.fn(),
   apagar: vi.fn(),
@@ -29,7 +30,13 @@ describe('itens do menu', () => {
   it('com texto selecionado: cores, anotar, citação, copiar (sem pesquisa enquanto não houver busca)', () => {
     const itens = montar('selecao');
     expect(itens[0]).toMatchObject({ tipo: 'cores' });
-    expect(rotulos(itens)).toEqual(['Anotar…', 'Salvar como citação', 'Copiar', 'Copiar como citação']);
+    expect(rotulos(itens)).toEqual([
+      'Anotar…',
+      'Salvar como citação',
+      'Copiar',
+      'Copiar como citação',
+      'Compartilhar como imagem…',
+    ]);
   });
   it('mostra "Pesquisar no livro" só quando existe busca', () => {
     const itens = itensDoMenu({
@@ -42,7 +49,13 @@ describe('itens do menu', () => {
   });
   it('em cima de uma marcação: editar, trocar cor, copiar, apagar', () => {
     const itens = montar('marcacao');
-    expect(rotulos(itens)).toEqual(['Editar nota', 'Copiar trecho', 'Copiar como citação', 'Apagar marcação']);
+    expect(rotulos(itens)).toEqual([
+      'Editar nota',
+      'Copiar trecho',
+      'Copiar como citação',
+      'Compartilhar como imagem…',
+      'Apagar marcação',
+    ]);
     expect(itens.find((i) => i.tipo === 'cores')).toMatchObject({ atual: 'duvida' });
   });
   it('sem seleção: página, notas, tema; o número da página só no PDF', () => {

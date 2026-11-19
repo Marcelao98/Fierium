@@ -7,6 +7,7 @@ test.use({ permissions: ['clipboard-read', 'clipboard-write'] });
 async function entrar(page: Page) {
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.goto('/?novo=1');
+  await page.getByRole('button', { name: 'Começar' }).click();
   await page.getByRole('button', { name: 'Usar a biblioteca de exemplo' }).click();
   await expect(page.getByText('Continuar lendo')).toBeVisible({ timeout: 10_000 });
   await page.getByRole('navigation').getByRole('button', { name: 'Notas' }).first().click();

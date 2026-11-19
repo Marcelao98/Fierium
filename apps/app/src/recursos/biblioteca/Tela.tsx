@@ -3,6 +3,7 @@ import type { EstadoLeitura, Formato, Ordem } from '@fierium/contratos';
 import { Icone } from '@fierium/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { AvisoDoCatalogo, CartaoCinza, lerBaixado } from '../../compartilhado/Catalogo';
+import { EstadoDaTela } from '../../compartilhado/Estados';
 import { autorDe, Capa, CartaoObra, formatosDe, fracaoDe } from '../../compartilhado/Obras';
 import { useFatia } from '../../nucleo/contexto';
 import { ir } from '../../nucleo/navegacao';
@@ -162,11 +163,40 @@ export function TelaBiblioteca({ biblioteca, lente }: { biblioteca: Biblioteca; 
             </span>
           </div>
 
-          {!lista.length && !paraBaixar.length && !carregando ? (
-            <div className="vazio">
-              <h2>Nenhuma obra assim</h2>
-              <p>Tente outras palavras ou limpe os filtros.</p>
-            </div>
+          {!lista.length && !paraBaixar.length && !carregando && !todas.length ? (
+            <EstadoDaTela
+              titulo="A sua biblioteca ainda está vazia"
+              acoes={
+                <>
+                  <button className="f-botao" data-tipo="luz" onClick={() => ir({ tela: 'ajustes' })}>
+                    Escolher a pasta dos meus livros
+                  </button>
+                  <button className="f-botao" data-tipo="fantasma" onClick={() => ir({ tela: 'descobrir' })}>
+                    Descobrir livros do catálogo
+                  </button>
+                </>
+              }
+            >
+              Os PDF e EPUB das suas pastas aparecem aqui; o catálogo público também tem muita coisa pra ler.
+            </EstadoDaTela>
+          ) : !lista.length && !paraBaixar.length && !carregando ? (
+            <EstadoDaTela
+              titulo="Nenhuma obra assim"
+              acoes={
+                <button
+                  className="f-botao"
+                  data-tipo="luz"
+                  onClick={() => {
+                    setTexto('');
+                    void filtrar({ texto: undefined }).catch(() => undefined);
+                  }}
+                >
+                  Limpar a busca
+                </button>
+              }
+            >
+              Tente outras palavras ou limpe os filtros.
+            </EstadoDaTela>
           ) : !lista.length ? null : visao === 'grade' ? (
             <div className="grade">
               {lista.map((o) => (

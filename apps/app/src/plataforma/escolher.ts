@@ -13,6 +13,7 @@ import {
   type Cliente,
   type Invocar,
 } from '@fierium/cliente';
+import { abrirLinkNoSistema, telaCheiaDoSistema } from './sistema';
 
 function armazenamento(): Storage | null {
   try {
@@ -32,6 +33,10 @@ export interface Plataforma {
   escolherPastas: (() => Promise<string[]>) | null;
   /** procura e instala versão nova (só no app, e só com a chave pública configurada) */
   atualizador: Atualizador | null;
+  /** abre um link https no navegador do sistema; false se não conseguiu */
+  abrirLink: (url: string) => Promise<boolean>;
+  /** liga/desliga a tela cheia da janela; false se não conseguiu */
+  telaCheia: (ligar: boolean) => Promise<boolean>;
   nome: 'tauri' | 'navegador';
 }
 
@@ -52,6 +57,12 @@ function comArquivoDeTeste(c: Cliente, url: URL): Cliente {
   };
 }
 
+/** Só pro e2e no navegador: `?pasta=/home/x/Livros` faz o "Escolher pasta…" devolver essa pasta (o seletor do sistema só existe no app). */
+function seletorDeTeste(url: URL): Plataforma['escolherPastas'] {
+  const pasta = url.searchParams.get('pasta');
+  return pasta ? () => Promise.resolve([pasta]) : null;
+}
+
 export const ehTauri = () => typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
 
 export async function escolherPlataforma(url: URL): Promise<Plataforma> {
@@ -68,8 +79,10 @@ export async function escolherPlataforma(url: URL): Promise<Plataforma> {
     return {
       cliente: comArquivoDeTeste(memoria, url),
       enviarLog: null,
-      escolherPastas: null,
       atualizador: null,
+      escolherPastas: seletorDeTeste(url),
+      abrirLink: abrirLinkNoSistema,
+      telaCheia: telaCheiaDoSistema,
       nome: 'navegador',
     };
 
@@ -88,6 +101,8 @@ export async function escolherPlataforma(url: URL): Promise<Plataforma> {
     enviarLog: (l) => void invocar('chamar', { cmd: 'log.escrever', args: l }).catch(() => undefined), // o log não pode gerar log
     escolherPastas,
     atualizador: await criarAtualizador((cmd) => invoke(cmd)).catch(() => null), // sem o comando, sem atualizador
+    abrirLink: abrirLinkNoSistema,
+    telaCheia: telaCheiaDoSistema,
     nome: 'tauri',
   };
 }

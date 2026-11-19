@@ -4,6 +4,7 @@ import { Icone } from '@fierium/ui';
 import { useEffect, useState } from 'react';
 import { AvisoDoCatalogo, CapaItem, CartaoCinza, lerBaixado } from '../../compartilhado/Catalogo';
 import { autorDoItem, licencaDoItem } from '../../compartilhado/catalogo';
+import { Carregando, EstadoDaTela } from '../../compartilhado/Estados';
 import { CartaoObra, Prateleira } from '../../compartilhado/Obras';
 import { useFatia } from '../../nucleo/contexto';
 import { ir } from '../../nucleo/navegacao';
@@ -61,15 +62,29 @@ export function TelaDescobrir({ descobrir: d }: { descobrir: Descobrir }) {
               ))}
             </div>
           ) : (
-            <div className="vazio">
-              <h2>Nada no catálogo com isso</h2>
-              <p>Tente outras palavras.</p>
-            </div>
+            <EstadoDaTela
+              titulo="Nada no catálogo com isso"
+              acoes={
+                <button className="f-botao" data-tipo="luz" onClick={() => setCampo('')}>
+                  Limpar a busca
+                </button>
+              }
+            >
+              Tente outras palavras. Se o catálogo ainda está chegando, o aviso acima mostra o andamento.
+            </EstadoDaTela>
           )}
         </section>
       ) : (
         <>
-          {!colecoes.length && <p className="carregando">{carregando ? 'Montando as coleções…' : ''}</p>}
+          {!colecoes.length && (
+            <Carregando
+              texto={
+                carregando
+                  ? 'Montando as coleções…'
+                  : 'As coleções aparecem aqui assim que o catálogo chegar. Dá pra buscar um título acima.'
+              }
+            />
+          )}
           {colecoes.map((c) => (
             <Prateleira key={c.id} titulo={c.titulo}>
               {c.itens.map((i) => (

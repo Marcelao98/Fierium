@@ -3,6 +3,7 @@ import { expect, test } from '@playwright/test';
 
 test('Ajustes: adicionar pasta, procurar livros, ver o resultado e remover', async ({ page }) => {
   await page.goto('/?novo=1');
+  await page.getByRole('button', { name: 'Começar' }).click();
   await page.getByRole('button', { name: 'Usar a biblioteca de exemplo' }).click();
   await expect(page.getByText('Continuar lendo')).toBeVisible({ timeout: 10_000 });
   await page

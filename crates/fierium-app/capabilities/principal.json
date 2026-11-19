@@ -1,13 +1,22 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "principal",
-  "description": "O que a janela principal pode fazer: só o mínimo do núcleo do Tauri e os comandos do Fierium.",
+  "description": "O que a janela principal pode fazer: o mínimo do núcleo do Tauri, os comandos do Fierium, escolher pasta, atualizar, tela cheia e abrir só links do GitHub do Fierium (relatar problema).",
   "windows": ["principal"],
   "permissions": [
     "core:default",
     "dialog:allow-open",
     "updater:allow-check",
     "updater:allow-download-and-install",
-    "process:allow-restart"
+    "process:allow-restart",
+    "core:window:allow-set-fullscreen",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://github.com/Marcelao98/Fierium/*"
+        }
+      ]
+    }
   ]
 }

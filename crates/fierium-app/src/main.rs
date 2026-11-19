@@ -82,6 +82,7 @@ fn main() {
 
     let mut app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_opener::init())
         .manage(AtualizadorAtivo(atualizador))
         .manage(ctx);
     if atualizador {

@@ -13,9 +13,13 @@ export interface Servicos {
   eventos: Eventos;
   agora: () => number;
   /** mostra um aviso (o padrão é o aviso da tela; os testes trocam) */
-  avisar: (texto: string, tipo?: 'info' | 'erro') => void;
+  avisar: (texto: string, tipo?: 'info' | 'erro', detalhes?: string) => void;
   /** abre o seletor de pastas do sistema (só no app; no navegador é null). Devolve as pastas, ou [] se cancelou */
   escolherPastas: (() => Promise<string[]>) | null;
+  /** abre um link https no navegador do sistema; false se não conseguiu */
+  abrirLink: (url: string) => Promise<boolean>;
+  /** liga/desliga a tela cheia da janela; false se não conseguiu */
+  telaCheia: (ligar: boolean) => Promise<boolean>;
 }
 
 export interface OpcoesServicos {
@@ -23,6 +27,8 @@ export interface OpcoesServicos {
   agora?: () => number;
   avisar?: Servicos['avisar'];
   escolherPastas?: Servicos['escolherPastas'];
+  abrirLink?: Servicos['abrirLink'];
+  telaCheia?: Servicos['telaCheia'];
 }
 
 export function criarServicos(cliente: Cliente, op: OpcoesServicos = {}): Servicos {
@@ -36,12 +42,19 @@ export function criarServicos(cliente: Cliente, op: OpcoesServicos = {}): Servic
     agora: op.agora ?? Date.now,
     avisar: aviso,
     escolherPastas: op.escolherPastas ?? null,
+    abrirLink: op.abrirLink ?? (() => Promise.resolve(false)),
+    telaCheia: op.telaCheia ?? (() => Promise.resolve(false)),
     async chamar(cmd, args) {
       try {
         return await rastreado.chamar(cmd, args);
       } catch (e) {
         const erro: ErroFierium = paraErroFierium(e);
-        aviso(`${erro.mensagem} (${erro.codigo})`, 'erro');
+        // o aviso leva os detalhes (comando, código, mensagem) pra pessoa copiar e mandar
+        aviso(
+          `${erro.mensagem} (${erro.codigo})`,
+          'erro',
+          `Comando: ${cmd}\nCódigo: ${erro.codigo}\nMensagem: ${erro.mensagem}`,
+        );
         throw erro;
       }
     },

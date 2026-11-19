@@ -166,6 +166,11 @@
   text-align: center;
   padding: var(--espaco-5);
   z-index: 2;
+  overflow-y: auto;
+}
+.abertura-miolo {
+  width: min(560px, 100%);
+  margin: auto;
 }
 .abertura-selo {
   display: flex;
@@ -203,4 +208,88 @@
 .abertura-formando {
   font-variant-numeric: tabular-nums;
   color: var(--texto-2);
+}
+
+.abertura-titulo {
+  font-family: var(--fonte-titulo);
+  font-weight: 400;
+  font-size: clamp(30px, 5vw, 44px);
+  animation: aparecer 0.9s both;
+}
+.abertura-passos {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: var(--espaco-6) 0 0;
+  padding: 0;
+  list-style: none;
+}
+.abertura-passos li {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--borda-forte);
+}
+.abertura-passos li[data-feito],
+.abertura-passos li[aria-current='step'] {
+  background: var(--luz);
+  border-color: var(--luz);
+}
+.abertura-sugestoes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-2);
+  color: var(--texto-3);
+}
+.abertura-bloco {
+  margin: var(--espaco-4) 0;
+  padding: var(--espaco-4);
+  border: 1px solid var(--borda);
+  border-radius: var(--raio-3);
+  background: var(--fundo-2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-3);
+}
+.abertura-bloco p {
+  max-width: 48ch;
+  margin: 0;
+  font-size: 15px;
+  animation: none;
+}
+.abertura-bloco h3 {
+  font-family: var(--fonte-rotulo);
+  font-weight: 500;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--luz);
+}
+.abertura-classicos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--espaco-4);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.abertura-classicos li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-2);
+}
+.abertura-capa {
+  display: block;
+  width: 84px;
+}
+.abertura-classicos small {
+  color: var(--texto-3);
+}
+.abertura-classicos [role='alert'] {
+  color: var(--perigo);
+  font-size: 12px;
 }

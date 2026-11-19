@@ -11,13 +11,13 @@ import {
   type SessaoLeitura,
   type Selecao,
 } from '@fierium/leitores';
-import { Icone } from '@fierium/ui';
+import { Anel, Icone } from '@fierium/ui';
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { citacao, formatoLembrado } from '../../compartilhado/citacao';
 import { useCores } from '../../compartilhado/Marcacoes';
 import { useConfig, useConfigApp, useFatia, useServicos } from '../../nucleo/contexto';
-import { fecharLeitura, type Leitura } from '../../nucleo/navegacao';
+import { abrirCartao, fecharLeitura, type Leitura } from '../../nucleo/navegacao';
 import { Balao } from './Balao';
 import { MenuContexto } from './MenuContexto';
 import { PainelNotas } from './PainelNotas';
@@ -51,6 +51,10 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
   const [painel, setPainel] = useState<'aparencia' | 'notas' | null>(null);
   const [balao, setBalao] = useState<EstadoBalao | null>(null);
   const [menu, setMenu] = useState<PedidoMenu | null>(null);
+  // modo mergulho: tela cheia, sem barra nem painéis; a barra volta com Esc ou com o mouse no topo
+  const [mergulho, setMergulho] = useState(false);
+  const [barraNoTopo, setBarraNoTopo] = useState(false);
+  const mergulhoAtual = useRef(false);
   const selecaoAtual = useRef<Selecao | null>(null);
   const [previa, setPrevia] = useState<PaginaLeitura | null>(null);
   const palco = useRef<HTMLDivElement>(null);
@@ -149,6 +153,27 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
     sessao.current?.mostrarMarcacoes(marcacoes, cores, selecionada);
   }, [marcacoes, cores, selecionada]);
 
+  useEffect(() => {
+    if (mergulhoAtual.current === mergulho) return;
+    mergulhoAtual.current = mergulho;
+    setBarraNoTopo(false);
+    if (mergulho) setPainel(null);
+    void servicos.telaCheia(mergulho).then((ok) => {
+      if (!ok && mergulho) servicos.log.registrar('aviso', 'leitor', 'tela cheia indisponível: mergulho só sem barra');
+    });
+  }, [mergulho, servicos]);
+  useEffect(() => {
+    // Esc no navegador sai da tela cheia por conta própria: o mergulho acompanha
+    const mudou = () => {
+      if (!document.fullscreenElement && mergulhoAtual.current) setMergulho(false);
+    };
+    document.addEventListener('fullscreenchange', mudou);
+    return () => {
+      document.removeEventListener('fullscreenchange', mudou);
+      if (mergulhoAtual.current) void servicos.telaCheia(false);
+    };
+  }, [servicos]);
+
   // o véu: a interface some 2,5 s depois do último movimento (nunca com painel ou balão aberto)
   const acordar = () => {
     leitor.mexeu();
@@ -160,6 +185,11 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
     acordar();
     const tecla = (e: KeyboardEvent) => {
       leitor.mexeu();
+      if (e.key === 'F11') {
+        e.preventDefault();
+        setMergulho((m) => !m);
+        return;
+      }
       if (e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10')) {
         e.preventDefault();
         const s = selecaoAtual.current;
@@ -186,6 +216,7 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
       if (menu) setMenu(null);
       else if (balao) setBalao(null);
       else if (painel) setPainel(null);
+      else if (mergulhoAtual.current) setMergulho(false);
       else fecharLeitura();
     };
     addEventListener('keydown', tecla);
@@ -263,6 +294,8 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
       aria-label={obra ? `Lendo ${obra.titulo}` : 'Abrindo'}
       data-tema={cfg.tema}
       data-veu={veu && !painel && !balao && !menu}
+      data-mergulho={mergulho}
+      data-barra={barraNoTopo}
       style={
         {
           '--origem-x': `${leitura.origem.x}px`,
@@ -271,7 +304,10 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
           '--l-fonte': FONTES.find((f) => f[0] === cfg.fonte)?.[2] ?? 'var(--fonte-titulo)',
         } as CSSProperties
       }
-      onPointerMove={acordar}
+      onPointerMove={(e) => {
+        acordar();
+        if (mergulhoAtual.current) setBarraNoTopo(e.clientY < (barraNoTopo ? 120 : 56));
+      }}
       // o menu do navegador nunca aparece aqui; PDF e EPUB pedem o nosso pelo motor, o texto corrido pela casca
       onContextMenu={(e) => {
         e.preventDefault();
@@ -299,6 +335,15 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
           onClick={() => setPainel(painel === 'notas' ? null : 'notas')}
         >
           <Icone nome="marcador" tamanho={16} /> {marcacoes.length}
+        </button>
+        <button
+          className="f-botao"
+          data-tamanho="p"
+          aria-label="Modo mergulho"
+          title="Modo mergulho: tela cheia, só o livro (F11)"
+          onClick={() => setMergulho(true)}
+        >
+          <Icone nome="lua" tamanho={16} /> Mergulho
         </button>
         <button
           className="f-botao"
@@ -435,6 +480,12 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
                 const t = menu.selecao ?? marcadaNoMenu;
                 if (t) copiarCitacao(t);
               },
+              compartilhar: () => {
+                setMenu(null);
+                const t = menu.selecao ?? marcadaNoMenu;
+                if (t)
+                  abrirCartao({ trecho: t.trecho, autor: obra?.criadores[0]?.nome ?? '', livro: obra?.titulo ?? '' });
+              },
               editarNota: () => {
                 setMenu(null);
                 if (!marcadaNoMenu) return;
@@ -507,6 +558,11 @@ export function Leitor({ leitor, leitura }: { leitor: EstadoLeitor; leitura: Lei
       <div className="leitor-progresso" aria-hidden="true">
         <span style={{ width: `${fracao * 100}%` }} />
       </div>
+      {mergulho && (
+        <div className="leitor-anel">
+          <Anel fracao={fracao} tamanho={34} />
+        </div>
+      )}
     </div>
   );
 }

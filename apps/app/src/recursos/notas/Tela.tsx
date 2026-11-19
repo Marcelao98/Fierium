@@ -3,11 +3,12 @@
 import type { Marcacao, Obra } from '@fierium/contratos';
 import { Icone } from '@fierium/ui';
 import type { CSSProperties } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { ErroDaTela, useCarregar } from '../../compartilhado/Estados';
 import { CartaoMarcacao, corDe, useCores } from '../../compartilhado/Marcacoes';
 import { lerObra } from '../../compartilhado/Obras';
 import { useFatia } from '../../nucleo/contexto';
-import { ir } from '../../nucleo/navegacao';
+import { abrirCartao, ir } from '../../nucleo/navegacao';
 import { formatoLembrado } from '../../compartilhado/citacao';
 import { agrupar, citacao, filtrar, TIPOS, type AbaNotas, type FiltroNotas, type FormatoCitacao } from './citacao';
 import type { Notas } from './estado';
@@ -43,9 +44,7 @@ export function TelaNotas({ notas }: { notas: Notas }) {
   const [apagando, setApagando] = useState<string | null>(null);
   const [aviso, setAviso] = useState('');
 
-  useEffect(() => {
-    void notas.carregar().catch(() => undefined);
-  }, [notas]);
+  const { erro: erroAoCarregar, tentar } = useCarregar(() => notas.carregar(), [notas]);
 
   const nomeCor = (id: string) => corDe(cores, id).nome;
   const idCitacao = cores.find((c) => c.id === 'citacao')?.id ?? 'citacao';
@@ -84,8 +83,15 @@ export function TelaNotas({ notas }: { notas: Notas }) {
   };
   const textoCitacao = (m: Marcacao) => citacao(m, obras.get(m.obraId), formato);
   const exportar = (lista: Marcacao[], arquivo: string) => baixar(arquivo, paraMarkdown(lista, obras, nomeCor));
+  const compartilhar = (m: Marcacao) =>
+    abrirCartao({
+      trecho: m.trecho,
+      autor: obras.get(m.obraId)?.criadores[0]?.nome ?? '',
+      livro: obras.get(m.obraId)?.titulo ?? '',
+    });
   const abrir = (obra: Obra, e: React.MouseEvent, m: Marcacao) => lerObra(obra, e, m.id, m.edicaoId);
 
+  if (erroAoCarregar) return <ErroDaTela erro={erroAoCarregar} onde="Notas" aoTentar={tentar} />;
   return (
     <>
       <div className="titulo-tela">
@@ -219,6 +225,9 @@ export function TelaNotas({ notas }: { notas: Notas }) {
               ? 'Marque trechos com a cor “Citação” enquanto lê e eles aparecem aqui, prontos pra copiar.'
               : 'Enquanto lê, selecione um trecho para marcar com uma cor e escrever uma nota.'}
           </p>
+          <button className="f-botao" data-tipo="luz" onClick={() => ir({ tela: 'biblioteca', lente: 'grade' })}>
+            Ir para a biblioteca
+          </button>
         </div>
       ) : (
         grupos.map((g) => (
@@ -247,6 +256,7 @@ export function TelaNotas({ notas }: { notas: Notas }) {
                     {m.nota && <p className="marcacao-nota">{m.nota}</p>}
                     <div className="marcacao-rodape">
                       <button onClick={() => void copiar(textoCitacao(m), 'Citação copiada.')}>Copiar citação</button>
+                      <button onClick={() => compartilhar(m)}>Compartilhar como imagem</button>
                       {g.obra && <button onClick={(e) => abrir(g.obra!, e, m)}>Abrir no trecho</button>}
                     </div>
                   </figure>
@@ -303,6 +313,7 @@ export function TelaNotas({ notas }: { notas: Notas }) {
                         </time>
                         {g.obra && <button onClick={(e) => abrir(g.obra!, e, m)}>Abrir no trecho</button>}
                         <button onClick={() => void copiar(textoCitacao(m), 'Citação copiada.')}>Copiar citação</button>
+                        <button onClick={() => compartilhar(m)}>Compartilhar como imagem</button>
                         <button
                           onClick={() => {
                             setEditando(m.id);

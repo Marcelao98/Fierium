@@ -24,6 +24,8 @@ export interface AcoesMenu {
   salvarCitacao(): void;
   copiar(): void;
   copiarCitacao(): void;
+  /** abre a prévia do cartão de citação (imagem pra compartilhar) */
+  compartilhar(): void;
   /** só existe quando o leitor tiver busca no livro */
   pesquisar?: () => void;
   editarNota(): void;
@@ -66,6 +68,7 @@ export function itensDoMenu({ caso, cores, corAtual, formato, paginaMarcada, aco
       SEP,
       acao('copiar', 'Copiar', 'baixar', a.copiar, { atalho: 'Ctrl+C' }),
       acao('copiar-citacao', 'Copiar como citação', 'ligar', a.copiarCitacao, { atalho: 'Ctrl+Shift+C' }),
+      acao('compartilhar', 'Compartilhar como imagem…', 'estrela', a.compartilhar),
       ...(a.pesquisar ? [SEP, acao('pesquisar', 'Pesquisar no livro', 'buscar', a.pesquisar)] : []),
     ];
   }
@@ -76,6 +79,7 @@ export function itensDoMenu({ caso, cores, corAtual, formato, paginaMarcada, aco
       SEP,
       acao('copiar', 'Copiar trecho', 'baixar', a.copiar),
       acao('copiar-citacao', 'Copiar como citação', 'ligar', a.copiarCitacao, { atalho: 'Ctrl+Shift+C' }),
+      acao('compartilhar', 'Compartilhar como imagem…', 'estrela', a.compartilhar),
       SEP,
       acao('apagar', 'Apagar marcação', 'lixo', a.apagar, { perigo: true }),
     ];

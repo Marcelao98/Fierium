@@ -6,6 +6,7 @@ test('Catálogo: cinza na biblioteca, autor, ficha, Descobrir, Ajustes e Corrigi
   const erros: string[] = [];
   page.on('pageerror', (e) => erros.push(String(e)));
   await page.goto('/?novo=1');
+  await page.getByRole('button', { name: 'Começar' }).click();
   await page.getByRole('button', { name: 'Usar a biblioteca de exemplo' }).click();
   await expect(page.getByRole('heading', { name: 'Dom Casmurro' })).toBeVisible({ timeout: 10_000 });
 

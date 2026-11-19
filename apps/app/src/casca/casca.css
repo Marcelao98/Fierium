@@ -116,12 +116,18 @@
   pointer-events: none;
 }
 .aviso {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 10px 16px;
   border-radius: 999px;
   background: var(--fundo-3);
   border: 1px solid var(--borda-forte);
   box-shadow: var(--sombra);
   animation: subir var(--medio) var(--curva-sonho);
+}
+.aviso button {
+  pointer-events: auto; /* o aviso deixa o clique passar; só o "Copiar detalhes" recebe */
 }
 .aviso[data-tipo='erro'] {
   border-color: var(--perigo);
@@ -335,4 +341,145 @@ kbd {
 .aviso-atualizacao button:disabled {
   opacity: 0.6;
   cursor: progress;
+}
+/* ---------- janelas: sugestão e cartão de citação ---------- */
+.modal-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: var(--espaco-4);
+  background: rgba(4, 7, 16, 0.62);
+  backdrop-filter: blur(6px);
+}
+.modal {
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: var(--espaco-5);
+  border-radius: var(--raio-3);
+  background: var(--fundo-2);
+  border: 1px solid var(--borda-forte);
+  box-shadow: var(--sombra);
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+}
+.modal h2 {
+  font-family: var(--fonte-titulo);
+  font-weight: 500;
+  font-size: 26px;
+}
+.modal-sub {
+  color: var(--texto-2);
+  font-size: 14px;
+}
+.modal-nota {
+  color: var(--luz);
+  font-size: 14px;
+}
+.modal-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-2);
+}
+.sugestao summary {
+  cursor: pointer;
+  color: var(--texto-2);
+  font-size: 13px;
+}
+.sugestao-previa {
+  margin-top: var(--espaco-2);
+  max-height: 200px;
+  overflow: auto;
+  padding: var(--espaco-3);
+  border-radius: var(--raio-2);
+  background: var(--fundo);
+  border: 1px solid var(--borda);
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  user-select: text;
+}
+.modal.cartao-previa {
+  width: min(900px, 100%);
+}
+.cartao-previa-corpo {
+  display: flex;
+  gap: var(--espaco-5);
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.cartao-canvas {
+  width: min(360px, 100%);
+  aspect-ratio: 1080 / 1350;
+  border-radius: var(--raio-2);
+  border: 1px solid var(--borda);
+  box-shadow: var(--sombra);
+  opacity: 0.4;
+  transition: opacity var(--medio);
+}
+.cartao-canvas[data-pronto='true'] {
+  opacity: 1;
+}
+.cartao-previa-lado {
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-3);
+}
+.cartao-estilos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-2);
+}
+.cartao-estilo {
+  padding: 10px 14px;
+  border-radius: var(--raio-2);
+  border: 1px solid;
+  font-family: var(--fonte-rotulo);
+  letter-spacing: 0.06em;
+  text-align: left;
+  cursor: pointer;
+}
+.cartao-estilo[aria-pressed='true'] {
+  outline: 2px solid var(--luz);
+  outline-offset: 2px;
+}
+/* o botão "Baixando…" de um item do catálogo pulsa: o núcleo ainda não manda a porcentagem do livro */
+.cartao-cinza[data-fase='baixando'] .f-botao {
+  animation: respirar 1.4s ease-in-out infinite;
+}
+@keyframes respirar {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ---------- estados vazios e de erro das telas ---------- */
+.estado-tela {
+  max-width: 52ch;
+  margin: var(--espaco-7) auto;
+  padding: var(--espaco-5);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-3);
+}
+.estado-tela h2 {
+  font-family: var(--fonte-titulo);
+  font-weight: 500;
+  font-size: 28px;
+}
+.estado-tela p {
+  color: var(--texto-2);
+}
+.estado-tela-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--espaco-2);
 }
