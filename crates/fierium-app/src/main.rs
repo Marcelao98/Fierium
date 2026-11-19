@@ -24,6 +24,27 @@ fn chamar(
     })
 }
 
+/// A interface pergunta se a atualização automática está ligada (chave pública de verdade na configuração).
+#[tauri::command]
+fn atualizador_ativo(ativo: tauri::State<AtualizadorAtivo>) -> bool {
+    ativo.0
+}
+
+struct AtualizadorAtivo(bool);
+
+/// Só liga o atualizador se a configuração tiver uma chave pública de verdade (não o placeholder).
+fn chave_do_atualizador(config: &tauri::Config) -> Option<String> {
+    let k = config
+        .plugins
+        .0
+        .get("updater")?
+        .get("pubkey")?
+        .as_str()?
+        .trim()
+        .to_string();
+    (!k.is_empty() && !k.contains("COLOQUE_AQUI")).then_some(k)
+}
+
 fn main() {
     let pasta = fierium_core::info::pasta_de_dados(|k| std::env::var(k).ok())
         .unwrap_or_else(|| std::env::temp_dir().join("fierium"));
@@ -49,9 +70,26 @@ fn main() {
     // primeira abertura com rede ligada e catálogo vazio: baixa o do Gutenberg em segundo plano
     comandos::atualizar_se_vazio(ctx.clone());
 
-    let resultado = tauri::Builder::default()
+    let contexto = tauri::generate_context!();
+    let atualizador = chave_do_atualizador(contexto.config()).is_some();
+    if atualizador {
+        tracing::info!("atualização automática ligada");
+    } else {
+        tracing::info!(
+            "atualização automática desligada: falta a chave pública em tauri.conf.json (plugins.updater.pubkey)"
+        );
+    }
+
+    let mut app = tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
-        .manage(ctx)
+        .manage(AtualizadorAtivo(atualizador))
+        .manage(ctx);
+    if atualizador {
+        app = app
+            .plugin(tauri_plugin_updater::Builder::new().build())
+            .plugin(tauri_plugin_process::init());
+    }
+    let resultado = app
         .register_asynchronous_uri_scheme_protocol("fierium", |ctx, pedido, responder| {
             use tauri::Manager;
             if pedido.method() == tauri::http::Method::OPTIONS {
@@ -76,8 +114,8 @@ fn main() {
             }
             responder.respond(b.body(r.corpo).expect("resposta do protocolo"));
         })
-        .invoke_handler(tauri::generate_handler![chamar])
-        .run(tauri::generate_context!());
+        .invoke_handler(tauri::generate_handler![chamar, atualizador_ativo])
+        .run(contexto);
     if let Err(e) = resultado {
         tracing::error!("o Fierium não abriu: {e}");
         eprintln!("Fierium: não consegui abrir a janela: {e}");

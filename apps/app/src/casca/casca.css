@@ -307,3 +307,32 @@ kbd {
 .inspetor-vazio {
   color: var(--texto-3);
 }
+
+/* ---------- aviso de atualização ---------- */
+.aviso-atualizacao {
+  position: fixed;
+  right: 16px;
+  bottom: 72px;
+  z-index: 55;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 8px 8px 16px;
+  border-radius: 999px;
+  background: var(--fundo-3);
+  border: 1px solid var(--borda-forte);
+  box-shadow: var(--sombra);
+  font-size: 0.9em;
+}
+.aviso-atualizacao button {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--destaque, #7c6cf0);
+  color: inherit;
+  cursor: pointer;
+}
+.aviso-atualizacao button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}

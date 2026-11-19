@@ -3,6 +3,8 @@
 // (a migração área por área, M3 em diante).
 //   ?novo=1     começa do zero (como na primeira vez), apagando o que o exemplo guardou
 //   ?atraso=300 atraso artificial em cada comando (pra ver os estados de carregando)
+import type { Atualizador } from '../nucleo/atualizacao';
+import { criarAtualizador } from './atualizador';
 import {
   criarClienteCombinado,
   criarClienteMemoria,
@@ -28,6 +30,8 @@ export interface Plataforma {
   enviarLog: ((linha: { nivel: string; origem: string; mensagem: string; dados?: unknown }) => void) | null;
   /** seletor de pastas do sistema (só no app) */
   escolherPastas: (() => Promise<string[]>) | null;
+  /** procura e instala versão nova (só no app, e só com a chave pública configurada) */
+  atualizador: Atualizador | null;
   nome: 'tauri' | 'navegador';
 }
 
@@ -61,7 +65,13 @@ export async function escolherPlataforma(url: URL): Promise<Plataforma> {
   const atraso = Number(url.searchParams.get('atraso') ?? 0);
   const memoria = criarClienteMemoria({ guardar, ...(atraso > 0 ? { atraso } : {}) });
   if (!ehTauri())
-    return { cliente: comArquivoDeTeste(memoria, url), enviarLog: null, escolherPastas: null, nome: 'navegador' };
+    return {
+      cliente: comArquivoDeTeste(memoria, url),
+      enviarLog: null,
+      escolherPastas: null,
+      atualizador: null,
+      nome: 'navegador',
+    };
 
   const { invoke } = await import('@tauri-apps/api/core');
   const invocar: Invocar = (cmd, args) => invoke(cmd, args);
@@ -77,6 +87,7 @@ export async function escolherPlataforma(url: URL): Promise<Plataforma> {
     cliente: combinado,
     enviarLog: (l) => void invocar('chamar', { cmd: 'log.escrever', args: l }).catch(() => undefined), // o log não pode gerar log
     escolherPastas,
+    atualizador: await criarAtualizador((cmd) => invoke(cmd)).catch(() => null), // sem o comando, sem atualizador
     nome: 'tauri',
   };
 }

@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { montar } from './montar';
 import { ProvedorNucleo } from './nucleo/contexto';
+import { procurarAtualizacao } from './nucleo/atualizacao';
 import { ligarEndereco } from './nucleo/navegacao';
 import { escolherPlataforma } from './plataforma/escolher';
 import './casca/casca.css';
@@ -63,6 +64,8 @@ async function iniciar(raiz: HTMLElement) {
       },
       (e: unknown) => log.registrar('aviso', 'app', 'a varredura ao abrir falhou', { erro: String(e) }),
     );
+
+  void procurarAtualizacao(plataforma.atualizador, log); // em segundo plano; só avisa se houver versão nova
 
   ligarEndereco();
   // a configuração vem antes da primeira tela (tema, movimento); se falhar, o aviso aparece e abre com o padrão
