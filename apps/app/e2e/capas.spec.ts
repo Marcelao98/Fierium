@@ -5,6 +5,7 @@ import { gerarPdf } from './arquivos';
 
 async function entrar(page: Page, extra = '') {
   await page.goto(`/?novo=1${extra}`);
+  await page.getByRole('button', { name: 'Começar' }).click();
   await page.getByRole('button', { name: 'Usar a biblioteca de exemplo' }).click();
   await expect(page.getByRole('heading', { name: 'Dom Casmurro' })).toBeVisible({ timeout: 10_000 });
 }

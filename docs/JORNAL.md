@@ -109,6 +109,23 @@ pacotes Linux, pois dependem de instalar GTK/WebKit/Xvfb no Fedora. Branch envia
 
 ---
 
+## 2026-11-19 · Beta pra galera · Windows, atualização, capas, primeira abertura e vitrine
+
+**Pedido:** deixar pronto pra mostrar pros amigos (a maioria no Windows), com capas bonitas.
+**Feito (executores, revisados e juntos):** workflow `lancamento.yml` (tag `v*`: Windows NSIS/MSI, Linux AppImage/deb/rpm,
+rascunho de Release com `latest.json`), atualizador assinado (desligado até a chave pública), ajustes de Windows, versão
+0.5.0, `CHANGELOG.md`, `docs/INSTALAR.md`; capa gerada nova (Céu antigo), capas do catálogo (espelho do Gutenberg →
+Open Library → gerada) e dos PDFs (fila em segundo plano, `capa.salvar`); primeira abertura em 3 passos, estados de
+erro com "Copiar detalhes", "Sugestão ou problema", cartão de citação (PNG 1080×1350), modo mergulho. Integração
+(minha): plugin opener só pra `https://github.com/Marcelao98/Fierium/*` e `core:window:allow-set-fullscreen`.
+L0 (arquitetura) pausada: trabalho parcial dos leitores em `agente/l0-leitores`.
+**Medido / conferido:** `pnpm check`, `pnpm check:rust`, e2e 29/29.
+**Deu errado / aprendido:** conflitos ao juntar (casca.css perdeu uma `}`, main.tsx com os dois blocos, e2e das capas
+sem o passo "Começar"); disco cheio pelos worktrees antigos (limpar depois de juntar). Nada testado no Windows nem com
+rede real (Gutenberg/Open Library bloqueados aqui).
+**Onde parou:** ⏸ o Marcelo gera a chave (`ferramentas/chave-atualizacao.md`), põe nos Secrets e manda a pública;
+aí colocar no `tauri.conf.json` e criar a tag `v0.5.0`.
+
 ## 2026-11-17 · M3c · catálogo público em cinza, metadados de dentro do arquivo e capas
 
 **Feito (executores, revisados e juntos):** `crates/fierium-catalogo` (catalogo.db separado, FTS sem acento, conector
