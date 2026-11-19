@@ -3,7 +3,6 @@
 // marcação antiga que volta, obras que nunca foram abertas e o que chegou por último.
 import { Anel, Icone, SeloFieri } from '@fierium/ui';
 import type { CSSProperties } from 'react';
-import { useEffect } from 'react';
 import {
   autorDe,
   Capa,
@@ -14,7 +13,8 @@ import {
   Prateleira,
   tempoRestante,
 } from '../../compartilhado/Obras';
-import { useFatia } from '../../nucleo/contexto';
+import { Carregando, EstadoDaTela, ErroDaTela, useCarregar } from '../../compartilhado/Estados';
+import { useFatia, useServicos } from '../../nucleo/contexto';
 import { ir } from '../../nucleo/navegacao';
 import type { Inicio } from './estado';
 import './inicio.css';
@@ -25,10 +25,36 @@ function saudacao(h = new Date().getHours()) {
 
 export function TelaInicio({ inicio }: { inicio: Inicio }) {
   const l = useFatia(inicio.store, (s) => s.limiar);
-  useEffect(() => {
-    void inicio.carregar().catch(() => undefined); // o aviso e o log já mostraram o erro
-  }, [inicio]);
-  if (!l) return <p className="carregando">Abrindo a biblioteca…</p>;
+  const servicos = useServicos();
+  const { erro, tentar } = useCarregar(() => inicio.carregar(), [inicio]);
+  if (erro) return <ErroDaTela erro={erro} onde="Início" aoTentar={tentar} />;
+  if (!l) return <Carregando texto="Abrindo a biblioteca…" />;
+  // biblioteca sem nenhuma obra: nunca uma tela vazia sem explicação
+  if (l.totalObras === 0)
+    return (
+      <EstadoDaTela
+        titulo="A sua biblioteca ainda está vazia"
+        acoes={
+          <>
+            {servicos.escolherPastas && (
+              <button className="f-botao" data-tipo="luz" onClick={() => ir({ tela: 'ajustes' })}>
+                Escolher a pasta dos meus livros
+              </button>
+            )}
+            <button
+              className="f-botao"
+              data-tipo={servicos.escolherPastas ? 'fantasma' : 'luz'}
+              onClick={() => ir({ tela: 'descobrir' })}
+            >
+              Descobrir livros do catálogo
+            </button>
+          </>
+        }
+      >
+        Os livros aparecem aqui quando você escolher uma pasta com PDF e EPUB (em Ajustes), ou baixar algo do catálogo
+        público.
+      </EstadoDaTela>
+    );
   const u = l.ultimo;
   return (
     <>

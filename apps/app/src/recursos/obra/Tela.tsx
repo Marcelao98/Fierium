@@ -3,6 +3,7 @@
 import { Anel, Icone } from '@fierium/ui';
 import type { Obra } from '@fierium/contratos';
 import { useEffect, useState } from 'react';
+import { Carregando, ErroDaTela, useCarregar } from '../../compartilhado/Estados';
 import { CartaoMarcacao, useCores } from '../../compartilhado/Marcacoes';
 import {
   autorDe,
@@ -31,9 +32,10 @@ export function TelaObra({ estado, id }: { estado: PaginaObraEstado; id: string 
   useEffect(() => {
     setJuntando(false);
     setCorrigindo(false);
-    void estado.abrir(id).catch(() => undefined);
-  }, [estado, id]);
-  if (!obra || obra.id !== id) return <p className="carregando">Abrindo…</p>;
+  }, [id]);
+  const { erro, tentar } = useCarregar(() => estado.abrir(id), [estado, id]);
+  if (erro) return <ErroDaTela erro={erro} onde="Obra" aoTentar={tentar} />;
+  if (!obra || obra.id !== id) return <Carregando texto="Abrindo…" />;
   const f = fracaoDe(obra);
   return (
     <>

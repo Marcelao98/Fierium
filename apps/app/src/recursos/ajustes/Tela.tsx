@@ -1,6 +1,6 @@
 import type { Tema } from '@fierium/contratos';
 import { useConfig, useConfigApp, useServicos } from '../../nucleo/contexto';
-import { inspetor } from '../../nucleo/navegacao';
+import { inspetor, sugestao } from '../../nucleo/navegacao';
 import { InternetECatalogos } from './Internet';
 import { PastasDeLivros } from './PastasDeLivros';
 import type { Pastas } from './estado';
@@ -115,6 +115,15 @@ export function TelaAjustes({ pastas, internet }: { pastas: Pastas; internet: In
           }}
         >
           Recomeçar
+        </button>
+      </div>
+      <div className="ajuste">
+        <div>
+          Mandar sugestão ou problema
+          <small>Escreva o que houve; o app junta a versão e o registro e você copia ou abre no GitHub</small>
+        </div>
+        <button className="f-botao" onClick={() => sugestao(true)}>
+          Escrever…
         </button>
       </div>
       <div className="ajuste">

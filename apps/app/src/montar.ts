@@ -10,6 +10,7 @@ import { criarDescobrir } from './recursos/descobrir/estado';
 import { criarBiblioteca } from './recursos/biblioteca/estado';
 import { criarColecoes } from './recursos/colecoes/estado';
 import { criarEstatisticas } from './recursos/estatisticas/estado';
+import { criarAbertura } from './recursos/inicio/abertura';
 import { criarInicio } from './recursos/inicio/estado';
 import { criarLeitor } from './recursos/leitor/estado';
 import { criarNotas } from './recursos/notas/estado';
@@ -22,6 +23,7 @@ export function montar(cliente: Cliente, op: OpcoesServicos = {}) {
     config: criarConfig(servicos),
     recursos: {
       pastas: criarPastas(servicos),
+      abertura: criarAbertura(servicos),
       internet: criarInternet(servicos),
       autor: criarAutor(servicos),
       descobrir: criarDescobrir(servicos),

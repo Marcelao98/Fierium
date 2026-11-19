@@ -75,7 +75,9 @@ describe('descobrir (estado)', () => {
       const d = criarDescobrir(servicosDeTeste(comFases).s);
       await d.carregar();
       expect(d.store.getState().colecoes).toEqual([]);
-      expect(fraseDoCatalogo(d.vigia.store.getState().estado!)).toBe('Baixando o catálogo do Gutenberg… 1 de 5 MB');
+      expect(fraseDoCatalogo(d.vigia.store.getState().estado!)).toBe(
+        'Baixando o catálogo do Gutenberg… 20% (1 de 5 MB)',
+      );
       await vi.advanceTimersByTimeAsync(1000);
       expect(fraseDoCatalogo(d.vigia.store.getState().estado!)).toBe('Baixando o catálogo do Gutenberg… 12.000 livros');
       await vi.advanceTimersByTimeAsync(1000);

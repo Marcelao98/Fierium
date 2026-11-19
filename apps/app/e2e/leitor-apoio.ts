@@ -30,6 +30,7 @@ export async function abrirLeitor(page: Page, formato: 'pdf' | 'epub', primeira:
     await page.goto(`/?novo=1&${new URLSearchParams({ arquivo: 'epub', arquivoUrl: '/livro.epub' })}`);
   }
   if (primeira) {
+    await page.getByRole('button', { name: 'Começar' }).click();
     await page.getByRole('button', { name: 'Usar a biblioteca de exemplo' }).click();
     await expect(page.getByRole('heading', { name: 'Dom Casmurro' })).toBeVisible({ timeout: 10_000 });
   }

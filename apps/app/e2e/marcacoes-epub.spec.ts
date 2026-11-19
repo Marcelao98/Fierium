@@ -12,6 +12,7 @@ async function abrirLeitor(page: Page, primeira: boolean) {
     await page.route('**/livro.epub', (r) => r.fulfill({ body: epubDeTeste(), contentType: 'application/epub+zip' }));
     const q = new URLSearchParams({ arquivo: 'epub', arquivoUrl: '/livro.epub' });
     await page.goto(`/?novo=1&${q}`);
+    await page.getByRole('button', { name: 'Começar' }).click();
     await page.getByRole('button', { name: 'Usar a biblioteca de exemplo' }).click();
     await expect(page.getByRole('heading', { name: 'Dom Casmurro' })).toBeVisible({ timeout: 10_000 });
   }

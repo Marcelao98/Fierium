@@ -135,6 +135,7 @@ test('painel Página: trocar o tema, buscar, personalizar, salvar como meu tema 
   const erros: string[] = [];
   page.on('pageerror', (e) => erros.push(String(e)));
   await page.goto('/?novo=1');
+  await page.getByRole('button', { name: 'Começar' }).click();
   await page.getByRole('button', { name: 'Usar a biblioteca de exemplo' }).click();
   await page.getByRole('button', { name: 'Continuar' }).click();
   const leitor = page.getByRole('dialog', { name: 'Lendo Dom Casmurro' });

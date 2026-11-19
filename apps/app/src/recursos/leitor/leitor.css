@@ -536,3 +536,33 @@
     0 0 0 2px var(--fundo-2),
     0 0 0 3.5px var(--luz);
 }
+
+/* modo mergulho: só o livro e um anel de progresso; a barra volta com Esc ou com o mouse no topo */
+.leitor[data-mergulho='true'] .leitor-barra,
+.leitor[data-mergulho='true'] .leitor-progresso {
+  transition:
+    opacity var(--medio),
+    transform var(--medio);
+}
+.leitor[data-mergulho='true']:not([data-barra='true']) .leitor-barra,
+.leitor[data-mergulho='true'] .leitor-progresso {
+  opacity: 0;
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+.leitor[data-mergulho='true'][data-barra='true'] .leitor-barra {
+  opacity: 1;
+  transform: none;
+}
+.leitor-anel {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2;
+  opacity: 0.45;
+  pointer-events: none;
+  transition: opacity var(--medio);
+}
+.leitor[data-veu='true'] .leitor-anel {
+  opacity: 0.22;
+}

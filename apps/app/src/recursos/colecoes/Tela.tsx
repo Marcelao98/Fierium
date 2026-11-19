@@ -2,6 +2,7 @@
 import { Icone } from '@fierium/ui';
 import type { CSSProperties } from 'react';
 import { useEffect, useState } from 'react';
+import { ErroDaTela, EstadoDaTela, useCarregar } from '../../compartilhado/Estados';
 import { Capa, CartaoObra } from '../../compartilhado/Obras';
 import { useFatia } from '../../nucleo/contexto';
 import { ir } from '../../nucleo/navegacao';
@@ -119,14 +120,25 @@ export function TelaColecao({ colecoes: estado, id }: { colecoes: Colecoes; id: 
   const { colecoes, todas } = useFatia(estado.store, (s) => s);
   const [editando, setEditando] = useState(false);
   const c = colecoes.find((x) => x.id === id);
-  useEffect(() => {
-    void estado.carregar().catch(() => undefined);
-  }, [estado]);
+  const { erro, tentar } = useCarregar(() => estado.carregar(), [estado]);
   // a atmosfera (cor do fundo) muda com a coleção aberta
   useEffect(() => {
     if (c) document.documentElement.style.setProperty('--matiz', String(c.matiz));
   }, [c]);
-  if (!c) return <p className="carregando">Abrindo…</p>;
+  if (erro) return <ErroDaTela erro={erro} onde="Coleção" aoTentar={tentar} />;
+  if (!c)
+    return (
+      <EstadoDaTela
+        titulo="Coleção não encontrada"
+        acoes={
+          <button className="f-botao" data-tipo="luz" onClick={() => ir({ tela: 'colecoes' })}>
+            Ver as minhas coleções
+          </button>
+        }
+      >
+        Ela pode ter sido apagada, ou ainda está abrindo.
+      </EstadoDaTela>
+    );
   const obras = todas.filter((o) => c.obraIds.includes(o.id));
   return (
     <>

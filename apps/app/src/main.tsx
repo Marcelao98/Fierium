@@ -38,6 +38,8 @@ async function iniciar(raiz: HTMLElement) {
   const app = montar(plataforma.cliente, {
     log,
     ...(plataforma.escolherPastas ? { escolherPastas: plataforma.escolherPastas } : {}),
+    abrirLink: plataforma.abrirLink,
+    telaCheia: plataforma.telaCheia,
   });
   log.registrar('info', 'app', `Fierium aberto (${plataforma.nome})`);
 

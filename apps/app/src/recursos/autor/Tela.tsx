@@ -2,8 +2,10 @@
 import { Icone } from '@fierium/ui';
 import { useEffect } from 'react';
 import { CartaoCinza, lerBaixado } from '../../compartilhado/Catalogo';
+import { EstadoDaTela } from '../../compartilhado/Estados';
 import { CartaoObra } from '../../compartilhado/Obras';
 import { useFatia } from '../../nucleo/contexto';
+import { ir } from '../../nucleo/navegacao';
 import type { Autor } from './estado';
 
 export function TelaAutor({ autor: a, nome }: { autor: Autor; nome: string }) {
@@ -34,10 +36,16 @@ export function TelaAutor({ autor: a, nome }: { autor: Autor; nome: string }) {
         </div>
       </div>
       {!pecas.length && !carregando ? (
-        <div className="vazio">
-          <h2>Nada deste autor por aqui</h2>
-          <p>Nem na sua biblioteca, nem nos catálogos abertos.</p>
-        </div>
+        <EstadoDaTela
+          titulo="Nada deste autor por aqui"
+          acoes={
+            <button className="f-botao" data-tipo="luz" onClick={() => ir({ tela: 'descobrir' })}>
+              Procurar no Descobrir
+            </button>
+          }
+        >
+          Nem na sua biblioteca, nem nos catálogos abertos (o catálogo pode ainda estar baixando).
+        </EstadoDaTela>
       ) : (
         <div className="grade">
           {pecas.map((p) =>

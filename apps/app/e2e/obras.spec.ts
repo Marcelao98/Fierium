@@ -6,6 +6,7 @@ test('Obra: juntar com outra obra, ver as duas edições e separar', async ({ pa
   const erros: string[] = [];
   page.on('pageerror', (e) => erros.push(String(e)));
   await page.goto('/?novo=1');
+  await page.getByRole('button', { name: 'Começar' }).click();
   await page.getByRole('button', { name: 'Usar a biblioteca de exemplo' }).click();
   await expect(page.getByRole('heading', { name: 'Dom Casmurro' })).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: 'Sobre a obra' }).click();

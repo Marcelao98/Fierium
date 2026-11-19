@@ -97,9 +97,9 @@ export function fraseDoCatalogo(e: EstadoCatalogo): string {
     case 'pronto':
       return '';
     case 'baixando':
-      return e.bytes
-        ? `Baixando o catálogo do Gutenberg… ${mb(e.bytes)}${e.total ? ` de ${mb(e.total)}` : ''} MB`
-        : 'Baixando o catálogo do Gutenberg…';
+      if (e.bytes && e.total)
+        return `Baixando o catálogo do Gutenberg… ${Math.min(100, Math.floor((e.bytes / e.total) * 100))}% (${mb(e.bytes)} de ${mb(e.total)} MB)`;
+      return e.bytes ? `Baixando o catálogo do Gutenberg… ${mb(e.bytes)} MB` : 'Baixando o catálogo do Gutenberg…';
     case 'importando':
       return `Baixando o catálogo do Gutenberg… ${e.itens.toLocaleString('pt-BR')} livros`;
     case 'sem-rede':
