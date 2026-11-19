@@ -267,18 +267,29 @@ struct Rede {
     permitida: bool,
 }
 
-/// `~/Documentos/Livros/Fierium` (ou `~/Documents/Livros/Fierium` se não houver "Documentos").
-pub fn pasta_de_livros_padrao() -> PathBuf {
-    let casa = std::env::var_os("HOME")
-        .or_else(|| std::env::var_os("USERPROFILE"))
-        .map(PathBuf::from)
-        .unwrap_or_else(std::env::temp_dir);
-    let docs = if casa.join("Documentos").is_dir() {
-        "Documentos"
+/// A pasta Documentos do usuário (Windows: a "known folder" Documentos, mesmo redirecionada pro OneDrive; Linux: a do
+/// XDG, que já vem como "Documentos" em português), ou `~/Documentos`/`~/Documents` se o sistema não souber.
+fn pasta_documentos() -> Option<PathBuf> {
+    dirs::document_dir().or_else(|| dirs::home_dir().map(|c| escolher_documentos(&c, Path::is_dir)))
+}
+
+/// Sem o sistema dizer, usa `Documentos` se existir, senão `Documents`.
+fn escolher_documentos(casa: &Path, existe: impl Fn(&Path) -> bool) -> PathBuf {
+    let pt = casa.join("Documentos");
+    if existe(&pt) {
+        pt
     } else {
-        "Documents"
-    };
-    casa.join(docs).join("Livros").join("Fierium")
+        casa.join("Documents")
+    }
+}
+
+/// `<Documentos>/Livros/Fierium`.
+pub fn pasta_de_livros_padrao() -> PathBuf {
+    livros_em(pasta_documentos().unwrap_or_else(std::env::temp_dir))
+}
+
+fn livros_em(documentos: PathBuf) -> PathBuf {
+    documentos.join("Livros").join("Fierium")
 }
 
 /// Preenche `obraId` quando a pessoa já tem a obra (mesma chave da biblioteca: título + 1º autor normalizados).
@@ -508,14 +519,18 @@ fn conferir_baixado(destino: &Path, formato: &str) -> Result<(), ErroFierium> {
 
 /// Pastas comuns de livros que existem no computador (só caminhos que são pastas).
 fn sugestoes_de_pastas() -> Vec<String> {
-    let Some(casa) = std::env::var_os("HOME").or_else(|| std::env::var_os("USERPROFILE")) else {
-        return vec![];
-    };
-    let casa = std::path::PathBuf::from(casa);
-    ["Livros", "Documentos", "Downloads", "Books", "Calibre Library"]
-        .iter()
-        .map(|n| casa.join(n))
-        .filter(|p| p.is_dir())
+    let mut candidatas: Vec<PathBuf> = vec![];
+    if let Some(casa) = dirs::home_dir() {
+        for n in ["Livros", "Books", "Calibre Library"] {
+            candidatas.push(casa.join(n));
+        }
+    }
+    candidatas.extend(pasta_documentos());
+    candidatas.extend(dirs::download_dir());
+    let mut vistas = std::collections::HashSet::new();
+    candidatas
+        .into_iter()
+        .filter(|p| p.is_dir() && vistas.insert(p.clone()))
         .map(|p| p.to_string_lossy().into_owned())
         .collect()
 }
@@ -524,6 +539,16 @@ fn sugestoes_de_pastas() -> Vec<String> {
 mod testes {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn pasta_de_livros_no_estilo_do_windows_e_do_linux() {
+        let win = livros_em(PathBuf::from(r"C:\Users\Ana\OneDrive\Documentos"));
+        assert!(win.starts_with(r"C:\Users\Ana\OneDrive\Documentos"));
+        assert!(win.ends_with("Fierium") && win.parent().unwrap().ends_with("Livros"));
+        let casa = Path::new("/home/ana");
+        assert_eq!(escolher_documentos(casa, |_| true), casa.join("Documentos"));
+        assert_eq!(escolher_documentos(casa, |_| false), casa.join("Documents"));
+    }
 
     fn contexto() -> (tempfile::TempDir, Contexto) {
         let d = tempfile::tempdir().unwrap();

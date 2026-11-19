@@ -179,6 +179,12 @@ fn nome_limpo() {
     );
     assert_eq!(nome_do_arquivo("", "A/B", "epub"), "A B.epub");
     assert_eq!(nome_do_arquivo("", "", "epub"), "Sem título.epub");
+    // casos do Windows: caracteres proibidos, nome reservado, ponto no fim
+    assert_eq!(nome_do_arquivo("A*B", "C|D\"E<F>", "epub"), "A B - C D E F.epub");
+    assert_eq!(nome_do_arquivo("", "con", "epub"), "_con.epub");
+    assert_eq!(nome_do_arquivo("", "COM1", "epub"), "_COM1.epub");
+    assert_eq!(nome_do_arquivo("", "Console", "epub"), "Console.epub");
+    assert_eq!(nome_do_arquivo("", "Fim...", "epub"), "Fim.epub");
 }
 
 #[test]

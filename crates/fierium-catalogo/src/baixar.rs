@@ -136,6 +136,19 @@ pub fn nome_do_arquivo(autor: &str, titulo: &str, extensao: &str) -> String {
             .to_string()
     }
     let corte = |s: String, n: usize| s.chars().take(n).collect::<String>().trim().to_string();
+    // o Windows não aceita nomes como CON, NUL, COM1 (com ou sem extensão): vira "_CON"
+    let reservado = |s: String| {
+        let base = s.split('.').next().unwrap_or("").to_uppercase();
+        let r = matches!(base.as_str(), "CON" | "PRN" | "AUX" | "NUL")
+            || ((base.starts_with("COM") || base.starts_with("LPT"))
+                && base.len() == 4
+                && base[3..].chars().all(|c| ('1'..='9').contains(&c)));
+        if r {
+            format!("_{s}")
+        } else {
+            s
+        }
+    };
     let (a, t) = (corte(limpar(autor), 60), corte(limpar(titulo), 120));
     let base = match (a.is_empty(), t.is_empty()) {
         (_, true) if a.is_empty() => "Sem título".to_string(),
@@ -143,5 +156,7 @@ pub fn nome_do_arquivo(autor: &str, titulo: &str, extensao: &str) -> String {
         (true, false) => t,
         (false, false) => format!("{a} - {t}"),
     };
+    // sem ponto/espaço no fim do nome-base (o Windows corta) e sem nome reservado
+    let base = reservado(base.trim_end_matches(['.', ' ']).to_string());
     format!("{base}.{extensao}")
 }

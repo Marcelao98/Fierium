@@ -30,9 +30,38 @@
     "category": "Education",
     "shortDescription": "A sua biblioteca pessoal com leitores integrados",
     "longDescription": "Fierium reúne seus livros, PDFs, EPUBs e mangás num lugar só, local e offline.",
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png"],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"],
     "linux": {
-      "deb": { "depends": [] }
+      "deb": {
+        "depends": []
+      },
+      "rpm": {}
+    },
+    "createUpdaterArtifacts": true,
+    "targets": ["nsis", "msi", "appimage", "deb", "rpm"],
+    "windows": {
+      "nsis": {
+        "languages": ["PortugueseBR"],
+        "displayLanguageSelector": false,
+        "installMode": "currentUser"
+      },
+      "wix": {
+        "language": "pt-BR"
+      },
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper",
+        "silent": true
+      }
+    }
+  },
+  "version": "0.5.0",
+  "plugins": {
+    "updater": {
+      "endpoints": ["https://github.com/Marcelao98/Fierium/releases/latest/download/latest.json"],
+      "pubkey": "COLOQUE_AQUI_A_CHAVE_PUBLICA",
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }

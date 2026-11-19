@@ -3,6 +3,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { Atmosfera } from './casca/Atmosfera';
 import { Avisos } from './casca/Avisos';
+import { AvisoAtualizacao } from './casca/AvisoAtualizacao';
 import { Busca } from './casca/Busca';
 import { Inspetor } from './casca/Inspetor';
 import { BarraInferior, Lateral } from './casca/Navegacao';
@@ -70,6 +71,7 @@ export function App({ recursos, estatisticasDisponiveis }: { recursos: Recursos;
       {leitura && <Leitor leitor={recursos.leitor} leitura={leitura} />}
       <Busca />
       <Inspetor />
+      <AvisoAtualizacao />
       <Avisos />
     </div>
   );
