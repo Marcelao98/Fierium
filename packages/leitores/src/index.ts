@@ -3,6 +3,7 @@
 export * from './motor';
 export { motorEpub } from './epub/motor-epub';
 export { motorPdf } from './pdf/motor-pdf';
+export { desenharCapaPdf } from './pdf/capa';
 export * from './pintor/index';
 export { motorTexto, deslocamento, pedacos } from './texto/motor-texto';
 import { motorEpub } from './epub/motor-epub';

@@ -5,7 +5,7 @@ import { autorDe, type Base, type Tratadores } from './base';
 import { novoId } from './dados-exemplo';
 import { combina } from './normalizar';
 
-export const ESCREVEM_OBRAS = ['obra.atualizar', 'obra.juntar', 'edicao.separar'] as const;
+export const ESCREVEM_OBRAS = ['obra.atualizar', 'obra.juntar', 'edicao.separar', 'capa.salvar'] as const;
 
 const fracao = (o: Obra) => Math.max(0, ...o.edicoes.map((e) => e.progresso?.fracao ?? 0));
 
@@ -35,7 +35,13 @@ export function filtrarObras(obras: Obra[], f: FiltroObras): Obra[] {
 export function comandosObras(
   b: Base,
 ): Tratadores<
-  'biblioteca.limiar' | 'obras.listar' | 'obra.obter' | 'obra.atualizar' | 'obra.juntar' | 'edicao.separar'
+  | 'biblioteca.limiar'
+  | 'obras.listar'
+  | 'obra.obter'
+  | 'obra.atualizar'
+  | 'obra.juntar'
+  | 'edicao.separar'
+  | 'capa.salvar'
 > {
   const DIA = 86_400_000;
   return {
@@ -91,6 +97,11 @@ export function comandosObras(
       // a lida por último primeiro (é a que "Continuar" abre)
       alvo.edicoes.sort((x, y) => (y.progresso?.quando ?? 0) - (x.progresso?.quando ?? 0));
       return alvo;
+    },
+    'capa.salvar': ({ edicaoId, imagem }) => {
+      const { e } = b.edicao(edicaoId);
+      e.capa = `data:image/webp;base64,${imagem}`;
+      return { capa: e.capa };
     },
     'edicao.separar': ({ edicaoId }) => {
       const { o, e } = b.edicao(edicaoId);

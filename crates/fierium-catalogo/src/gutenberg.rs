@@ -35,6 +35,11 @@ pub fn url_do_epub(n: &str) -> String {
     format!("{ESPELHO}cache/epub/{n}/pg{n}-images-3.epub")
 }
 
+/// A capa média do livro no espelho oficial (nem todo livro tem; a Open Library cobre o resto).
+pub fn url_da_capa(n: &str) -> String {
+    format!("{ESPELHO}cache/epub/{n}/pg{n}.cover.medium.jpg")
+}
+
 /// Os endereços a tentar pra um EPUB do Gutenberg, na ordem: o da oferta, o mesmo arquivo no outro servidor e os
 /// formatos mais antigos (nem todo livro tem EPUB 3). Pra endereço de outra fonte, só ele mesmo.
 pub fn alternativas_do_epub(url: &str) -> Vec<String> {

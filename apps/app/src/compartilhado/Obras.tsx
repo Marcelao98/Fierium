@@ -4,6 +4,7 @@ import type { Obra } from '@fierium/contratos';
 import { Selo } from '@fierium/ui';
 import type { MouseEvent, ReactNode } from 'react';
 import { abrirLeitura, ir } from '../nucleo/navegacao';
+import { CapaImagem } from './CapaImagem';
 
 export const autorDe = (o: Obra) => o.criadores[0]?.nome ?? '';
 export const fracaoDe = (o: Obra) => Math.max(0, ...o.edicoes.map((e) => e.progresso?.fracao ?? 0));
@@ -28,16 +29,21 @@ export function lerObra(o: Obra, e?: MouseEvent, marcacaoId?: string, edicaoId?:
 }
 
 export function Capa({ obra, compacto = false }: { obra: Obra; compacto?: boolean }) {
+  // capa de verdade (extraída do EPUB ou desenhada da 1ª página do PDF); sem ela, a capa gerada
   const imagem = obra.edicoes.find((e) => e.capa)?.capa;
-  // capa de verdade (M3: extraída do arquivo); sem ela, o selo gerado
-  if (imagem) return <img className="capa-imagem" src={imagem} alt="" loading="lazy" decoding="async" />;
   return (
-    <Selo
-      titulo={obra.serie ? obra.serie.nome : obra.titulo}
-      autor={autorDe(obra)}
-      matiz={obra.matiz}
-      detalhe={obra.serie ? `vol. ${obra.serie.volume}` : undefined}
-      compacto={compacto}
+    <CapaImagem
+      src={imagem}
+      gerada={
+        <Selo
+          titulo={obra.serie ? obra.serie.nome : obra.titulo}
+          autor={autorDe(obra)}
+          matiz={obra.matiz}
+          detalhe={obra.serie ? `vol. ${obra.serie.volume}` : undefined}
+          area={obra.reino}
+          compacto={compacto}
+        />
+      }
     />
   );
 }

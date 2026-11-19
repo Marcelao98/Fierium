@@ -14,6 +14,7 @@
 | `edicao.separar` | `{edicaoId}` → `Obra` (a edição vira uma obra própria; a varredura não junta de novo) | `ARGUMENTO_INVALIDO` (única edição), `NAO_ENCONTRADO` | biblioteca |
 | `colecoes.listar` / `colecao.criar` / `colecao.definirObras` | … → `Colecao` | `ARGUMENTO_INVALIDO`, `NAO_ENCONTRADO` | biblioteca |
 | `edicao.abrir` | `{edicaoId}` → `FonteLeitura`: `{tipo:'texto', capitulos}` ou `{tipo:'arquivo', formato, url, tamanho}` (o arquivo vem aos pedaços pelo endereço — M2/M4) | `NAO_ENCONTRADO` | leitura |
+| `capa.salvar` | `{edicaoId, imagem}` → `{capa}` (a interface desenha a 1ª página do PDF em WebP; `imagem` é base64 sem `data:`; o núcleo grava em `~/.cache/fierium/capas/` e preenche `Edicao.capa`) | `ARGUMENTO_INVALIDO` (não é imagem / passa de 2 MB), `NAO_ENCONTRADO` | biblioteca |
 | `progresso.salvar` | `{edicaoId, posicao, fracao 0..1}` → null | `ARGUMENTO_INVALIDO` | leitura |
 | `sessao.registrar` | `{edicaoId, segundos, paginas}` → null | `NAO_ENCONTRADO` | leitura |
 | `marcacoes.listar` | `{obraId?, cor?, texto?}` → `Marcacao[]` (mais novas primeiro) | — | marcações |

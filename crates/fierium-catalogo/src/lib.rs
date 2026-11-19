@@ -9,6 +9,7 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 mod baixar;
+pub mod capas;
 pub mod gutenberg;
 
 pub use baixar::{nome_do_arquivo, Baixador, BaixadorHttp, USER_AGENT};

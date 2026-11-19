@@ -391,6 +391,8 @@ export interface Comandos {
   'colecao.criar': [{ nome: string; descricao: string; matiz: number }, Colecao];
   'colecao.definirObras': [{ id: Id; obraIds: Id[] }, Colecao];
   'edicao.abrir': [{ edicaoId: Id }, FonteLeitura];
+  /** guarda a capa desenhada pela interface (1ª página do PDF, WebP em base64 sem o prefixo `data:`) e a põe na edição */
+  'capa.salvar': [{ edicaoId: Id; imagem: string }, { capa: string }];
   'progresso.salvar': [{ edicaoId: Id; posicao: string; fracao: number }, null];
   'marcacoes.listar': [{ obraId?: Id; cor?: string; texto?: string }, Marcacao[]];
   'marcacao.criar': [Omit<Marcacao, 'id' | 'criadaEm' | 'editadaEm'>, Marcacao];
