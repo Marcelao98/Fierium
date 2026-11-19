@@ -64,17 +64,32 @@ fn main() {
                 return;
             }
             let ctx = ctx.app_handle().state::<std::sync::Arc<comandos::Contexto>>();
+            let resposta = move |r: protocolo::Resposta| {
+                let mut b = tauri::http::Response::builder().status(r.status);
+                for (k, v) in r.cabecalhos {
+                    b = b.header(k, v);
+                }
+                responder.respond(b.body(r.corpo).expect("resposta do protocolo"));
+            };
+            // capa de item do catálogo: pode precisar da rede, então roda numa linha à parte (a janela não espera)
+            if let Some(chave) = pedido.uri().path().trim_start_matches('/').strip_prefix("capa/cat-") {
+                let (ctx, chave) = (ctx.inner().clone(), chave.to_owned());
+                std::thread::spawn(move || {
+                    let achada = comandos::capa_do_catalogo(&ctx, &chave);
+                    resposta(protocolo::responder_arquivo(achada.as_deref()));
+                });
+                return;
+            }
             let range = pedido
                 .headers()
                 .get("range")
                 .and_then(|v| v.to_str().ok())
                 .map(str::to_owned);
-            let r = protocolo::responder(&ctx.arquivos, pedido.uri().path(), range.as_deref());
-            let mut b = tauri::http::Response::builder().status(r.status);
-            for (k, v) in r.cabecalhos {
-                b = b.header(k, v);
-            }
-            responder.respond(b.body(r.corpo).expect("resposta do protocolo"));
+            resposta(protocolo::responder(
+                &ctx.arquivos,
+                pedido.uri().path(),
+                range.as_deref(),
+            ));
         })
         .invoke_handler(tauri::generate_handler![chamar])
         .run(tauri::generate_context!());

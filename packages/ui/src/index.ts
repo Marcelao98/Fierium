@@ -5,5 +5,5 @@ import './selo.css';
 export { Icone, type NomeIcone } from './Icone';
 export { Selo } from './Selo';
 export { SeloFieri } from './SeloFieri';
-export { formaDoSelo, hash } from './selo';
+export { ajustarAutor, ajustarTitulo, hash, motivoDaArea, ornamentoDaCapa, type Motivo } from './selo';
 export { Anel } from './Anel';

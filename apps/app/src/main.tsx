@@ -5,7 +5,8 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { montar } from './montar';
 import { ProvedorNucleo } from './nucleo/contexto';
-import { ligarEndereco } from './nucleo/navegacao';
+import { criarFilaDeCapas } from './nucleo/capasPdf';
+import { ligarEndereco, useNavegacao } from './nucleo/navegacao';
 import { escolherPlataforma } from './plataforma/escolher';
 import './casca/casca.css';
 import './compartilhado/compartilhado.css';
@@ -63,6 +64,18 @@ async function iniciar(raiz: HTMLElement) {
       },
       (e: unknown) => log.registrar('aviso', 'app', 'a varredura ao abrir falhou', { erro: String(e) }),
     );
+
+  // capas dos PDFs: com o app parado, desenha a 1ª página de cada PDF sem capa e o núcleo guarda (uma por vez)
+  const capas = criarFilaDeCapas({
+    cliente: plataforma.cliente,
+    eventos: app.servicos.eventos,
+    log,
+    lendo: () => !!useNavegacao.getState().leitura,
+    desenhar: async (f) => (await import('@fierium/leitores')).desenharCapaPdf(f),
+  });
+  const desenharCapas = () => void capas.varrer().catch((e: unknown) => log.registrar('aviso', 'capas', String(e)));
+  app.servicos.eventos.ouvir('biblioteca-mudou', desenharCapas);
+  setTimeout(desenharCapas, 4000);
 
   ligarEndereco();
   // a configuração vem antes da primeira tela (tema, movimento); se falhar, o aviso aparece e abre com o padrão

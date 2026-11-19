@@ -82,6 +82,32 @@ fn tipo(caminho: &std::path::Path) -> &'static str {
     }
 }
 
+/// Entrega um arquivo já escolhido pelo núcleo (a capa do catálogo, que vem do cache em disco). `None` = 404.
+pub fn responder_arquivo(caminho: Option<&std::path::Path>) -> Resposta {
+    let Some(caminho) = caminho else {
+        return erro(
+            404,
+            ErroContrato {
+                codigo: "NAO_ENCONTRADO".into(),
+                mensagem: "esse item não tem capa".into(),
+            },
+        );
+    };
+    match std::fs::read(caminho) {
+        Ok(corpo) => Resposta {
+            status: 200,
+            cabecalhos: vec![
+                ("Content-Type", tipo(caminho).into()),
+                ("Content-Length", corpo.len().to_string()),
+                ("Cache-Control", "max-age=86400".into()),
+                ("Access-Control-Allow-Origin", "*".into()),
+            ],
+            corpo,
+        },
+        Err(e) => erro(404, fierium_core::ErroFierium::de_io(caminho.display(), e).into()),
+    }
+}
+
 /// `caminho_url` = a parte do endereço depois do esquema (ex.: "/arquivo/abc").
 pub fn responder(arquivos: &Arquivos, caminho_url: &str, range: Option<&str>) -> Resposta {
     let url = caminho_url.trim_start_matches('/');

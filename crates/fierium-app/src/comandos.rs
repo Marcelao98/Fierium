@@ -11,7 +11,7 @@ use serde::Deserialize;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Mutex;
+use std::sync::{Condvar, Mutex};
 
 /// Os comandos que o Rust já atende (a interface pergunta isso pra montar o adaptador combinado).
 pub const NO_RUST: &[&str] = &[
@@ -27,6 +27,7 @@ pub const NO_RUST: &[&str] = &[
     "obra.sugestoes",
     "obra.aplicarSugestao",
     "edicao.abrir",
+    "capa.salvar",
     "edicao.separar",
     "progresso.salvar",
     "pastas.listar",
@@ -60,6 +61,10 @@ pub struct Contexto {
     pub pasta_de_livros: PathBuf,
     /// onde ficam os arquivos baixados de catálogo (cache)
     pub pasta_de_cache: PathBuf,
+    /// `~/.cache/fierium/capas-catalogo/`: as capas dos itens cinzas (cache permanente)
+    pub pasta_de_capas_catalogo: PathBuf,
+    /// quantas capas do catálogo estão sendo buscadas agora (poucas ao mesmo tempo, pra ser educado com os servidores)
+    vagas_de_capa: (Mutex<usize>, Condvar),
     atualizando: AtomicBool,
     /// o andamento da atualização do catálogo, pra tela mostrar (nunca segura o banco)
     andamento: Mutex<Andamento>,
@@ -92,6 +97,8 @@ impl Contexto {
             baixador: Box::new(BaixadorHttp::default()),
             pasta_de_livros: pasta_de_livros_padrao(),
             pasta_de_cache: std::env::temp_dir().join("fierium-cache"),
+            pasta_de_capas_catalogo: fierium_biblioteca::metadados::pasta_de_capas().with_file_name("capas-catalogo"),
+            vagas_de_capa: (Mutex::new(0), Condvar::new()),
             atualizando: AtomicBool::new(false),
             andamento: Mutex::new(Andamento::default()),
         };
@@ -151,6 +158,38 @@ struct Edicao {
 }
 
 #[derive(Deserialize)]
+struct CapaSalvar {
+    #[serde(rename = "edicaoId")]
+    edicao_id: String,
+    /// a imagem em base64 (sem o prefixo `data:`)
+    imagem: String,
+}
+
+/// Base64 padrão (com ou sem `=`), sem dependência nova. `None` se tiver caractere fora do alfabeto.
+fn base64_decodificar(s: &str) -> Option<Vec<u8>> {
+    let mut saida = Vec::with_capacity(s.len() * 3 / 4);
+    let (mut acc, mut bits) = (0u32, 0u32);
+    for c in s.bytes().filter(|c| !c.is_ascii_whitespace() && *c != b'=') {
+        let v = match c {
+            b'A'..=b'Z' => c - b'A',
+            b'a'..=b'z' => c - b'a' + 26,
+            b'0'..=b'9' => c - b'0' + 52,
+            b'+' | b'-' => 62,
+            b'/' | b'_' => 63,
+            _ => return None,
+        };
+        acc = (acc << 6) | u32::from(v);
+        bits += 6;
+        if bits >= 8 {
+            bits -= 8;
+            saida.push((acc >> bits) as u8);
+            acc &= (1 << bits) - 1;
+        }
+    }
+    Some(saida)
+}
+
+#[derive(Deserialize)]
 struct Progresso {
     #[serde(rename = "edicaoId")]
     edicao_id: String,
@@ -197,6 +236,17 @@ pub fn chamar(ctx: &Contexto, cmd: &str, a: Value) -> Result<Value, ErroFierium>
         // ---- fim: metadados ----
         "obra.juntar" => b().obra_juntar(&args::<Juntar>(a)?.ids),
         "edicao.abrir" => b().edicao_abrir(&args::<Edicao>(a)?.edicao_id),
+        "capa.salvar" => {
+            let x: CapaSalvar = args(a)?;
+            let bytes = base64_decodificar(&x.imagem).ok_or_else(|| ErroFierium::Argumento {
+                campo: "imagem".into(),
+                motivo: "não é base64 válido".into(),
+            })?;
+            b().capa_salvar(&x.edicao_id, &bytes)?;
+            ctx.registrar_arquivos()?;
+            // devolve a edição com o endereço novo da capa
+            json(serde_json::json!({ "capa": fierium_biblioteca::url_da_capa(&x.edicao_id) }))
+        }
         "edicao.separar" => b().edicao_separar(&args::<Edicao>(a)?.edicao_id),
         "progresso.salvar" => {
             let x: Progresso = args(a)?;
@@ -233,6 +283,7 @@ pub fn chamar(ctx: &Contexto, cmd: &str, a: Value) -> Result<Value, ErroFierium>
         "catalogo.item" => {
             let mut i = ctx.catalogo.lock().expect("catálogo").item(&args::<PorId>(a)?.id)?;
             marcar_obra(ctx, &mut i);
+            marcar_capa(&mut i);
             Ok(i)
         }
         "catalogo.fontes" => ctx.catalogo.lock().expect("catálogo").fontes(),
@@ -302,14 +353,73 @@ fn marcar_obra(ctx: &Contexto, item: &mut Value) {
     }
 }
 
+/// A capa de um item cinza: o endereço no protocolo (`/capa/cat-<id>`), que busca a imagem na hora em que a tela a
+/// pede. Itens que já trazem capa ficam como estão; só o Gutenberg tem esse caminho por enquanto.
+fn marcar_capa(item: &mut Value) {
+    if item.get("capa").is_some() {
+        return;
+    }
+    let chave = item["id"].as_str().and_then(fierium_catalogo::capas::chave_do_item);
+    if let (Some(chave), true) = (chave, item["id"].as_str().is_some_and(|i| i.starts_with("gutenberg:"))) {
+        item["capa"] = Value::String(fierium_biblioteca::url_da_capa(&format!("cat-{chave}")));
+    }
+}
+
 fn catalogo_buscar(ctx: &Contexto, filtro: &Value) -> Result<Value, ErroFierium> {
     let mut r = ctx.catalogo.lock().expect("catálogo").buscar(filtro)?;
     if let Some(itens) = r["itens"].as_array_mut() {
         for i in itens {
             marcar_obra(ctx, i);
+            marcar_capa(i);
         }
     }
     Ok(r)
+}
+
+/// Entrega o arquivo da capa de um item do catálogo (chave `cat-<id>` do protocolo), buscando na rede se for a
+/// primeira vez e a rede estiver ligada. `None` = não há capa (a interface desenha a gerada). Só ids que o catálogo
+/// conhece; no máximo 3 buscas ao mesmo tempo.
+pub fn capa_do_catalogo(ctx: &Contexto, chave: &str) -> Option<PathBuf> {
+    let id = fierium_catalogo::capas::id_da_chave(chave)?;
+    let pasta = &ctx.pasta_de_capas_catalogo;
+    if let Some(p) = fierium_catalogo::capas::capa_em_cache(pasta, &id) {
+        return Some(p);
+    }
+    if fierium_catalogo::capas::sem_capa_lembrada(pasta, &id) {
+        return None;
+    }
+    let (titulo, autor) = {
+        let c = ctx.catalogo.lock().expect("catálogo");
+        if c.exigir_rede("buscar a capa").is_err() {
+            return None;
+        }
+        let item = c.item(&id).ok()?; // id desconhecido: nada de baixar
+        let autor = item["pessoas"]
+            .as_array()
+            .and_then(|p| p.iter().find(|x| x["papel"] == "autor").or_else(|| p.first()))
+            .and_then(|p| p["nome"].as_str())
+            .unwrap_or("")
+            .to_string();
+        (item["titulo"].as_str().unwrap_or("").to_string(), autor)
+    };
+    let (trava, aviso) = &ctx.vagas_de_capa;
+    {
+        let mut n = trava.lock().expect("vagas de capa");
+        while *n >= 3 {
+            n = aviso.wait(n).expect("vagas de capa");
+        }
+        *n += 1;
+    }
+    let r = fierium_catalogo::capas::obter(ctx.baixador.as_ref(), pasta, &id, &titulo, &autor);
+    *trava.lock().expect("vagas de capa") -= 1;
+    aviso.notify_one();
+    match r {
+        Ok(p) => p,
+        Err(e) => {
+            tracing::debug!(id, "capa do catálogo: {e}");
+            None
+        }
+    }
 }
 
 /// Baixa o catálogo da fonte (sem segurar o banco durante o download) e importa numa transação.
@@ -750,6 +860,84 @@ mod testes {
                 .unwrap_err()
                 .codigo(),
             "NAO_ENCONTRADO"
+        );
+    }
+
+    #[test]
+    fn capa_salvar_grava_e_registra_na_edicao() {
+        let d = tempfile::tempdir().unwrap();
+        let b = Biblioteca::abrir_com_capas(&d.path().join("fierium.db"), d.path().join("capas")).unwrap();
+        let c = Contexto::com(b, Catalogo::abrir(&d.path().join("catalogo.db")).unwrap());
+        let livros = tempfile::tempdir().unwrap();
+        std::fs::write(livros.path().join("Ana - Um Livro.pdf"), b"%PDF-falso").unwrap();
+        chamar(
+            &c,
+            "pastas.adicionar",
+            json!({ "caminho": livros.path().to_str().unwrap() }),
+        )
+        .unwrap();
+        chamar(&c, "biblioteca.varrer", json!({})).unwrap();
+        let obras = chamar(&c, "obras.listar", json!({})).unwrap();
+        let ed = obras[0]["edicoes"][0]["id"].as_str().unwrap();
+        assert!(obras[0]["edicoes"][0].get("capa").is_none());
+        // "RIFF....WEBPxxxx" em base64
+        let webp = b"RIFF\x04\x00\x00\x00WEBPVP8 ";
+        let b64 = "UklGRgQAAABXRUJQVlA4IA==";
+        assert_eq!(base64_decodificar(b64).unwrap(), webp);
+        let r = chamar(&c, "capa.salvar", json!({ "edicaoId": ed, "imagem": b64 })).unwrap();
+        assert!(r["capa"].as_str().unwrap().ends_with(&format!("/capa/{ed}")));
+        let o = chamar(&c, "obras.listar", json!({})).unwrap();
+        assert!(o[0]["edicoes"][0]["capa"]
+            .as_str()
+            .unwrap()
+            .ends_with(&format!("/capa/{ed}")));
+        assert!(c.arquivos.caminho_da_capa(ed).is_some());
+        // lixo não vira capa
+        let e = chamar(&c, "capa.salvar", json!({ "edicaoId": ed, "imagem": "bGl4bw==" })).unwrap_err();
+        assert_eq!(e.codigo(), "ARGUMENTO_INVALIDO");
+        let e = chamar(&c, "capa.salvar", json!({ "edicaoId": "x", "imagem": b64 })).unwrap_err();
+        assert_eq!(e.codigo(), "NAO_ENCONTRADO");
+    }
+
+    #[test]
+    fn capa_do_catalogo_so_pra_id_conhecido_e_respeita_a_rede() {
+        struct Capa;
+        impl Baixador for Capa {
+            fn baixar(&self, url: &str, destino: &Path) -> Result<u64, ErroFierium> {
+                let corpo: Vec<u8> = if url.contains("pg_catalog.csv") {
+                    CSV.as_bytes().to_vec()
+                } else if url.contains(".cover.") {
+                    [&[0xFF, 0xD8, 0xFF][..], &[1u8; 4000]].concat()
+                } else {
+                    return Err(ErroFierium::Rede("fora do ar".into()));
+                };
+                std::fs::create_dir_all(destino.parent().unwrap()).unwrap();
+                std::fs::write(destino, &corpo).unwrap();
+                Ok(corpo.len() as u64)
+            }
+        }
+        let d = tempfile::tempdir().unwrap();
+        let mut c = Contexto::abrir(d.path()).unwrap();
+        c.baixador = Box::new(Capa);
+        c.pasta_de_capas_catalogo = d.path().join("capas-catalogo");
+        chamar(&c, "catalogo.atualizar", json!({ "fonte": "gutenberg" })).unwrap();
+        let r = chamar(&c, "catalogo.buscar", json!({ "texto": "dom casmurro" })).unwrap();
+        let capa = r["itens"][0]["capa"].as_str().unwrap();
+        assert!(capa.ends_with("/capa/cat-gutenberg_2"), "{capa}");
+        assert!(
+            capa_do_catalogo(&c, "gutenberg_999").is_none(),
+            "id que o catálogo não conhece"
+        );
+        assert!(capa_do_catalogo(&c, "..").is_none());
+        chamar(&c, "rede.definir", json!({ "permitida": false })).unwrap();
+        assert!(capa_do_catalogo(&c, "gutenberg_2").is_none(), "sem rede e sem cache");
+        chamar(&c, "rede.definir", json!({ "permitida": true })).unwrap();
+        let p = capa_do_catalogo(&c, "gutenberg_2").unwrap();
+        assert!(p.starts_with(d.path().join("capas-catalogo")));
+        chamar(&c, "rede.definir", json!({ "permitida": false })).unwrap();
+        assert!(
+            capa_do_catalogo(&c, "gutenberg_2").is_some(),
+            "o cache vale mesmo sem rede"
         );
     }
 

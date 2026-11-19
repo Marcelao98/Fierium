@@ -4,20 +4,26 @@ import type { ItemCatalogo } from '@fierium/contratos';
 import { useFatia } from '../nucleo/contexto';
 import { Icone, Selo } from '@fierium/ui';
 import { abrirLeitura, ir } from '../nucleo/navegacao';
+import { CapaImagem } from './CapaImagem';
 import './catalogo.css';
 import { autorDoItem, fraseDoCatalogo, licencaDoItem, type FaseBaixa, type Vigia } from './catalogo';
 
 const matizDe = (id: string) => [...id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 360, 7);
 
 export function CapaItem({ item, compacto = false }: { item: ItemCatalogo; compacto?: boolean }) {
-  if (item.capa) return <img className="capa-imagem" src={item.capa} alt="" loading="lazy" decoding="async" />;
   return (
-    <Selo
-      titulo={item.serie ? item.serie.nome : item.titulo}
-      autor={autorDoItem(item)}
-      matiz={matizDe(item.id)}
-      detalhe={item.serie ? `vol. ${item.serie.volume}` : undefined}
-      compacto={compacto}
+    <CapaImagem
+      src={item.capa}
+      gerada={
+        <Selo
+          titulo={item.serie ? item.serie.nome : item.titulo}
+          autor={autorDoItem(item)}
+          matiz={matizDe(item.id)}
+          detalhe={item.serie ? `vol. ${item.serie.volume}` : undefined}
+          area={item.assuntos.join(' ')}
+          compacto={compacto}
+        />
+      }
     />
   );
 }

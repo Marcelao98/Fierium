@@ -1,0 +1,52 @@
+/* A capa (imagem ou gerada): proporção 2:3 fixa, mesma moldura e sombra nas duas, troca suave ao carregar. */
+.capa {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--raio-1) var(--raio-3) var(--raio-3) var(--raio-1);
+  overflow: hidden;
+  background: var(--vidro, rgba(255, 255, 255, 0.04));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 10px 30px rgba(0, 0, 0, 0.35);
+}
+.capa > .f-selo,
+.capa > .capa-imagem {
+  box-shadow: none;
+}
+.capa > .f-selo {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+.capa > .capa-imagem {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 0.4s var(--curva);
+}
+.capa[data-fase='carregando'] > .capa-imagem {
+  opacity: 0;
+}
+/* a lombada também nas capas de imagem (a gerada já traz a dela) */
+.capa::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.28),
+    rgba(0, 0, 0, 0) 3%,
+    rgba(255, 255, 255, 0.08) 4%,
+    rgba(0, 0, 0, 0) 5.5%
+  );
+}
+@media (prefers-reduced-motion: reduce) {
+  .capa > .capa-imagem {
+    transition: none;
+  }
+}

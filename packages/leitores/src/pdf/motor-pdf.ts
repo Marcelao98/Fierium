@@ -58,14 +58,14 @@ export function classificarErro(e: unknown): { codigo: string; mensagem: string 
 }
 
 let workerConfigurado = false;
-function configurarWorker() {
+export function configurarWorker() {
   if (workerConfigurado) return;
   pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
   workerConfigurado = true;
 }
 
 /** O pdf.js só habilita Range automaticamente em URLs HTTP(S); `fierium://` precisa de um transporte explícito. */
-class TransportePdf extends PDFDataRangeTransport {
+export class TransportePdf extends PDFDataRangeTransport {
   constructor(
     readonly url: string,
     tamanho: number,
