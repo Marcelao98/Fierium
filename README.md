@@ -1,179 +1,75 @@
 <p align="center">
-  <img src="docs/imagens/selo-fieri.svg" width="140" alt="Selo de Fieri: a centelha, a lua crescente e a órbita aberta">
+  <img src="site/selo.svg" width="120" alt="Selo de Fieri: um astrolábio com a lua e a centelha">
 </p>
 
 <h1 align="center">Fierium</h1>
 
 <p align="center">
-  <em>A biblioteca de tudo que já foi imaginado.</em><br>
-  Os seus livros, PDFs, EPUBs e mangás num lugar que parece seu: local, offline, sem conta e sem nuvem.
+  <em>Tudo que já foi imaginado está no mapa de Fieri.</em><br>
+  Sua biblioteca pessoal: leitor de PDF e EPUB, notas e citações. Offline, sem conta, sem nuvem.
 </p>
 
 <p align="center">
-  <img alt="Linux primeiro" src="https://img.shields.io/badge/Linux-primeiro-f1d9a0?style=flat-square&labelColor=0b0a1a">
-  <img alt="Tauri 2" src="https://img.shields.io/badge/Tauri-2-a99be6?style=flat-square&labelColor=0b0a1a">
-  <img alt="React + TypeScript" src="https://img.shields.io/badge/React_+_TypeScript-interface-7cc7b4?style=flat-square&labelColor=0b0a1a">
-  <img alt="Rust" src="https://img.shields.io/badge/Rust-núcleo-d98a9c?style=flat-square&labelColor=0b0a1a">
-  <img alt="Estado" src="https://img.shields.io/badge/estado-em_construção-ece8f6?style=flat-square&labelColor=0b0a1a">
+  <a href="https://marcelao98.github.io/Fierium/">Site</a> ·
+  <a href="https://github.com/Marcelao98/Fierium/releases/latest">Baixar</a> ·
+  <a href="docs/INSTALAR.md">Como instalar</a> ·
+  <a href="CHANGELOG.md">Novidades</a>
 </p>
 
 <p align="center">
-  <img src="docs/imagens/inicio.jpg" width="92%" alt="O Início do Fierium: continuar lendo Dom Casmurro, uma marcação antiga que volta e as obras em andamento">
+  <img src="site/imagens/inicio.webp" width="92%" alt="O Início do Fierium: a frase do mapa de Fieri, a obra que você está lendo e uma citação marcada">
 </p>
 
----
+## Baixar
 
-## O que é
+Windows (`.exe`) e Linux (AppImage, `.rpm`, `.deb`) na página de
+[Releases](https://github.com/Marcelao98/Fierium/releases/latest). No Windows, o SmartScreen pode avisar (o
+instalador não tem certificado pago): **Mais informações → Executar assim mesmo**. Passo a passo em
+[docs/INSTALAR.md](docs/INSTALAR.md). Depois de instalado, o Fierium avisa sozinho quando sai versão nova.
 
-**Fieri** é a primordial dos sonhos e da imaginação: de onde vem tudo que um dia foi imaginado. **Fierium** é o
-lugar dela, a biblioteca de tudo que existe. Aqui, a sua coleção não é uma pasta de arquivos: é a sua parte desse
-céu. Cada área é um mundo, cada obra é uma estrela, cada série é uma constelação, e ler é atravessar a estrela.
-
-Na prática, é uma **biblioteca pessoal com leitores integrados**:
-
-- **Obras, não arquivos.** *Dom Casmurro* em EPUB, um PDF escaneado e o audiolivro são **uma obra** com três jeitos de viver.
-- **Ler sem distração.** A interface some enquanto você lê; temas de papel, sépia, noite e tinta.
-- **Marcar e pensar.** Cores com o significado que você der, notas, ligações entre trechos de livros diferentes,
-  tudo exportável em Markdown.
-- **Estatísticas sem culpa.** Tempo, sequência e metas fazem parte do produto; no app Linux elas ficam desativadas até
-  a implementação das estatísticas reais. Os números de demonstração aparecem apenas no navegador.
-- **Seu, pra sempre.** Funciona sem internet, sem conta, e nunca altera os seus arquivos.
-
-O Fierium vai **substituir o [KOFlibrary](https://github.com/Marcelao98/KOFLibrary)** quando fizer tudo o que ele faz.
-
-## Como está agora
+## O que ele faz
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/imagens/leitor.jpg" alt="Leitor: selecionar um trecho, escolher a cor (Dúvida) e escrever uma nota"></td>
-    <td width="50%"><img src="docs/imagens/mapa.jpg" alt="Mapa da biblioteca: as obras como luzes agrupadas por área, com a deriva parada numa obra nunca aberta"></td>
+    <td width="50%"><img src="site/imagens/leitor.webp" alt="O leitor com página em pergaminho e trechos marcados"><br><sub><b>PDF e EPUB</b> no mesmo leitor, com progresso salvo</sub></td>
+    <td width="50%"><img src="site/imagens/temas.webp" alt="Painel com cerca de 100 temas de página"><br><sub><b>100 temas de página</b>, mais cor de papel e de letra livres</sub></td>
   </tr>
   <tr>
-    <td align="center"><sub>Marcação dinâmica: cada cor tem o seu significado</sub></td>
-    <td align="center"><sub>O mapa: a biblioteca como um céu, e a deriva</sub></td>
+    <td><img src="site/imagens/notas.webp" alt="Página de Notas com as citações marcadas"><br><sub><b>Notas e citações</b>: marque em cores, copie em ABNT, exporte em Markdown</sub></td>
+    <td><img src="site/imagens/descobrir.webp" alt="Descobrir: catálogo de clássicos em domínio público"><br><sub><b>Catálogo de clássicos</b> (Projeto Gutenberg): baixar e ler</sub></td>
   </tr>
   <tr>
-    <td><img src="docs/imagens/estatisticas.jpg" alt="Estatísticas: hoje, semana, sequência, recorde e o calendário do ano"></td>
-    <td><img src="docs/imagens/linux-abertura.jpg" alt="O Fierium rodando como programa no Linux (Tauri)"></td>
-  </tr>
-  <tr>
-    <td align="center"><sub>Estatísticas de demonstração no navegador</sub></td>
-    <td align="center"><sub>Rodando como programa de verdade no Linux</sub></td>
+    <td><img src="site/imagens/biblioteca.webp" alt="Biblioteca em grade com capas desenhadas"><br><sub><b>Capas bonitas</b>, até pra livro sem capa</sub></td>
+    <td><img src="site/imagens/cartao.webp" alt="Cartão de citação em estilo Céu antigo"><br><sub><b>Cartão de citação</b> 1080×1350 pra compartilhar</sub></td>
   </tr>
 </table>
 
-> **Próximo checkpoint: validar a leitura no Linux.** O cartão [lendo/CONTINUAR](docs/cartoes/lendo/CONTINUAR.md)
-> registra os testes feitos e o que ainda falta conferir no Tauri.
+## Privacidade
 
-## Estado atual no Linux
+Sem conta. Funciona offline (a internet só é usada pelo catálogo, quando você pede, e dá pra desligar). Notas,
+marcações e progresso ficam no seu computador. O Fierium só lê os seus livros: nunca altera os seus arquivos.
 
-O Tauri já conecta a biblioteca local em SQLite e abre PDFs pelo protocolo interno `fierium://`. PDFs grandes usam
-requisições por intervalos; como o PDF.js não reconhece esse esquema como HTTP, o app fornece um transporte Range
-próprio. A correção foi confirmada com um PDF real de 19 MB que antes não renderizava.
+## Rodar pra desenvolver
 
-O motor de EPUB e seus fluxos de navegador estão implementados, mas ainda falta confirmar a abertura e a retomada de
-posição de um EPUB no Tauri. A retomada de posição também precisa de conferência no app instalado. As estatísticas
-reais ainda não foram ligadas ao Rust: no Tauri, a tela informa isso e não exibe os números fictícios do exemplo.
-
-No Linux, o build desta trilha gerou `.deb` e `.rpm`. O AppImage não foi gerado porque o download do runtime `AppRun`
-expirou. Para instalar um pacote já gerado:
-
-```bash
-sudo apt install ./target/release/bundle/deb/Fierium_*_amd64.deb
-```
-
-No Fedora:
-
-```bash
-sudo dnf install ./target/release/bundle/rpm/Fierium-*.x86_64.rpm
-```
-
-Esses arquivos ficam em `target/` e são artefatos locais; para gerar novamente, use `pnpm tauri build --bundles deb,rpm`.
-
-## Roadmap
-
-Cada marco termina num checkpoint: o Marcelo testa no Linux dele e só então o próximo começa.
-Checklist completo em [docs/ROADMAP.md](docs/ROADMAP.md).
-
-| | Marco | |
-|---|---|---|
-| ✅ | **M0** Fundação e plano | monorepo, regras de camada, CI, documentação |
-| ✅ | **M1** Interface e arquitetura modular | início, biblioteca (grade, lista, mapa), obra, coleções, leitor, notas, estatísticas |
-| ⏸️ | **M2** Programa Linux (Tauri 2) | núcleo Rust, log em arquivo, `.deb` e `.rpm`; AppImage pendente |
-| ⏭️ | **M1.5** Identidade de Fieri | o sonho, os mundos, as constelações, o selo |
-| 🟨 | **M3** Biblioteca de verdade | SQLite e pastas conectados; metadados e aceite pendentes |
-| 🟨 | **M4** Leitor de PDF | PDF por intervalos e páginas sob demanda; recursos e aceite pendentes |
-| ⬜ | **M7 · M8** Marcações e estatísticas reais | no PDF, com a sua leitura de verdade |
-| 🟨 | **M5** Leitor de EPUB · ⬜ **M6** mangá | motor EPUB implementado; validar Tauri; CBZ/CBR depois |
-| ⬜ | **M9 · M10** Backup, importar o KOFlibrary, v1.0 Linux | atualização assinada |
-| ⬜ | **M11–M13** Windows, Android, sincronia | e aí o KOFlibrary se aposenta |
-
-## Como é feito
-
-```mermaid
-flowchart LR
-  T["Telas<br/>(uma pasta por funcionalidade)"] --> E["Estado de cada<br/>funcionalidade"]
-  E --> S["Serviços<br/>cliente · log · eventos"]
-  S --> C{"Cliente"}
-  C -->|navegador| MEM["exemplo em memória"]
-  C -->|programa| RUST["núcleo Rust (Tauri)<br/>SQLite · pastas · formatos"]
-  T --> L["Leitores<br/>texto · PDF · EPUB · mangá"]
-```
-
-- **Regra de negócio só no Rust**; a interface mostra e pede.
-- **Cada funcionalidade isolada** na sua pasta: o lint barra uma importar a outra; elas conversam por eventos tipados.
-- **Dependências injetadas**: cada parte é testável sozinha, sem tela e sem Rust.
-- **Leitores como motores trocáveis**: PDF, EPUB e mangá entram sem mexer no resto.
-- **Depuração de verdade**: log central, rastro de cada comando e um inspetor (**Ctrl+Shift+D**).
-
-Detalhes em [docs/ARQUITETURA.md](docs/ARQUITETURA.md); receitas pra estender em [docs/EXPANDIR.md](docs/EXPANDIR.md).
-
-## Rodar
-
-Precisa de **Node 22+**, **pnpm 10** (`npm i -g pnpm@10.28.0`) e, pro programa, **Rust pelo rustup** e as bibliotecas
-do Tauri:
-
-```bash
-sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libsoup-3.0-dev
-```
-
-```bash
-sudo dnf install webkit2gtk4.1-devel gtk3-devel librsvg2-devel libsoup3-devel
-```
-
-(a primeira linha é pro Ubuntu/Debian, a segunda pro Fedora)
+Precisa de **Node 22+**, **pnpm 10** e, pro programa de verdade, **Rust (rustup)** e as bibliotecas do Tauri
+(Fedora: `sudo dnf install webkit2gtk4.1-devel gtk3-devel librsvg2-devel libsoup3-devel`; Ubuntu/Debian:
+`sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libsoup-3.0-dev`).
 
 ```bash
 pnpm install
+pnpm dev          # a interface no navegador, com a biblioteca de exemplo
+pnpm tauri dev    # o programa de verdade (Rust + interface)
+pnpm check        # formato, lint, tipos e testes   (pnpm check:rust pro Rust, pnpm e2e pros fluxos)
 ```
 
-| Comando | O que faz |
-|---|---|
-| `pnpm dev` | a interface no navegador (http://localhost:5180) com a biblioteca de exemplo |
-| `pnpm tauri dev` | o programa de verdade (Rust + interface) |
-| `pnpm pacote:linux` | gera `.deb` e AppImage em `target/release/bundle/` |
-| `pnpm check` | formato, lint (camadas e fronteiras), tipos e testes da interface |
-| `pnpm check:rust` | formato, clippy e testes do Rust |
-| `pnpm e2e` | testes de fluxo no Chromium, com prints em `apps/app/e2e/prints/` |
-| `sh ferramentas/fumaca-linux.sh` | abre o executável numa tela virtual e confere que a interface falou com o Rust |
+Os prints e o vídeo do site saem de `node ferramentas/vitrine/prints.mjs`; o site (`site/`) é publicado no GitHub
+Pages pelo workflow `site.yml`. Arquitetura, decisões e roadmap: [ARQUITETURA](docs/ARQUITETURA.md),
+[DECISOES](docs/DECISOES.md), [ROADMAP](docs/ROADMAP.md), [IDENTIDADE](docs/IDENTIDADE.md) e a
+[visão de produto](docs/FIERIUM_PRODUCT_VISION.md). Agentes de IA: comecem pelo [AGENTS.md](AGENTS.md).
 
-Atalhos: **Ctrl+K** busca tudo · **Ctrl+Shift+D** inspetor · `#/vitrine` cada componente sozinho (desenvolvimento) ·
-`?novo=1` recomeça o exemplo do zero.
+## Licença
 
-## Documentação
+Ainda em aberto (D14 em [docs/DECISOES.md](docs/DECISOES.md)): até o dono decidir, nenhum uso está liberado além
+de ler o código.
 
-| | |
-|---|---|
-| [Visão de produto](docs/FIERIUM_PRODUCT_VISION.md) | o que o Fierium quer ser, e a Alma dele |
-| [Identidade de Fieri](docs/IDENTIDADE.md) | o sonho, os mundos, o selo (próximo marco) |
-| [Plano de engenharia](docs/PLANO.md) | processo, qualidade, testes, versões, riscos |
-| [Roadmap](docs/ROADMAP.md) | os marcos em checklist |
-| [Arquitetura](docs/ARQUITETURA.md) · [Modelo de dados](docs/MODELO_DE_DADOS.md) · [Contratos](docs/CONTRATOS.md) | como é montado |
-| [Como estender](docs/EXPANDIR.md) | comando, funcionalidade ou formato novo; como achar defeito |
-| [Decisões](docs/DECISOES.md) · [Jornal](docs/JORNAL.md) | o porquê de cada escolha, e o que aconteceu em cada sessão |
-
-Agentes de IA: comecem por [AGENTS.md](AGENTS.md).
-
----
-
-<p align="center"><sub>Feito pelo Marcelo, no Linux. Nenhum livro, ROM ou arquivo protegido é distribuído aqui: os testes geram os seus próprios.</sub></p>
+O Fierium não inclui nem indica onde baixar livros protegidos; os clássicos do catálogo são de domínio público.
