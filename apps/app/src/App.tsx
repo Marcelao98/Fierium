@@ -21,6 +21,7 @@ import { TelaColecao, TelaColecoes } from './recursos/colecoes/Tela';
 import { TelaEstatisticas } from './recursos/estatisticas/Tela';
 import { Abertura } from './recursos/inicio/Abertura';
 import { TelaInicio } from './recursos/inicio/Tela';
+import { aquecerMotores } from './recursos/leitor/motores';
 import { Leitor } from './recursos/leitor/Tela';
 import { TelaNotas } from './recursos/notas/Tela';
 import { TelaObra } from './recursos/obra/Tela';
@@ -36,6 +37,12 @@ export function App({ recursos, estatisticasDisponiveis }: { recursos: Recursos;
   useEffect(() => {
     if (rota.tela !== 'colecao') document.documentElement.style.setProperty('--matiz', '255');
   }, [rota]);
+
+  // com o app parado e já aberto, baixa os leitores em segundo plano: o primeiro livro abre sem esperar o pacote
+  useEffect(() => {
+    const t = setTimeout(aquecerMotores, 3000);
+    return () => clearTimeout(t);
+  }, []);
 
   if (primeiraVez) return <Abertura abertura={recursos.abertura} />;
   return (

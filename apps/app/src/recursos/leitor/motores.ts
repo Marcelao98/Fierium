@@ -23,3 +23,11 @@ export const REGISTROS: readonly RegistroMotor[] = [
 ];
 
 export const abrirMotor = (fonte: FonteLeitura): Promise<MotorDeLeitura> => carregarMotor(REGISTROS, fonte);
+
+/** Carrega os pacotes dos leitores de arquivo (PDF e EPUB) sem montar nada; erros aqui não importam (abrir um livro tenta de novo). */
+export function aquecerMotores(): void {
+  for (const r of REGISTROS) {
+    if (r.nome === 'texto') continue;
+    void r.carregar().catch(() => undefined);
+  }
+}
