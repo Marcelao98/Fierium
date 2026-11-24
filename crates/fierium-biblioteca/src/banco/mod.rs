@@ -81,6 +81,21 @@ impl Biblioteca {
         })
     }
 
+    /// Uma conexão de escrita EXTRA, só pra o trabalho que mistura rede lenta com poucas gravações (o cache das
+    /// sugestões da Open Library): assim a rede não segura a conexão de escrita das outras telas. O SQLite serializa
+    /// as gravações das duas (cada uma dura milissegundos; `busy_timeout` cobre a espera).
+    pub fn abrir_auxiliar(&self) -> Result<Self, ErroFierium> {
+        let conexao = Connection::open(&self.caminho_db).map_err(bd)?;
+        conexao
+            .execute_batch("PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;")
+            .map_err(bd)?;
+        Ok(Self {
+            bd: conexao,
+            capas: self.capas.clone(),
+            caminho_db: self.caminho_db.clone(),
+        })
+    }
+
     /// O pool de conexões de leitura deste banco (guarda até `max` abertas; picos abrem conexões passageiras).
     pub fn leitores(&self, max: usize) -> Leitores {
         let (caminho, capas) = (self.caminho_db.clone(), self.capas.clone());
