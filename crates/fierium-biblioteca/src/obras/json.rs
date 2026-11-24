@@ -1,7 +1,29 @@
 //! A obra com as edições e os arquivos, e o JSON dela (formato do contrato TypeScript).
-use crate::metadados::{Metadados, Pessoa};
+use crate::metadados::Pessoa;
 use crate::url_da_capa;
+use serde::Deserialize;
 use serde_json::{json, Value};
+
+/// O pedaço dos metadados da edição que a estante mostra (o resto do JSON `meta` nem é construído).
+#[derive(Deserialize, Default)]
+#[serde(default)]
+pub(crate) struct MetaLeve {
+    pub idioma: String,
+    pub assuntos: Vec<String>,
+    pub paginas: Option<u32>,
+}
+
+/// O resumo leve de uma obra da estante: o que basta pra filtrar e ordenar sem carregar edições e arquivos.
+pub(crate) struct Resumo {
+    pub id: String,
+    pub titulo: String,
+    pub autor: String,
+    pub estado: String,
+    pub adicionada_em: i64,
+    pub ultima_leitura: Option<i64>,
+    /// quanto já foi lido (da edição lida por último)
+    pub fracao: f64,
+}
 
 pub(crate) struct ArquivoLinha {
     pub id: String,
@@ -16,7 +38,7 @@ pub(crate) struct EdicaoLinha {
     pub formato: String,
     pub arquivos: Vec<ArquivoLinha>,
     pub progresso: Option<(String, f64, i64)>,
-    pub meta: Option<Metadados>,
+    pub meta: Option<MetaLeve>,
     pub tem_capa: bool,
 }
 
@@ -75,23 +97,6 @@ pub(crate) struct ObraLinha {
 }
 
 impl ObraLinha {
-    /// Quanto já foi lido: o da edição lida por último.
-    pub fn fracao(&self) -> f64 {
-        self.edicoes
-            .iter()
-            .filter_map(|e| e.progresso.as_ref())
-            .max_by_key(|p| p.2)
-            .map_or(0.0, |p| p.1)
-    }
-
-    pub fn disponivel(&self) -> bool {
-        self.edicoes.iter().any(EdicaoLinha::disponivel)
-    }
-
-    pub fn tem_formato(&self, formato: &str) -> bool {
-        self.edicoes.iter().any(|e| e.disponivel() && e.formato == formato)
-    }
-
     pub fn json(&self) -> Value {
         let mut relacao = json!({
             "estado": self.estado,

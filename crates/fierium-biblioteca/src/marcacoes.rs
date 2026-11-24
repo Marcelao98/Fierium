@@ -68,19 +68,53 @@ impl Biblioteca {
             .ok_or_else(|| ErroFierium::NaoEncontrado(format!("marcação {id}")))
     }
 
-    pub(crate) fn todas_marcacoes(&self) -> Result<Vec<Value>, ErroFierium> {
+    /// Marcações vivas, da mais nova pra mais velha, com os filtros que o SQL faz (obra e cor) usando os índices
+    /// `marcacoes_obra_data` e `marcacoes_recentes`. `aceita(trecho, nota)` decide o texto (sem acento) ANTES de
+    /// montar o JSON; `max` corta cedo (a lista pode ter dezenas de milhares).
+    pub(crate) fn marcacoes_filtradas(
+        &self,
+        obra: Option<&str>,
+        cor: Option<&str>,
+        max: usize,
+        aceita: &dyn Fn(&str, &str) -> bool,
+    ) -> Result<Vec<Value>, ErroFierium> {
+        let onde_obra = if obra.is_some() {
+            "AND obra_id = ?1"
+        } else {
+            "AND ?1 IS NULL"
+        };
         let mut st = self
             .bd
-            .prepare(&format!(
-                "SELECT {COLUNAS} FROM marcacoes WHERE apagado_em IS NULL ORDER BY criada_em DESC, id DESC"
+            .prepare_cached(&format!(
+                "SELECT {COLUNAS} FROM marcacoes WHERE apagado_em IS NULL {onde_obra} AND (?2 IS NULL OR cor = ?2)
+                 ORDER BY criada_em DESC, id DESC"
             ))
             .map_err(bd)?;
-        let v = st
-            .query_map([], ler)
-            .map_err(bd)?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(bd)?;
+        let mut linhas = st.query(params![obra, cor]).map_err(bd)?;
+        let mut v = Vec::new();
+        while v.len() < max {
+            let Some(r) = linhas.next().map_err(bd)? else { break };
+            let trecho = r.get_ref(5).map_err(bd)?.as_str().unwrap_or("");
+            let nota = r.get_ref(7).map_err(bd)?.as_str_or_null().ok().flatten().unwrap_or("");
+            if aceita(trecho, nota) {
+                v.push(ler(r).map_err(bd)?);
+            }
+        }
         Ok(v)
+    }
+
+    /// A `n`-ésima (por id) das marcações vivas criadas antes de `limite`.
+    pub(crate) fn marcacao_velha(&self, limite: i64, n: i64) -> Result<Value, ErroFierium> {
+        self.bd
+            .query_row(
+                &format!(
+                    "SELECT {COLUNAS} FROM marcacoes WHERE apagado_em IS NULL AND criada_em < ?1
+                     ORDER BY id LIMIT 1 OFFSET ?2"
+                ),
+                params![limite, n],
+                ler,
+            )
+            .map_err(bd)
     }
 
     pub fn marcacoes_listar(&self, filtro: &Value) -> Result<Value, ErroFierium> {
@@ -88,17 +122,18 @@ impl Biblioteca {
         let cor = filtro["cor"].as_str().filter(|s| !s.is_empty());
         let busca = normalizar(filtro["texto"].as_str().unwrap_or(""));
         let palavras: Vec<&str> = busca.split_whitespace().collect();
-        let v = self.todas_marcacoes()?.into_iter().filter(|m| {
-            obra.is_none_or(|o| m["obraId"] == o) && cor.is_none_or(|c| m["cor"] == c) && {
-                let alvo = normalizar(&format!(
-                    "{} {}",
-                    m["trecho"].as_str().unwrap_or(""),
-                    m["nota"].as_str().unwrap_or("")
-                ));
+        let aceita = |trecho: &str, nota: &str| {
+            palavras.is_empty() || {
+                let alvo = normalizar(&format!("{trecho} {nota}"));
                 palavras.iter().all(|p| alvo.contains(p))
             }
-        });
-        Ok(Value::Array(v.collect()))
+        };
+        Ok(Value::Array(self.marcacoes_filtradas(
+            obra,
+            cor,
+            usize::MAX,
+            &aceita,
+        )?))
     }
 
     pub fn marcacao_criar(&self, a: &Value) -> Result<Value, ErroFierium> {
@@ -205,7 +240,22 @@ impl Biblioteca {
                 params![id, agora()],
             )
             .map_err(bd)?;
-        for m in self.todas_marcacoes()? {
+        // só as marcações que citam este id (busca de texto no SQLite, sem montar as 20 mil)
+        let citam: Vec<Value> = {
+            let mut st = self
+                .bd
+                .prepare(&format!(
+                    "SELECT {COLUNAS} FROM marcacoes WHERE apagado_em IS NULL AND instr(ligacoes, ?1) > 0"
+                ))
+                .map_err(bd)?;
+            let v = st
+                .query_map(params![format!("\"{id}\"")], ler)
+                .map_err(bd)?
+                .collect::<Result<_, _>>()
+                .map_err(bd)?;
+            v
+        };
+        for m in citam {
             let ligs = m["ligacoes"].as_array().cloned().unwrap_or_default();
             if ligs.iter().any(|l| l == id) {
                 let resto: Vec<&Value> = ligs.iter().filter(|l| *l != id).collect();

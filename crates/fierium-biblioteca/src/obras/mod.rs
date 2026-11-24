@@ -14,5 +14,5 @@ mod testes;
 pub(crate) use chave::achar_obra;
 pub use chave::{chave_do_autor, chave_do_titulo};
 pub(crate) use escrita::{chaves, completar_obra, criadores_json, inserir_edicao, inserir_obra, primeiro_autor};
-pub(crate) use json::ObraLinha;
+pub(crate) use json::Resumo;
 pub(crate) use relacao::{absorver_relacao, ler_relacao};

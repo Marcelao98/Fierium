@@ -62,21 +62,28 @@ pub fn url_da_capa(edicao_id: &str) -> String {
     }
 }
 
-/// Minúsculas e sem acento, pra busca.
+/// Minúsculas e sem acento, pra busca. (ASCII é o caminho rápido: roda milhares de vezes por consulta.)
 pub fn normalizar(s: &str) -> String {
-    s.chars()
-        .flat_map(char::to_lowercase)
-        .map(|c| match c {
-            'á' | 'à' | 'â' | 'ã' | 'ä' | 'å' => 'a',
-            'é' | 'è' | 'ê' | 'ë' => 'e',
-            'í' | 'ì' | 'î' | 'ï' => 'i',
-            'ó' | 'ò' | 'ô' | 'õ' | 'ö' => 'o',
-            'ú' | 'ù' | 'û' | 'ü' => 'u',
-            'ç' => 'c',
-            'ñ' => 'n',
-            c => c,
-        })
-        .collect()
+    let mut saida = String::with_capacity(s.len());
+    for c in s.chars() {
+        if c.is_ascii() {
+            saida.push(c.to_ascii_lowercase());
+            continue;
+        }
+        for c in c.to_lowercase() {
+            saida.push(match c {
+                'á' | 'à' | 'â' | 'ã' | 'ä' | 'å' => 'a',
+                'é' | 'è' | 'ê' | 'ë' => 'e',
+                'í' | 'ì' | 'î' | 'ï' => 'i',
+                'ó' | 'ò' | 'ô' | 'õ' | 'ö' => 'o',
+                'ú' | 'ù' | 'û' | 'ü' => 'u',
+                'ç' => 'c',
+                'ñ' => 'n',
+                c => c,
+            });
+        }
+    }
+    saida
 }
 
 /// (autor, título) a partir do nome do arquivo.
