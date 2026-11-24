@@ -1,0 +1,783 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Fierium — a sua biblioteca, com o mapa de Fieri</title>
+    <meta
+      name="description"
+      content="Biblioteca pessoal com leitor de PDF e EPUB, 100 temas de página, notas, citações em imagem e catálogo de clássicos. Offline, sem conta. Pra Windows e Linux."
+    />
+    <meta name="theme-color" content="#0a0f1e" />
+    <link rel="canonical" href="https://marcelao98.github.io/Fierium/" />
+    <link rel="icon" type="image/svg+xml" href="selo.svg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta property="og:site_name" content="Fierium" />
+    <meta property="og:title" content="Fierium — tudo que já foi imaginado está no mapa de Fieri" />
+    <meta
+      property="og:description"
+      content="Biblioteca pessoal com leitor de PDF e EPUB, 100 temas de página, notas e citações. Offline, sem conta."
+    />
+    <meta property="og:url" content="https://marcelao98.github.io/Fierium/" />
+    <meta property="og:image" content="https://marcelao98.github.io/Fierium/imagens/og.jpg" />
+    <meta property="og:image:width" content="1440" />
+    <meta property="og:image:height" content="900" />
+    <meta
+      property="og:image:alt"
+      content="Tela inicial do Fierium: céu noturno com astrolábio e a obra que você está lendo"
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link
+      rel="preload"
+      href="fontes/cormorant-garamond-latin-wght-normal.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <style>
+      @font-face {
+        font-family: 'Cormorant Garamond';
+        src: url('fontes/cormorant-garamond-latin-wght-normal.woff2') format('woff2');
+        font-weight: 300 700;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Cormorant Garamond';
+        src: url('fontes/cormorant-garamond-latin-wght-italic.woff2') format('woff2');
+        font-weight: 300 700;
+        font-style: italic;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Cinzel';
+        src: url('fontes/cinzel-latin-wght-normal.woff2') format('woff2');
+        font-weight: 400 900;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: 'Inter';
+        src: url('fontes/inter-latin-wght-normal.woff2') format('woff2');
+        font-weight: 100 900;
+        font-display: swap;
+      }
+
+      :root {
+        --fundo: #0a0f1e;
+        --fundo-2: #0f1628;
+        --fundo-3: #162036;
+        --texto: #efe4c8;
+        --texto-2: #c2b48f;
+        --texto-3: #a39776;
+        --luz: #e2b866;
+        --borda: rgba(226, 184, 102, 0.22);
+        --borda-forte: rgba(226, 184, 102, 0.5);
+        --titulo: 'Cormorant Garamond', Georgia, serif;
+        --rotulo: 'Cinzel', Georgia, serif;
+        --ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        background: var(--fundo);
+        color: var(--texto);
+        font-family: var(--ui);
+        font-size: 1rem;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: var(--luz);
+      }
+      img,
+      video {
+        max-width: 100%;
+        height: auto;
+        display: block;
+      }
+      .miolo {
+        width: min(1120px, 100% - 32px);
+        margin-inline: auto;
+      }
+      .rotulo {
+        font-family: var(--rotulo);
+        font-size: 0.78rem;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--luz);
+        margin: 0 0 12px;
+      }
+      h1,
+      h2,
+      h3 {
+        font-family: var(--titulo);
+        font-weight: 500;
+        line-height: 1.1;
+        margin: 0;
+      }
+      h2 {
+        font-size: clamp(2rem, 5vw, 3rem);
+        margin-bottom: 16px;
+      }
+      h3 {
+        font-size: 1.55rem;
+        margin-bottom: 6px;
+      }
+      em {
+        color: var(--luz);
+      }
+
+      /* o céu: estrelas feitas só de gradientes (sem imagem) */
+      .ceu {
+        position: relative;
+        isolation: isolate;
+      }
+      .ceu::before {
+        content: '';
+        position: absolute;
+        inset: 0 0 auto 0;
+        height: 900px;
+        z-index: -1;
+        pointer-events: none;
+        background:
+          radial-gradient(1.2px 1.2px at 12% 18%, #efe4c8cc, transparent),
+          radial-gradient(1px 1px at 78% 12%, #efe4c899, transparent),
+          radial-gradient(1.4px 1.4px at 90% 60%, #efe4c8bb, transparent),
+          radial-gradient(1px 1px at 30% 72%, #efe4c899, transparent),
+          radial-gradient(1.2px 1.2px at 55% 38%, #efe4c8aa, transparent),
+          radial-gradient(1px 1px at 5% 88%, #efe4c899, transparent),
+          radial-gradient(ellipse at 80% 0%, #1b1a4a 0%, transparent 55%);
+      }
+
+      header.topo {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 0;
+      }
+      .marca {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-family: var(--rotulo);
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        font-size: 0.95rem;
+        color: var(--texto);
+        text-decoration: none;
+      }
+      .marca img {
+        width: 36px;
+        height: 36px;
+      }
+      nav.topo-links {
+        display: flex;
+        gap: 20px;
+        font-size: 0.92rem;
+      }
+      nav.topo-links a {
+        color: var(--texto-2);
+        text-decoration: none;
+      }
+      nav.topo-links a:hover {
+        color: var(--luz);
+      }
+
+      .heroi {
+        padding: 40px 0 72px;
+        text-align: center;
+      }
+      .heroi .selo {
+        width: 104px;
+        height: 104px;
+        margin: 0 auto 20px;
+      }
+      .heroi h1 {
+        font-size: clamp(2.6rem, 8vw, 5rem);
+        max-width: 16ch;
+        margin: 0 auto 20px;
+      }
+      .heroi p.sub {
+        font-family: var(--titulo);
+        font-style: italic;
+        font-size: clamp(1.2rem, 3vw, 1.55rem);
+        color: var(--texto-2);
+        max-width: 38ch;
+        margin: 0 auto 28px;
+      }
+      .acoes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        justify-content: center;
+      }
+      .botao {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 24px;
+        border: 1px solid var(--borda-forte);
+        border-radius: 3px;
+        color: var(--texto);
+        text-decoration: none;
+        font-family: var(--rotulo);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-size: 0.82rem;
+        background: rgba(226, 184, 102, 0.06);
+        transition:
+          background 0.16s,
+          border-color 0.16s;
+      }
+      .botao:hover,
+      .botao:focus-visible {
+        background: rgba(226, 184, 102, 0.18);
+        border-color: var(--luz);
+      }
+      .botao.principal {
+        background: var(--luz);
+        color: #1a1306;
+        border-color: var(--luz);
+        font-weight: 700;
+      }
+      .botao.principal:hover,
+      .botao.principal:focus-visible {
+        background: #f0cd86;
+      }
+      :focus-visible {
+        outline: 2px solid var(--luz);
+        outline-offset: 3px;
+      }
+      .nota-peq {
+        margin: 14px 0 0;
+        font-size: 0.88rem;
+        color: var(--texto-3);
+      }
+      .moldura {
+        border: 1px solid var(--borda-forte);
+        border-radius: 4px;
+        padding: 6px;
+        background: var(--fundo-2);
+        box-shadow:
+          0 0 0 5px var(--fundo),
+          0 0 0 6px var(--borda),
+          0 12px 28px rgba(0, 0, 0, 0.45);
+      }
+      .moldura img,
+      .moldura video {
+        border-radius: 2px;
+        width: 100%;
+      }
+      .heroi .moldura {
+        margin: 56px auto 0;
+        max-width: 960px;
+      }
+
+      section {
+        padding: 72px 0;
+      }
+      section.faixa {
+        background: var(--fundo-2);
+        border-block: 1px solid var(--borda);
+      }
+      .intro {
+        max-width: 60ch;
+        color: var(--texto-2);
+        font-size: 1.08rem;
+        margin: 0 0 40px;
+      }
+
+      .recurso {
+        display: grid;
+        grid-template-columns: 1fr 1.35fr;
+        gap: 48px;
+        align-items: center;
+        margin-bottom: 80px;
+      }
+      .recurso:last-child {
+        margin-bottom: 0;
+      }
+      .recurso:nth-child(even) .texto {
+        order: 2;
+      }
+      .recurso p {
+        color: var(--texto-2);
+        margin: 0;
+      }
+      .recurso .numero {
+        font-family: var(--rotulo);
+        color: var(--luz);
+        letter-spacing: 0.2em;
+        font-size: 0.8rem;
+        margin-bottom: 8px;
+      }
+
+      .grade-privacidade {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+        margin-top: 32px;
+      }
+      .cartao {
+        border: 1px solid var(--borda);
+        border-radius: 4px;
+        padding: 22px;
+        background: rgba(226, 184, 102, 0.035);
+      }
+      .cartao h3 {
+        font-size: 1.4rem;
+      }
+      .cartao p {
+        margin: 0;
+        color: var(--texto-2);
+        font-size: 0.97rem;
+      }
+
+      .baixar-grade {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 24px;
+      }
+      .baixar-grade .cartao {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .baixar-grade .acoes {
+        justify-content: flex-start;
+      }
+      ol.passos {
+        margin: 0;
+        padding-left: 1.2em;
+        color: var(--texto-2);
+      }
+      ol.passos li {
+        margin-bottom: 8px;
+      }
+      code {
+        font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+        font-size: 0.88em;
+        background: rgba(226, 184, 102, 0.1);
+        padding: 1px 6px;
+        border-radius: 3px;
+        color: var(--texto);
+      }
+
+      .tocar {
+        position: relative;
+        display: block;
+        width: 100%;
+        padding: 0;
+        border: 0;
+        background: none;
+        cursor: pointer;
+      }
+      .tocar-icone {
+        position: absolute;
+        inset: 50% auto auto 50%;
+        transform: translate(-50%, -50%);
+        width: 84px;
+        height: 84px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        padding-left: 6px;
+        font-size: 1.9rem;
+        color: #1a1306;
+        background: var(--luz);
+        box-shadow: 0 0 0 6px rgba(10, 15, 30, 0.55);
+      }
+      .tocar:hover .tocar-icone,
+      .tocar:focus-visible .tocar-icone {
+        background: #f0cd86;
+      }
+      footer {
+        padding: 40px 0 56px;
+        border-top: 1px solid var(--borda);
+        text-align: center;
+        color: var(--texto-3);
+        font-size: 0.92rem;
+      }
+      footer .frase {
+        font-family: var(--titulo);
+        font-style: italic;
+        font-size: 1.3rem;
+        color: var(--texto-2);
+        margin-bottom: 12px;
+      }
+
+      @media (max-width: 800px) {
+        .recurso {
+          grid-template-columns: 1fr;
+          gap: 20px;
+          margin-bottom: 56px;
+        }
+        .recurso:nth-child(even) .texto {
+          order: 0;
+        }
+        section {
+          padding: 52px 0;
+        }
+        nav.topo-links a:not(.botao-topo) {
+          display: none;
+        }
+        .botao {
+          width: 100%;
+          justify-content: center;
+        }
+        .acoes {
+          flex-direction: column;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="ceu">
+      <div class="miolo">
+        <header class="topo">
+          <a class="marca" href="#"><img decoding="async" src="selo.svg" alt="" width="36" height="36" />Fierium</a>
+          <nav class="topo-links" aria-label="Seções">
+            <a href="#recursos">Recursos</a>
+            <a href="#privacidade">Privacidade</a>
+            <a class="botao-topo" href="#baixar">Baixar</a>
+          </nav>
+        </header>
+
+        <main>
+          <div class="heroi">
+            <img
+              decoding="async"
+              class="selo"
+              src="selo.svg"
+              alt="Selo de Fieri: um astrolábio com a lua e a centelha"
+              width="104"
+              height="104"
+            />
+            <p class="rotulo">Biblioteca pessoal · Windows e Linux</p>
+            <h1>Tudo que já foi <em>imaginado</em> está no mapa de Fieri.</h1>
+            <p class="sub">Os seus livros, o seu ritmo, o seu céu. Um leitor bonito que guarda tudo só com você.</p>
+            <div class="acoes">
+              <a
+                class="botao principal"
+                id="baixar-windows"
+                href="https://github.com/Marcelao98/Fierium/releases/latest"
+                >Baixar pra Windows</a
+              >
+              <a class="botao" id="baixar-linux" href="https://github.com/Marcelao98/Fierium/releases/latest"
+                >Baixar pra Linux</a
+              >
+            </div>
+            <p class="nota-peq">Grátis, sem conta, funciona sem internet.</p>
+            <div class="moldura">
+              <img
+                decoding="async"
+                src="imagens/inicio.webp"
+                alt="Início do Fierium: a frase do mapa de Fieri, a obra que você está lendo com o progresso e uma citação que você marcou"
+                width="1440"
+                height="900"
+                fetchpriority="high"
+              />
+            </div>
+          </div>
+        </main>
+      </div>
+
+      <section id="recursos">
+        <div class="miolo">
+          <p class="rotulo">O que ele faz</p>
+          <h2>Feito pra quem lê de verdade</h2>
+          <p class="intro">Seis coisas que o Fierium faz bem, sem pedir cadastro nem nuvem.</p>
+
+          <div class="recurso">
+            <div class="texto">
+              <p class="numero">I</p>
+              <h3>Lê PDF e EPUB</h3>
+              <p>
+                Os dois formatos no mesmo leitor, com o progresso salvo e o tempo que falta no seu ritmo. Uma obra pode
+                ter várias edições e formatos juntos. O Fierium nunca altera os seus arquivos.
+              </p>
+            </div>
+            <div class="moldura">
+              <img
+                decoding="async"
+                src="imagens/leitor.webp"
+                alt="O leitor com a página em pergaminho e trechos marcados"
+                width="1440"
+                height="900"
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          <div class="recurso">
+            <div class="texto">
+              <p class="numero">II</p>
+              <h3>100 temas de página</h3>
+              <p>
+                Papel, sépia, noite, tinta, e o céu de Fieri. Cor do papel e da letra livres, e você salva os seus
+                próprios temas. Vale pro PDF e pro EPUB, e há modo mergulho pra sumir com tudo.
+              </p>
+            </div>
+            <div class="moldura">
+              <img
+                decoding="async"
+                src="imagens/temas.webp"
+                alt="Painel com cerca de cem temas de página, claros, escuros e do Céu de Fieri"
+                width="1440"
+                height="900"
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          <div class="recurso">
+            <div class="texto">
+              <p class="numero">III</p>
+              <h3>Anota e guarda citações</h3>
+              <p>
+                Marque em cores, escreva notas e ligue um trecho a outro. Tudo vira uma página de citações que você
+                copia em texto simples ou em ABNT, ou exporta em Markdown.
+              </p>
+            </div>
+            <div class="moldura">
+              <img
+                decoding="async"
+                src="imagens/notas.webp"
+                alt="A página de Notas com as citações que você marcou"
+                width="1440"
+                height="900"
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          <div class="recurso">
+            <div class="texto">
+              <p class="numero">IV</p>
+              <h3>Catálogo de clássicos</h3>
+              <p>
+                Em Descobrir aparecem obras em domínio público do Projeto Gutenberg, em cinza. Um clique em “Baixar e
+                ler” e a obra vira colorida na sua biblioteca. A internet só é usada quando você pede, e dá pra
+                desligar.
+              </p>
+            </div>
+            <div class="moldura">
+              <img
+                decoding="async"
+                src="imagens/descobrir.webp"
+                alt="Descobrir: prateleiras de clássicos brasileiros, fantasia, filosofia e poesia"
+                width="1440"
+                height="900"
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          <div class="recurso">
+            <div class="texto">
+              <p class="numero">V</p>
+              <h3>Capas bonitas</h3>
+              <p>
+                Livro sem capa não fica feio: o Fierium desenha uma, com a moldura e a constelação do gênero da obra.
+                Organize em coleções, busque por tudo e continue de onde parou.
+              </p>
+            </div>
+            <div class="moldura">
+              <img
+                decoding="async"
+                src="imagens/biblioteca.webp"
+                alt="Biblioteca em grade, cada obra com a sua capa desenhada"
+                width="1440"
+                height="900"
+                loading="lazy"
+              />
+            </div>
+          </div>
+
+          <div class="recurso">
+            <div class="texto">
+              <p class="numero">VI</p>
+              <h3>Cartão de citação</h3>
+              <p>
+                Escolheu uma frase que não quer esquecer? Vire imagem 1080×1350, o tamanho do Instagram, em três
+                estilos, pronta pra copiar ou salvar.
+              </p>
+            </div>
+            <div class="moldura">
+              <img
+                decoding="async"
+                src="imagens/cartao.webp"
+                alt="Janela do cartão de citação em estilo Céu antigo"
+                width="1440"
+                height="900"
+                loading="lazy"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="faixa" aria-labelledby="titulo-video">
+        <div class="miolo">
+          <p class="rotulo">Em 17 segundos</p>
+          <h2 id="titulo-video">Abrir, ler, marcar, citar</h2>
+          <div class="moldura" id="caixa-video">
+            <button class="tocar" type="button" id="tocar" aria-label="Tocar o vídeo de 17 segundos">
+              <img decoding="async" src="imagens/leitor.webp" alt="" width="1440" height="900" loading="lazy" />
+              <span class="tocar-icone" aria-hidden="true">&#9654;</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="privacidade">
+        <div class="miolo">
+          <p class="rotulo">Privacidade</p>
+          <h2>Os seus livros ficam com você</h2>
+          <div class="grade-privacidade">
+            <div class="cartao">
+              <h3>Sem conta</h3>
+              <p>Instalou, abriu, leu. Ninguém pede e-mail, senha ou cadastro.</p>
+            </div>
+            <div class="cartao">
+              <h3>Funciona offline</h3>
+              <p>
+                Ler, anotar e buscar não precisam de internet. Só o catálogo de clássicos usa a rede, quando você pede.
+              </p>
+            </div>
+            <div class="cartao">
+              <h3>Seus dados no seu computador</h3>
+              <p>Notas, marcações e progresso ficam em arquivos da sua máquina. Nada vai pra nuvem.</p>
+            </div>
+            <div class="cartao">
+              <h3>Seus arquivos intactos</h3>
+              <p>O Fierium só lê os seus livros. Nunca muda nem apaga o que está na sua pasta.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="faixa" id="baixar">
+        <div class="miolo">
+          <p class="rotulo">Baixar</p>
+          <h2>Escolha o seu sistema</h2>
+          <p class="intro">
+            Sempre a versão mais nova, direto da página de Releases do projeto. Depois de instalado, ele avisa sozinho
+            quando sai versão nova.
+          </p>
+          <div class="baixar-grade">
+            <div class="cartao">
+              <h3>Windows</h3>
+              <div class="acoes">
+                <a class="botao principal" id="dl-exe" href="https://github.com/Marcelao98/Fierium/releases/latest"
+                  >Instalador (.exe)</a
+                >
+                <a class="botao" id="dl-msi" href="https://github.com/Marcelao98/Fierium/releases/latest">.msi</a>
+              </div>
+              <ol class="passos">
+                <li>Baixe o arquivo que termina em <code>-setup.exe</code> e dê dois cliques.</li>
+                <li>
+                  Se aparecer a tela azul <strong>“O Windows protegeu o computador”</strong> (SmartScreen), clique em
+                  <strong>Mais informações</strong> e depois em <strong>Executar assim mesmo</strong>. Isso acontece
+                  porque o instalador ainda não tem o certificado pago da Microsoft, não porque tenha algo errado.
+                </li>
+                <li>Siga o instalador (em português) e abra pelo menu Iniciar.</li>
+              </ol>
+            </div>
+            <div class="cartao">
+              <h3>Linux</h3>
+              <div class="acoes">
+                <a class="botao principal" id="dl-appimage" href="https://github.com/Marcelao98/Fierium/releases/latest"
+                  >AppImage</a
+                >
+                <a class="botao" id="dl-rpm" href="https://github.com/Marcelao98/Fierium/releases/latest">.rpm</a>
+                <a class="botao" id="dl-deb" href="https://github.com/Marcelao98/Fierium/releases/latest">.deb</a>
+              </div>
+              <ol class="passos">
+                <li><strong>AppImage:</strong> <code>chmod +x Fierium_*.AppImage</code> e rode. Não instala nada.</li>
+                <li><strong>Fedora, openSUSE:</strong> <code>sudo dnf install ./Fierium-*.rpm</code></li>
+                <li><strong>Debian, Ubuntu, Mint:</strong> <code>sudo apt install ./Fierium_*.deb</code></li>
+              </ol>
+            </div>
+          </div>
+          <p class="nota-peq">
+            Os botões levam ao arquivo da versão mais nova; se não abrir direto, use a
+            <a href="https://github.com/Marcelao98/Fierium/releases/latest">página de Releases</a>.
+          </p>
+        </div>
+      </section>
+
+      <footer>
+        <div class="miolo">
+          <div class="frase">Cada obra é uma estrela; cada série, uma constelação.</div>
+          <p>
+            <a href="https://github.com/Marcelao98/Fierium">Código no GitHub</a> ·
+            <a href="https://github.com/Marcelao98/Fierium/issues/new">Mandar sugestão ou problema</a> ·
+            <a href="https://github.com/Marcelao98/Fierium/blob/main/CHANGELOG.md">Novidades</a>
+          </p>
+          <p>
+            O Fierium não inclui nem indica onde baixar livros protegidos. Os clássicos do catálogo são de domínio
+            público.
+          </p>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      // O vídeo só é carregado quando a pessoa toca (a página abre leve).
+      document.getElementById('tocar').addEventListener('click', function () {
+        var v = document.createElement('video');
+        v.controls = true;
+        v.autoplay = true;
+        v.muted = true;
+        v.playsInline = true;
+        v.width = 1280;
+        v.height = 800;
+        v.innerHTML =
+          '<source src="imagens/fluxo.mp4" type="video/mp4" /><source src="imagens/fluxo.webm" type="video/webm" />';
+        document.getElementById('caixa-video').replaceChildren(v);
+      });
+      // Melhora os botões: aponta direto pro arquivo da versão mais nova (a API do GitHub é pública).
+      // Sem isso (ou se falhar), os botões continuam levando à página de Releases.
+      (function () {
+        var casar = {
+          'baixar-windows': /-setup\.exe$/,
+          'dl-exe': /-setup\.exe$/,
+          'dl-msi': /\.msi$/,
+          'baixar-linux': /\.AppImage$/,
+          'dl-appimage': /\.AppImage$/,
+          'dl-rpm': /\.rpm$/,
+          'dl-deb': /\.deb$/,
+        };
+        fetch('https://api.github.com/repos/Marcelao98/Fierium/releases/latest')
+          .then(function (r) {
+            return r.ok ? r.json() : null;
+          })
+          .then(function (rel) {
+            if (!rel || !rel.assets) return;
+            Object.keys(casar).forEach(function (id) {
+              var a = rel.assets.find(function (x) {
+                return casar[id].test(x.name);
+              });
+              var el = document.getElementById(id);
+              if (a && el) el.href = a.browser_download_url;
+            });
+          })
+          .catch(function () {
+            // sem rede ou limite da API: ficam os links pra página de Releases
+          });
+      })();
+    </script>
+  </body>
+</html>
