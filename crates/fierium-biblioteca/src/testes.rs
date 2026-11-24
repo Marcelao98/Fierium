@@ -129,3 +129,58 @@ fn progresso_alimenta_o_limiar() {
         "ARGUMENTO_INVALIDO"
     );
 }
+
+#[test]
+fn conexao_de_leitura_le_durante_uma_escrita_aberta_e_recusa_escrever() {
+    let (_d, l, mut b) = montar();
+    livro(&l.path().join("Autor - Um.pdf"), "um");
+    b.pastas_adicionar(l.path().to_str().unwrap()).unwrap();
+    b.varrer().unwrap();
+    let pool = b.leitores(2);
+    // uma transação de escrita aberta e não commitada na conexão de escrita: a leitura segue (WAL)
+    let tx = b.bd.unchecked_transaction().unwrap();
+    tx.execute("UPDATE obras SET titulo = 'Mudado'", []).unwrap();
+    let leitor = pool.emprestar().unwrap();
+    let v = leitor.obras_listar(&json!({})).unwrap();
+    assert_eq!(
+        v[0]["titulo"], "Um",
+        "a leitura vê o último estado commitado, não a escrita em andamento"
+    );
+    // e uma conexão só-leitura nunca escreve
+    assert!(leitor.bd.execute("UPDATE obras SET titulo = 'X'", []).is_err());
+    assert!(leitor.progresso_salvar("qualquer", "1", 0.5).is_err());
+    drop(leitor);
+    tx.commit().unwrap();
+    assert_eq!(
+        pool.emprestar().unwrap().obras_listar(&json!({})).unwrap()[0]["titulo"],
+        "Mudado"
+    );
+    assert_eq!(pool.livres(), 1, "a conexão voltou pro pool");
+}
+
+#[test]
+fn estante_em_paginas_mantem_a_ordem() {
+    let (_d, l, mut b) = montar();
+    for nome in ["E", "C", "A", "D", "B"] {
+        livro(&l.path().join(format!("Autor - {nome}.pdf")), nome);
+    }
+    b.pastas_adicionar(l.path().to_str().unwrap()).unwrap();
+    b.varrer().unwrap();
+    let titulos = |f: Value| -> Vec<String> {
+        b.obras_listar(&f)
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|o| o["titulo"].as_str().unwrap().to_string())
+            .collect()
+    };
+    assert_eq!(titulos(json!({ "ordem": "titulo" })), ["A", "B", "C", "D", "E"]);
+    assert_eq!(titulos(json!({ "ordem": "titulo", "limite": 2 })), ["A", "B"]);
+    assert_eq!(
+        titulos(json!({ "ordem": "titulo", "limite": 2, "deslocamento": 2 })),
+        ["C", "D"]
+    );
+    assert_eq!(titulos(json!({ "ordem": "titulo", "deslocamento": 4 })), ["E"]);
+    assert!(titulos(json!({ "ordem": "titulo", "deslocamento": 9 })).is_empty());
+}

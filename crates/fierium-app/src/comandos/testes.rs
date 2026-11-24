@@ -357,3 +357,21 @@ fn na_rede_de_verdade() {
         );
     }
 }
+
+#[test]
+fn cada_comando_tem_uma_area_so_e_todos_sao_atendidos() {
+    let lista = comandos_do_rust();
+    let mut unicos = lista.clone();
+    unicos.sort_unstable();
+    unicos.dedup();
+    assert_eq!(unicos.len(), lista.len(), "comando declarado em duas áreas");
+    let (_d, c) = contexto();
+    for cmd in lista {
+        // com argumentos vazios, o comando pode falhar por argumento, mas nunca por "não sei o que é isso"
+        let r = chamar(&c, cmd, json!({}));
+        assert!(
+            r.as_ref().err().is_none_or(|e| e.codigo() != "COMANDO_DESCONHECIDO"),
+            "{cmd} não foi despachado"
+        );
+    }
+}
