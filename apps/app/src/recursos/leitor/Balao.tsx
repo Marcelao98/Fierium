@@ -1,7 +1,7 @@
 // O balão de marcação: aparece sobre um trecho selecionado (escolher a cor = marcar) ou sobre uma marcação existente
 // (mudar a cor, escrever a nota, apagar). É o mesmo pra todos os formatos: o motor só avisa onde está o trecho.
 import type { CorMarcacao, Marcacao } from '@fierium/contratos';
-import type { Caixa } from '@fierium/leitores';
+import type { Caixa } from '@fierium/leitor-base';
 import { Icone } from '@fierium/ui';
 import type { CSSProperties } from 'react';
 import { useEffect, useRef, useState } from 'react';

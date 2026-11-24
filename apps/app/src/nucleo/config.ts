@@ -1,7 +1,7 @@
 // As preferências (tema, movimento, leitura, cores das marcações). Infraestrutura do app: a casca e as
 // funcionalidades leem daqui; só os Ajustes e o leitor mudam.
 import type { Config } from '@fierium/contratos';
-import { completarLeitura } from '@fierium/leitores';
+import { completarLeitura } from '@fierium/leitor-base';
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import type { Servicos } from './servicos';
 

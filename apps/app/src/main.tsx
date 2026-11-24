@@ -75,7 +75,7 @@ async function iniciar(raiz: HTMLElement) {
     eventos: app.servicos.eventos,
     log,
     lendo: () => !!useNavegacao.getState().leitura,
-    desenhar: async (f) => (await import('@fierium/leitores')).desenharCapaPdf(f),
+    desenhar: async (f) => (await import('@fierium/leitor-pdf')).desenharCapaPdf(f),
   });
   const desenharCapas = () => void capas.varrer().catch((e: unknown) => log.registrar('aviso', 'capas', String(e)));
   app.servicos.eventos.ouvir('biblioteca-mudou', desenharCapas);

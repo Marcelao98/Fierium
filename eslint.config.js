@@ -38,21 +38,93 @@ export default tseslint.config(
   {
     files: ['packages/cliente/**'],
     rules: proibir([
-      ['@fierium/ui', '@fierium/leitores', '@fierium/app', 'react', 'react-dom', 'zustand'],
+      ['@fierium/ui', '@fierium/leitor-*', '@fierium/app', 'react', 'react-dom', 'zustand'],
       'o cliente não conhece a interface',
     ]),
   },
   {
-    files: ['packages/leitores/**'],
+    // a tomada e os modos: sem React, sem os leitores dos formatos, sem o núcleo (só o contrato e o DOM)
+    files: ['packages/leitor-base/**'],
     rules: proibir([
-      ['@fierium/cliente', '@fierium/ui', '@fierium/app', 'react', 'react-dom', 'zustand'],
-      'motor de leitura só conhece o contrato e o DOM',
+      [
+        '@fierium/cliente',
+        '@fierium/ui',
+        '@fierium/app',
+        '@fierium/leitor-pdf',
+        '@fierium/leitor-epub',
+        '@fierium/leitor-texto',
+        'pdfjs-dist',
+        'pdfjs-dist/*',
+        'epubjs',
+        'dompurify',
+        'react',
+        'react-dom',
+        'zustand',
+      ],
+      'o leitor-base só conhece o contrato e o DOM: nada de formato, de núcleo nem de React',
+    ]),
+  },
+  {
+    // cada leitor de formato conhece só o leitor-base (um leitor não importa outro) e o DOM
+    files: ['packages/leitor-pdf/**'],
+    rules: proibir([
+      [
+        '@fierium/cliente',
+        '@fierium/ui',
+        '@fierium/app',
+        '@fierium/leitor-epub',
+        '@fierium/leitor-texto',
+        'epubjs',
+        'dompurify',
+        'react',
+        'react-dom',
+        'zustand',
+      ],
+      'o leitor de PDF só conhece o leitor-base: um leitor não importa outro nem o núcleo',
+    ]),
+  },
+  {
+    files: ['packages/leitor-epub/**'],
+    rules: proibir([
+      [
+        '@fierium/cliente',
+        '@fierium/ui',
+        '@fierium/app',
+        '@fierium/leitor-pdf',
+        '@fierium/leitor-texto',
+        'pdfjs-dist',
+        'pdfjs-dist/*',
+        'react',
+        'react-dom',
+        'zustand',
+      ],
+      'o leitor de EPUB só conhece o leitor-base: um leitor não importa outro nem o núcleo',
+    ]),
+  },
+  {
+    files: ['packages/leitor-texto/**'],
+    rules: proibir([
+      [
+        '@fierium/cliente',
+        '@fierium/ui',
+        '@fierium/app',
+        '@fierium/leitor-pdf',
+        '@fierium/leitor-epub',
+        'pdfjs-dist',
+        'pdfjs-dist/*',
+        'epubjs',
+        'dompurify',
+        'react',
+        'react-dom',
+        'zustand',
+      ],
+      'o leitor de texto só conhece o leitor-base: um leitor não importa outro nem o núcleo',
     ]),
   },
   {
     files: ['packages/ui/**'],
     rules: proibir([
-      ['@fierium/cliente', '@fierium/leitores', '@fierium/app', 'zustand'],
+      ['@fierium/cliente', '@fierium/leitor-*', '@fierium/app', 'zustand'],
       'a ui (design system) não conhece dados nem estado',
     ]),
   },

@@ -1,7 +1,8 @@
 // Página de desenvolvimento do motor de EPUB (?dev=epub&url=...): monta só o motor, sem biblioteca nem núcleo.
 // Serve pra olhar um EPUB de verdade e pro teste e2e. Expõe window.__epub { posicao, fracao, erro, toques }.
 import type { ConfigLeitura } from '@fierium/contratos';
-import { motorEpub, PAGINA_PADRAO, type SessaoLeitura } from '@fierium/leitores';
+import { PAGINA_PADRAO, type SessaoLeitura } from '@fierium/leitor-base';
+import { motorEpub } from '@fierium/leitor-epub';
 import { useEffect, useRef } from 'react';
 
 const APARENCIA: ConfigLeitura = {
