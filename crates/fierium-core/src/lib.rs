@@ -4,5 +4,6 @@ pub mod erro;
 pub mod info;
 pub mod intervalo;
 pub mod log;
+pub mod pool;
 
 pub use erro::{ErroContrato, ErroFierium};

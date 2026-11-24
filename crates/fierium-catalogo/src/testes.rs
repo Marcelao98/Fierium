@@ -1,5 +1,6 @@
 use super::*;
 use crate::gutenberg::{autor_legivel, ler_csv};
+use serde_json::json;
 
 pub const CSV: &str = "Text#,Type,Issued,Title,Language,Authors,Subjects,LoCC,Bookshelves\n\
 1,Text,2000-01-01,Memórias Póstumas de Brás Cubas,pt,\"Machado de Assis, 1839-1908\",\"Brazil -- Fiction; Satire\",PQ,Brazilian Literature\n\

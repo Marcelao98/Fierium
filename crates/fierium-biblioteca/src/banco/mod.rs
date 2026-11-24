@@ -11,9 +11,9 @@ use rusqlite::{Connection, OpenFlags};
 use std::path::{Path, PathBuf};
 
 mod migracao_003;
-mod pool;
-
-pub use pool::{Leitor, Leitores};
+/// O pool de conexões de leitura (ver `fierium_core::pool`).
+pub type Leitores = fierium_core::pool::Pool<Biblioteca>;
+pub type Leitor<'a> = fierium_core::pool::Emprestado<'a, Biblioteca>;
 
 /// Uma migração: SQL puro (arquivo numerado em `migracoes/`) ou código Rust quando precisa juntar dados.
 enum Migracao {
@@ -83,7 +83,8 @@ impl Biblioteca {
 
     /// O pool de conexões de leitura deste banco (guarda até `max` abertas; picos abrem conexões passageiras).
     pub fn leitores(&self, max: usize) -> Leitores {
-        Leitores::novo(self.caminho_db.clone(), self.capas.clone(), max)
+        let (caminho, capas) = (self.caminho_db.clone(), self.capas.clone());
+        Leitores::novo(max, move || Self::abrir_leitura(&caminho, capas.clone()))
     }
 
     fn versao(&self) -> Result<i64, ErroFierium> {
