@@ -1,6 +1,6 @@
 // A seção "Página" do painel de aparência: grade de temas (agrupada, com busca e prévia ao passar o mouse) e o
 // "Personalizar" (cor do papel e da letra livres, brilho, contraste, luz quente, manter figuras coloridas, e salvar
-// como "meu tema"). Vale pra PDF e EPUB; quem pinta é o motor (@fierium/leitores).
+// como "meu tema"). Vale pra PDF e EPUB; quem pinta é o motor (@fierium/leitor-base).
 import type { ConfigLeitura, PaginaLeitura, TemaMeu } from '@fierium/contratos';
 import {
   buscarTemas,
@@ -10,7 +10,7 @@ import {
   PAGINA_PADRAO,
   resolverTema,
   TEMAS_PAGINA,
-} from '@fierium/leitores';
+} from '@fierium/leitor-base';
 import { useEffect, useState } from 'react';
 
 interface Props {

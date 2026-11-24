@@ -1,7 +1,8 @@
 // Página de desenvolvimento (?dev=pdf&url=...&tamanho=N&posicao=37:0.42&tema=noite): monta só o motor de PDF numa
 // caixa de tela cheia. O e2e usa isso; a posição aparece em #posicao e o estado em #estado.
 import type { ConfigLeitura, PaginaLeitura } from '@fierium/contratos';
-import { motorPdf, PAGINA_PADRAO } from '@fierium/leitores';
+import { PAGINA_PADRAO } from '@fierium/leitor-base';
+import { motorPdf } from '@fierium/leitor-pdf';
 
 const paginaDaUrl = (): PaginaLeitura => {
   const q = new URL(location.href).searchParams;

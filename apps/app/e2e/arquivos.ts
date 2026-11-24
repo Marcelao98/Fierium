@@ -1,15 +1,24 @@
 // Arquivos gerados pelos testes (nunca commitar PDF/EPUB de verdade): um PDF de N páginas e um EPUB de 3 capítulos.
 import { crc32 } from 'node:zlib';
 
-/** Escreve um PDF simples à mão: cada página com o texto "Página N" (sem acento, fonte Helvetica). */
-export function gerarPdf(n: number): Buffer {
+/**
+ * Escreve um PDF simples à mão: cada página com o texto "Página N" (sem acento, fonte Helvetica). Com `linhas` > 1 a
+ * página ganha esse tanto de linhas de 10 palavras (pros modos Automático e Guiado terem o que seguir).
+ */
+export function gerarPdf(n: number, linhas = 1): Buffer {
   const objs: string[] = [];
   objs[1] = '<< /Type /Catalog /Pages 2 0 R >>';
   const kids = Array.from({ length: n }, (_, i) => `${4 + i * 2} 0 R`).join(' ');
   objs[2] = `<< /Type /Pages /Kids [${kids}] /Count ${n} >>`;
   objs[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
   for (let i = 0; i < n; i++) {
-    const conteudo = `BT /F1 48 Tf 72 700 Td (Pagina ${i + 1}) Tj ET`;
+    const conteudo =
+      linhas <= 1
+        ? `BT /F1 48 Tf 72 700 Td (Pagina ${i + 1}) Tj ET`
+        : `BT /F1 12 Tf 14 TL 72 740 Td ${Array.from(
+            { length: linhas },
+            (_, k) => `(Pagina ${i + 1} linha ${k + 1}: um dois tres quatro cinco seis sete oito) Tj T*`,
+          ).join(' ')} ET`;
     objs[4 + i * 2] =
       `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 3 0 R >> >> /Contents ${5 + i * 2} 0 R >>`;
     objs[5 + i * 2] = `<< /Length ${conteudo.length} >>\nstream\n${conteudo}\nendstream`;
@@ -69,9 +78,14 @@ function zip(arquivos: [string, string][]): Buffer {
   return Buffer.concat([...partes, ...central, fim]);
 }
 
-export function epubDeTeste(): Buffer {
+/** Com `hostil`, o capítulo 1 traz <script>, on*, javascript: e <iframe> (a limpeza do DOMPurify tem de tirar tudo). */
+export function epubDeTeste(hostil = false): Buffer {
+  const veneno = (n: number) =>
+    hostil && n === 1
+      ? '<script>window.__veneno = 1</script><p id="veneno" onclick="window.__veneno = 2">Texto do livro</p><a id="mal" href="javascript:window.__veneno=3">mal</a><iframe id="quadro" src="about:blank"></iframe>'
+      : '';
   const cap = (n: number) =>
-    `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Capítulo ${n}</title></head><body><h1>Capítulo ${n}</h1>${Array.from(
+    `<?xml version="1.0" encoding="utf-8"?><html xmlns="http://www.w3.org/1999/xhtml"><head><title>Capítulo ${n}</title></head><body><h1>Capítulo ${n}</h1>${veneno(n)}${Array.from(
       { length: 40 },
       (_, i) => `<p>Parágrafo ${i + 1} do capítulo ${n}: o dragão dormia sobre o ouro da montanha.</p>`,
     ).join('')}</body></html>`;

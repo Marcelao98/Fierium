@@ -1,6 +1,6 @@
 // A prévia do cartão de citação ("Compartilhar como imagem"): 3 estilos, "Copiar imagem" e "Salvar…". O desenho em si
 // está em cartaoCitacao.ts; aqui só a janela. As cores do primeiro estilo vêm do tema da página que a pessoa lê.
-import { resolverTema } from '@fierium/leitores';
+import { resolverTema } from '@fierium/leitor-base';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useConfig, useServicos } from '../nucleo/contexto';
 import { abrirCartao, useNavegacao } from '../nucleo/navegacao';
