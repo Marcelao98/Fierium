@@ -29,20 +29,20 @@ flowchart TB
     DIA["diagnostico — log central"]
     CON["contratos — tipos dos comandos"]
   end
-  subgraph RUST["crates/ (M2+)"]
-    APPR["fierium-app — Tauri: comandos, protocolo de arquivo, log em arquivo"]
-    BIB["fierium-biblioteca — pastas, formatos, capas, backup"]
-    DADOS["fierium-dados — SQLite, migrações, busca"]
-    CORE["fierium-core — domínio e regras puras"]
+  subgraph RUST["crates/ (ver §10)"]
+    APPR["fierium-app — Tauri: comandos por área, protocolo de arquivo, log em arquivo"]
+    BIB["fierium-biblioteca — SQLite da estante: obras, varredura, progresso, marcações, metadados"]
+    CAT["fierium-catalogo — SQLite do catálogo público: busca FTS5, fontes, download"]
+    CORE["fierium-core — erros com código, log, Range, pool de conexões"]
   end
   MAIN --> REC & CASCA & NUC
   REC --> NUC & COMP & LEI & UI
   CASCA --> NUC & COMP & UI
   NUC --> CLI & DIA
   CLI -- "IPC tipado + arquivo aos pedaços" --> APPR
-  APPR --> BIB & DADOS & CORE
+  APPR --> BIB & CAT & CORE
   BIB --> CORE
-  DADOS --> CORE
+  CAT --> CORE
 ```
 
 ## 2. Pastas
@@ -71,7 +71,7 @@ fierium/
 │  ├─ leitor-pdf/ leitor-epub/ leitor-texto/   um motor por pacote (+ leitor-manga no M6)
 │  ├─ ui/                  tokens.css, Icone, Selo, Anel
 │  └─ diagnostico/         criarLog, relatorio, textoDoErro
-└─ crates/ (M2+)           fierium-core · fierium-dados · fierium-biblioteca · fierium-app
+└─ crates/                 fierium-core · fierium-biblioteca · fierium-catalogo · fierium-app (§10)
 ```
 
 ## 3. Quem pode falar com quem (o ESLint barra o resto)
@@ -205,9 +205,95 @@ prontos pra sincronizar (UUIDv7, identidade pelo conteúdo, relógio lógico, l�
 | Motores e modos de leitura | `packages/leitor-*/**` | Vitest + jsdom |
 | Componentes | `*.test.tsx` | Testing Library + jsdom |
 | Fluxo | `apps/app/e2e/` (com prints em `e2e/prints/`) | Playwright (Chromium; app Tauri a partir do M2) |
-| Rust | `crates/*/tests` | `cargo test` (M2+) |
+| Rust | `crates/*/src/**/testes*.rs`, `crates/*/tests` | `cargo test`; orçamentos de desempenho: `cargo test --release … --ignored` (§10.5) |
 
 ## 9. Segurança e entrega
 
 Atualização assinada desde o primeiro pacote (D11), chave só no segredo do CI, lançamento por tag. O Rust só expõe
 comandos com nome e escopo; permissões do Tauri mínimas. O app nunca altera os arquivos dos livros (D9).
+
+## 10. O Rust por dentro
+
+Escala de projeto: **milhares de livros e marcações, catálogo de 75 mil itens, vários agentes mexendo em paralelo, e a
+tela nunca trava**. Daí as regras abaixo. Todo arquivo de produção fica abaixo de ~400 linhas; o que cresce vira módulo.
+
+### 10.1 Os crates
+
+| Crate | O que é | Módulos |
+|---|---|---|
+| `fierium-core` | sem Tauri nem banco | `erro` (`ErroFierium`, um código estável por variante), `log` (arquivo por dia), `intervalo` (Range), `info`, `pool` (pool genérico de conexões) |
+| `fierium-biblioteca` | o SQLite da estante (`fierium.db`) | `banco/` · `pastas` · `varredura` · `obras/` · `progresso` · `limiar` · `marcacoes` · `busca` · `capas` · `edicao_meta` · `sugestoes` · `metadados/` |
+| `fierium-catalogo` | o catálogo público (`catalogo.db`, descartável) | `banco/` · `rede` · `importar` · `consultas` · `gutenberg` · `baixar` · `capas` |
+| `fierium-app` | Tauri: a casca | `main` (`chamar` assíncrono) · `comandos/` (uma área por arquivo) · `protocolo` (`fierium://`) |
+
+`fierium-biblioteca`: `banco/` abre as conexões, roda as migrações (`migracoes/NNN_nome.sql` + uma em Rust, a 003, que
+junta dados) e guarda o pool de leitura · `obras/` = `chave` (a mesma obra pelo título + 1º autor), `consultas`
+(estante e carga), `json` (o formato do contrato), `escrita`, `juntar`, `relacao` · `metadados/` = `nome` (do nome do
+arquivo), `epub`, `pdf`. `fierium-app/comandos/`: `app`, `biblioteca`, `leitura`, `marcacoes`, `busca`, `catalogo`, `capas`.
+
+### 10.2 Conexões: uma de escrita, várias de leitura
+
+O SQLite roda em **WAL**: quem lê não espera quem escreve. Por isso cada banco tem:
+
+- **uma conexão de escrita** (`Mutex<Biblioteca>` / `Mutex<Catalogo>` no `Contexto`), segurada só por milissegundos;
+- **um pool de conexões só-leitura** (`fierium_core::pool::Pool`, até 4 guardadas): `ctx.ler()` empresta uma, e se
+  chegarem mais pedidos do que conexões livres o excesso abre uma passageira (custa décimos de milissegundo). Escolhi
+  pool pequeno em vez de "conexão por pedido" porque reaproveita o cache de páginas e os statements preparados, e em
+  vez de pool grande porque o SQLite não ganha nada com dezenas de leitores. A conexão só-leitura **recusa escrever**
+  (o SQLite barra), então um comando de leitura que escrevesse sem querer falharia alto nos testes;
+- uma **conexão auxiliar** de escrita (`abrir_auxiliar`) só pra `obra.sugestoes`, que mistura rede lenta com gravar
+  um cache pequeno (a rede não segura a conexão das outras telas).
+
+O que isso garante: a **varredura** anda nas pastas e lê os arquivos novos numa conexão de leitura
+(`planejar_varredura`) e só depois grava numa transação curta (`aplicar_varredura`); o **catálogo** importa 75 mil itens
+numa transação da conexão de escrita dele enquanto a busca segue lendo; as **capas do catálogo** só usam leitura. O
+comando Tauri `chamar` é `async` e roda cada pedido em `spawn_blocking`: o pedido lento não segura a janela nem os
+outros. Trava envenenada (um comando que entrou em pânico) é ignorada, e o pânico vira `ERRO_INTERNO` em vez de
+derrubar tudo. Leituras que fazem várias consultas (carga das obras) usam uma transação de leitura, pra ver um instante só.
+
+### 10.3 Migrações
+
+`PRAGMA user_version` = número da migração (a posição na lista `MIGRACOES` de `banco/mod.rs`). Cada migração SQL roda
+numa transação, junto com o `user_version`. Antes de migrar um banco que já tem coisa, o app guarda uma cópia
+(`fierium.db.vN.bak`). **Nunca editar uma migração publicada**: escreva a próxima (arquivo `NNN_nome.sql` + uma linha
+na lista). Biblioteca: 001 base · 002 marcações · 003 obra→edição→arquivo (Rust) · 004 metadados e sugestões · 005
+índices. Catálogo: 001 base · 002 índice da ordem "sem texto" · 003 FTS5 com índice de prefixos.
+
+### 10.4 Onde entra coisa nova
+
+- **Comando novo**: escolha a área em `fierium-app/src/comandos/`, ponha o nome em `COMANDOS` e o caso em `atender`
+  (a lista de `app.comandos` sai sozinha; o teste `cada_comando_tem_uma_area_so…` confere). Área nova: um arquivo, um
+  `mod` e uma entrada em `AREAS` (`comandos/mod.rs`). Leitura usa `ctx.ler()`, escrita usa `ctx.escrever()`.
+- **Regra de negócio**: no crate (`fierium-biblioteca` / `-catalogo`), nunca no `fierium-app`. O app só traduz argumentos.
+- **Tabela ou índice novo**: migração nova (§10.3) + `EXPLAIN QUERY PLAN` da consulta (§10.5).
+- **Formato novo de arquivo**: `metadados/<formato>.rs` e o ramo em `ler_do_arquivo`.
+
+### 10.5 Desempenho (orçamentos com teste)
+
+Os testes geram os dados e rodam só em release (a preparação passa de poucos segundos e em debug o SQLite é 10–30×
+mais lento), por isso são `#[ignore]`:
+
+```
+cargo test --release -p fierium-biblioteca desempenho -- --ignored --nocapture   # 10 mil obras + 20 mil marcações
+cargo test --release -p fierium-catalogo   desempenho -- --ignored --nocapture   # 75 mil itens
+```
+
+| Consulta | Orçamento | Medido (release, mediana de 7) |
+|---|---|---|
+| `obras.listar` (página de 100; todas as ordens e filtros) | < 50 ms | 5–23 ms (a primeira página, de 100) |
+| `obras.listar` sem `limite` (os 10 mil de uma vez) | sem orçamento | ≈ 160–200 ms (montar ~10 MB de JSON) |
+| `biblioteca.limiar` | < 30 ms | ≈ 21 ms |
+| `marcacoes.listar` de uma obra | < 10 ms | < 1 ms |
+| `busca.tudo` | < 30 ms | ≈ 21 ms |
+| `catalogo.buscar` (75 mil itens; pior caso medido) | < 30 ms | 1–29 ms (o pior: assunto + idioma, ≈ 29) |
+
+Como chegou lá: (1) as consultas leem um **resumo leve** (`Resumo`: id, título, autor, estado, datas, fração) pra
+filtrar, ordenar e paginar, e só as obras que vão aparecer são carregadas por inteiro (edições, arquivos, JSON);
+(2) `meta` da edição é lido só no que a estante mostra (`MetaLeve`) e as capas são conferidas por uma listagem da
+pasta, não um `stat` por capa; (3) `marcacoes.listar`/`busca.tudo` filtram por obra e cor no SQL e cortam cedo; (4) o
+catálogo tem índice na ordem "sem texto" e FTS5 com índice de prefixos; (5) a varredura casa arquivos por mapas, não
+por laço duplo. Os planos conferidos com `EXPLAIN QUERY PLAN` (os testes de desempenho afirmam "sem SCAN" nas
+consultas quentes): `marcacoes` por `marcacoes_obra_data (obra_id, criada_em DESC, id DESC) WHERE apagado_em IS NULL`;
+`arquivos` por `arquivos_edicao_lista` (índice que cobre as colunas lidas, já na ordem da tela); `edicoes` por
+`edicoes_obra`; catálogo por `itens_por_numero`. **`obras.listar` sem `limite` com a estante inteira é o único caso
+acima do orçamento**: a interface deve pedir por páginas (`limite`/`deslocamento`, opcionais e compatíveis).

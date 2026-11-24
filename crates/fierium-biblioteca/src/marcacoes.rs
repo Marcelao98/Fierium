@@ -6,7 +6,7 @@ use fierium_core::ErroFierium;
 use rusqlite::{params, OptionalExtension};
 use serde_json::{json, Value};
 
-const DIA_MS: i64 = 86_400_000;
+pub(crate) const DIA_MS: i64 = 86_400_000;
 const COLUNAS: &str =
     "id, obra_id, edicao_id, tipo, ancora, trecho, cor, nota, etiquetas, ligacoes, criada_em, editada_em";
 
@@ -68,19 +68,53 @@ impl Biblioteca {
             .ok_or_else(|| ErroFierium::NaoEncontrado(format!("marcação {id}")))
     }
 
-    fn todas_marcacoes(&self) -> Result<Vec<Value>, ErroFierium> {
+    /// Marcações vivas, da mais nova pra mais velha, com os filtros que o SQL faz (obra e cor) usando os índices
+    /// `marcacoes_obra_data` e `marcacoes_recentes`. `aceita(trecho, nota)` decide o texto (sem acento) ANTES de
+    /// montar o JSON; `max` corta cedo (a lista pode ter dezenas de milhares).
+    pub(crate) fn marcacoes_filtradas(
+        &self,
+        obra: Option<&str>,
+        cor: Option<&str>,
+        max: usize,
+        aceita: &dyn Fn(&str, &str) -> bool,
+    ) -> Result<Vec<Value>, ErroFierium> {
+        let onde_obra = if obra.is_some() {
+            "AND obra_id = ?1"
+        } else {
+            "AND ?1 IS NULL"
+        };
         let mut st = self
             .bd
-            .prepare(&format!(
-                "SELECT {COLUNAS} FROM marcacoes WHERE apagado_em IS NULL ORDER BY criada_em DESC, id DESC"
+            .prepare_cached(&format!(
+                "SELECT {COLUNAS} FROM marcacoes WHERE apagado_em IS NULL {onde_obra} AND (?2 IS NULL OR cor = ?2)
+                 ORDER BY criada_em DESC, id DESC"
             ))
             .map_err(bd)?;
-        let v = st
-            .query_map([], ler)
-            .map_err(bd)?
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(bd)?;
+        let mut linhas = st.query(params![obra, cor]).map_err(bd)?;
+        let mut v = Vec::new();
+        while v.len() < max {
+            let Some(r) = linhas.next().map_err(bd)? else { break };
+            let trecho = r.get_ref(5).map_err(bd)?.as_str().unwrap_or("");
+            let nota = r.get_ref(7).map_err(bd)?.as_str_or_null().ok().flatten().unwrap_or("");
+            if aceita(trecho, nota) {
+                v.push(ler(r).map_err(bd)?);
+            }
+        }
         Ok(v)
+    }
+
+    /// A `n`-ésima (por id) das marcações vivas criadas antes de `limite`.
+    pub(crate) fn marcacao_velha(&self, limite: i64, n: i64) -> Result<Value, ErroFierium> {
+        self.bd
+            .query_row(
+                &format!(
+                    "SELECT {COLUNAS} FROM marcacoes WHERE apagado_em IS NULL AND criada_em < ?1
+                     ORDER BY id LIMIT 1 OFFSET ?2"
+                ),
+                params![limite, n],
+                ler,
+            )
+            .map_err(bd)
     }
 
     pub fn marcacoes_listar(&self, filtro: &Value) -> Result<Value, ErroFierium> {
@@ -88,17 +122,18 @@ impl Biblioteca {
         let cor = filtro["cor"].as_str().filter(|s| !s.is_empty());
         let busca = normalizar(filtro["texto"].as_str().unwrap_or(""));
         let palavras: Vec<&str> = busca.split_whitespace().collect();
-        let v = self.todas_marcacoes()?.into_iter().filter(|m| {
-            obra.is_none_or(|o| m["obraId"] == o) && cor.is_none_or(|c| m["cor"] == c) && {
-                let alvo = normalizar(&format!(
-                    "{} {}",
-                    m["trecho"].as_str().unwrap_or(""),
-                    m["nota"].as_str().unwrap_or("")
-                ));
+        let aceita = |trecho: &str, nota: &str| {
+            palavras.is_empty() || {
+                let alvo = normalizar(&format!("{trecho} {nota}"));
                 palavras.iter().all(|p| alvo.contains(p))
             }
-        });
-        Ok(Value::Array(v.collect()))
+        };
+        Ok(Value::Array(self.marcacoes_filtradas(
+            obra,
+            cor,
+            usize::MAX,
+            &aceita,
+        )?))
     }
 
     pub fn marcacao_criar(&self, a: &Value) -> Result<Value, ErroFierium> {
@@ -205,7 +240,22 @@ impl Biblioteca {
                 params![id, agora()],
             )
             .map_err(bd)?;
-        for m in self.todas_marcacoes()? {
+        // só as marcações que citam este id (busca de texto no SQLite, sem montar as 20 mil)
+        let citam: Vec<Value> = {
+            let mut st = self
+                .bd
+                .prepare(&format!(
+                    "SELECT {COLUNAS} FROM marcacoes WHERE apagado_em IS NULL AND instr(ligacoes, ?1) > 0"
+                ))
+                .map_err(bd)?;
+            let v = st
+                .query_map(params![format!("\"{id}\"")], ler)
+                .map_err(bd)?
+                .collect::<Result<_, _>>()
+                .map_err(bd)?;
+            v
+        };
+        for m in citam {
             let ligs = m["ligacoes"].as_array().cloned().unwrap_or_default();
             if ligs.iter().any(|l| l == id) {
                 let resto: Vec<&Value> = ligs.iter().filter(|l| *l != id).collect();
@@ -218,95 +268,6 @@ impl Biblioteca {
             }
         }
         Ok(())
-    }
-
-    /// Ctrl+K: obras (título/autor), autores e marcações (trecho/nota), sem acento, todas as palavras.
-    pub fn busca_tudo(&self, consulta: &str) -> Result<Value, ErroFierium> {
-        let busca = normalizar(consulta);
-        let palavras: Vec<&str> = busca.split_whitespace().collect();
-        if palavras.is_empty() {
-            return Ok(json!([]));
-        }
-        let combina = |s: &str| {
-            let alvo = normalizar(s);
-            palavras.iter().all(|p| alvo.contains(p))
-        };
-        let mut obras = self.todas(true)?;
-        obras.sort_by_cached_key(|o| normalizar(&o.titulo));
-        let mut r: Vec<Value> = Vec::new();
-        for o in obras
-            .iter()
-            .filter(|o| combina(&format!("{} {}", o.titulo, o.autor)))
-            .take(8)
-        {
-            let autor = if o.autor.is_empty() {
-                "Autor desconhecido"
-            } else {
-                &o.autor
-            };
-            r.push(json!({
-                "tipo": "obra", "id": o.id, "titulo": o.titulo,
-                "detalhe": format!("{autor} · biblioteca"), "obraId": o.id,
-            }));
-        }
-        let mut autores: Vec<&str> = obras
-            .iter()
-            .map(|o| o.autor.as_str())
-            .filter(|a| !a.is_empty())
-            .collect();
-        autores.sort_unstable();
-        autores.dedup();
-        for a in autores.into_iter().filter(|a| combina(a)).take(3) {
-            let n = obras.iter().filter(|o| o.autor == a).count();
-            let primeira = obras.iter().find(|o| o.autor == a).map(|o| o.id.clone());
-            r.push(json!({
-                "tipo": "criador", "id": a, "titulo": a, "detalhe": format!("{n} obras"), "obraId": primeira,
-            }));
-        }
-        let mut achadas = 0;
-        for m in self.todas_marcacoes()? {
-            if achadas == 5 {
-                break;
-            }
-            let alvo = format!(
-                "{} {}",
-                m["trecho"].as_str().unwrap_or(""),
-                m["nota"].as_str().unwrap_or("")
-            );
-            if !combina(&alvo) {
-                continue;
-            }
-            achadas += 1;
-            let titulo_obra = m["obraId"]
-                .as_str()
-                .and_then(|id| self.uma(id).ok())
-                .map(|o| o.titulo)
-                .unwrap_or_default();
-            r.push(json!({
-                "tipo": "marcacao", "id": m["id"], "titulo": format!("“{}”", m["trecho"].as_str().unwrap_or("")),
-                "detalhe": titulo_obra, "obraId": m["obraId"],
-            }));
-        }
-        Ok(Value::Array(r))
-    }
-
-    /// O eco do limiar: uma marcação com mais de 30 dias, a mesma o dia todo (escolhida pelo dia).
-    pub(crate) fn eco(&self, agora_ms: i64) -> Result<Value, ErroFierium> {
-        let mut velhas: Vec<Value> = self
-            .todas_marcacoes()?
-            .into_iter()
-            .filter(|m| m["criadaEm"].as_i64().is_some_and(|c| agora_ms - c > 30 * DIA_MS))
-            .collect();
-        velhas.sort_by(|a, b| a["id"].as_str().cmp(&b["id"].as_str()));
-        if velhas.is_empty() {
-            return Ok(Value::Null);
-        }
-        let dia = (agora_ms / DIA_MS).max(0) as usize;
-        let m = velhas.swap_remove(dia % velhas.len());
-        let Ok(obra) = self.obra_obter(m["obraId"].as_str().unwrap_or("")) else {
-            return Ok(Value::Null);
-        };
-        Ok(json!({ "marcacao": m, "obra": obra }))
     }
 }
 

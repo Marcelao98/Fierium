@@ -24,6 +24,8 @@ pub enum ErroFierium {
     SemRede(String),
     #[error("falha na rede: {0}")]
     Rede(String),
+    #[error("erro interno: {0}")]
+    Interno(String),
     #[error("erro de arquivo em {caminho}: {fonte}")]
     Arquivo {
         caminho: String,
@@ -45,6 +47,7 @@ impl ErroFierium {
             Self::Banco(_) => "BANCO_DE_DADOS",
             Self::SemRede(_) => "SEM_REDE",
             Self::Rede(_) => "ERRO_DE_REDE",
+            Self::Interno(_) => "ERRO_INTERNO",
             Self::Arquivo { .. } => "ERRO_DE_ARQUIVO",
         }
     }

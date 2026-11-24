@@ -13,6 +13,26 @@ Uma entrada por sessão de trabalho, **a mais nova em cima**. Modelo:
 **Onde parou:** estado exato e o próximo passo (e se está esperando o Marcelo).
 ```
 
+## 2026-11-24 · L0 · arquitetura do Rust pra escalar
+
+**Pedido:** o Fierium vai pra usuários reais: tem que escalar (milhares de livros e marcações, catálogo de 75 mil, vários
+agentes em paralelo) e nunca travar a tela. Refatoração + desempenho, sem mudar comportamento nem JSON.
+**Feito:** `comandos.rs` (1006 linhas) virou `comandos/` com uma área por arquivo e a lista de `app.comandos` montada das
+áreas; `fierium-biblioteca` (lib.rs, obras.rs, metadados.rs) e `fierium-catalogo` (lib.rs) em módulos coesos, nenhum
+arquivo de produção acima de ~400 linhas; migrações numeradas em `.sql` (biblioteca 005 e catálogo 002/003 são novas).
+`chamar` é `async` + `spawn_blocking`; conexão de escrita (Mutex) separada de um pool de leitura só-leitura em WAL
+(`fierium_core::pool`); varredura em duas fases (lê sem a conexão de escrita); `obra.sugestoes` numa conexão auxiliar.
+**Decidido:** pool pequeno (4) com conexões passageiras no pico, em vez de conexão por pedido ou fila (ARQUITETURA §10.2).
+`obras.listar` ganhou `limite`/`deslocamento` opcionais (sem eles, o mesmo de antes). Erro novo `ERRO_INTERNO`.
+**Medido / conferido:** release, 10 mil obras + 20 mil marcações: `obras.listar` página de 100 = 5–23 ms (a estante inteira
+de uma vez continua ≈ 160–200 ms: é montar ~10 MB de JSON, a tela deve paginar), `biblioteca.limiar` ≈ 21 ms,
+`marcacoes.listar` de uma obra < 1 ms, `busca.tudo` ≈ 21 ms; 75 mil itens no catálogo: `catalogo.buscar` 1–29 ms (importar
+leva ≈ 3 s). Antes: 160 / 205 / 46 / 138 ms. Como rodar: ARQUITETURA §10.5.
+**Deu errado / aprendido:** quase todo o tempo era alocação (Strings, `json!`) e `stat` por capa, não SQL; o ganho veio de
+ler um resumo leve e carregar por inteiro só o que aparece.
+**Onde parou:** a interface (`packages/`, `apps/`) ainda pede a estante inteira: passar a paginar com `limite`/`deslocamento`
+é o próximo passo de quem mexe na tela. Sem push (a branch fica local).
+
 ## 2026-11-16 · Descobrir de ponta a ponta · catálogo do Gutenberg de verdade
 
 **Pedido:** o Descobrir funcionando no app instalado: catálogo baixa sozinho com andamento, coleções cheias, cinza na

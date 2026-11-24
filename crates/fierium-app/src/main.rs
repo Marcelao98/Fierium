@@ -8,17 +8,27 @@ mod protocolo;
 use fierium_core::ErroContrato;
 use serde_json::Value;
 
-/// A porta única dos comandos (nomes iguais aos do contrato da interface). Roda fora da linha da janela (`async`):
-/// uma varredura grande não trava a interface.
-#[tauri::command(async)]
-fn chamar(
-    ctx: tauri::State<std::sync::Arc<comandos::Contexto>>,
+/// A porta única dos comandos (nomes iguais aos do contrato da interface). É `async` e cada comando roda numa linha
+/// de trabalho própria (`spawn_blocking`): uma varredura, um download ou uma busca grande nunca travam a janela,
+/// nem uns aos outros (a conexão de escrita só trava por milissegundos; a leitura vem de um pool).
+#[tauri::command]
+async fn chamar(
+    ctx: tauri::State<'_, std::sync::Arc<comandos::Contexto>>,
     cmd: String,
     args: Option<Value>,
 ) -> Result<Value, ErroContrato> {
-    comandos::chamar(&ctx, &cmd, args.unwrap_or(Value::Null)).map_err(|e| {
+    let ctx = ctx.inner().clone();
+    let nome = cmd.clone();
+    let r = tauri::async_runtime::spawn_blocking(move || comandos::chamar(&ctx, &cmd, args.unwrap_or(Value::Null)))
+        .await
+        .unwrap_or_else(|e| {
+            Err(fierium_core::ErroFierium::Interno(format!(
+                "o comando {nome} parou de repente ({e})"
+            )))
+        });
+    r.map_err(|e| {
         if e.codigo() != "NAO_ENCONTRADO" {
-            tracing::warn!(cmd, codigo = e.codigo(), "{e}");
+            tracing::warn!(cmd = nome, codigo = e.codigo(), "{e}");
         }
         e.into()
     })
