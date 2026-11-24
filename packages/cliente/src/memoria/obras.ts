@@ -65,7 +65,12 @@ export function comandosObras(
         totalObras: obras.length,
       };
     },
-    'obras.listar': (f) => filtrarObras(b.estado.obras, f),
+    'obras.listar': (f) => {
+      const r = filtrarObras(b.estado.obras, f);
+      // página da estante, igual ao Rust: sem limite, devolve tudo
+      const ini = f.deslocamento ?? 0;
+      return f.limite === undefined ? r.slice(ini) : r.slice(ini, ini + f.limite);
+    },
     'obra.obter': ({ id }) => b.obra(id),
     'obra.atualizar': ({ id, favorita, estado }) => {
       const o = b.obra(id);

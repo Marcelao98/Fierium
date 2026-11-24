@@ -290,6 +290,9 @@ export interface FiltroObras {
   reino?: string;
   favoritas?: boolean;
   ordem?: Ordem;
+  /** página da estante (o Rust só cumpre o orçamento de 50 ms com página; sem os dois, devolve tudo como antes) */
+  limite?: number;
+  deslocamento?: number;
 }
 
 export interface ResultadoBusca {
