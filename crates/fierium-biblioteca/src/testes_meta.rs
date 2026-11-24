@@ -1,7 +1,11 @@
 //! Metadados de dentro dos arquivos, na biblioteca de ponta a ponta. Todos os arquivos são GERADOS aqui.
-use super::*;
+use crate::banco::Biblioteca;
+use crate::novo_id;
+use rusqlite::params;
+use serde_json::{json, Value};
 use std::fs;
 use std::io::Write;
+use std::path::Path;
 
 fn epub(caminho: &Path, metadados_opf: &str, capa: Option<&[u8]>) {
     fs::create_dir_all(caminho.parent().unwrap()).unwrap();

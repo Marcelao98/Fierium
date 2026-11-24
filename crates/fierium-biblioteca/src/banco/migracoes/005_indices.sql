@@ -1,0 +1,1 @@
+-- 005: índices pras consultas que as telas fazem (ver docs/ARQUITETURA.md, 'Desempenho')
